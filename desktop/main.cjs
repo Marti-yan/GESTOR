@@ -25,11 +25,8 @@ const { randomBytes, randomUUID, createHash } = require("node:crypto");
 const { networkInterfaces } = require("node:os");
 const net = require("node:net");
 const { PrintAgent } = require("./print-agent.cjs");
-const { renderReceipt, testOrder } = require(
-  app.isPackaged
-    ? join(process.resourcesPath, "shared", "receipt.cjs")
-    : join(__dirname, "..", "shared", "receipt.cjs"),
-);
+// O build inclui a comanda e o agente no mesmo arquivo do processo principal.
+const { renderReceipt, testOrder } = require("../shared/receipt.cjs");
 
 let mainWindow,
   tray,
@@ -459,7 +456,7 @@ function createWindow() {
     height: 960,
     minWidth: 1024,
     minHeight: 700,
-    title: "Pronto Gestor",
+    title: `Pronto Gestor — ${app.getVersion()}`,
     backgroundColor: "#f6f7f3",
     icon: join(__dirname, "icon.png"),
     autoHideMenuBar: true,
@@ -471,6 +468,7 @@ function createWindow() {
     },
   });
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  mainWindow.on("page-title-updated", (event) => event.preventDefault());
   mainWindow.webContents.on("will-navigate", (event, url) => {
     try {
       if (new URL(url).origin !== localServerUrl) event.preventDefault();

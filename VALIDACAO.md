@@ -1,6 +1,16 @@
-# Validação do MVP 0.1.1
+# Validação do MVP 0.1.2
 
 Data: 15/10/2026. Ambiente de desenvolvimento e build: Linux, Node.js 24.
+
+## Correção 0.1.2 e reparador
+
+O usuário relatou a mesma importação antiga depois de instalar a versão 0.1.1. Os artefatos publicados continham o código corrigido, mas o código antigo continuava sendo executado no Windows. A versão 0.1.2 inclui o gerador de comanda e o agente no próprio arquivo do processo principal; o instalador completo e o reparador agora gravam os arquivos críticos diretamente e conferem seu SHA-256 no destino. Se o programa estiver em execução, o instalador pede que seja fechado; se a escrita ou o hash falhar, a atualização é interrompida.
+
+- Reparador nativo NSIS de aproximadamente 1,8 MB gerado.
+- Conteúdo do reparador extraído e comparado ao pacote: `app.asar`, API e manifesto de versão/hashes correspondem.
+- Execução do novo `app.asar` e da API em Electron/Node Linux, com o arquivo externo `shared/receipt.cjs` ausente: abertura, login, pedido anterior preservado, novo pedido visível e janela de comanda passaram.
+- Os 12 testes automatizados e a compilação de produção passaram.
+- O teste Linux não comprova o comportamento do instalador/reparador em Windows real. A cópia e o SHA-256 no destino são verificações incluídas nos executáveis; não houve uma execução nativa Windows neste ambiente.
 
 ## Verificações concluídas
 

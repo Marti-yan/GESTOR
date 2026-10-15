@@ -1,4 +1,10 @@
-const { existsSync, readFileSync } = require("node:fs");
+const {
+  existsSync,
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+} = require("node:fs");
+const { createHash } = require("node:crypto");
 const {
   join,
   resolve,
@@ -17,12 +23,7 @@ function verifyPackage(appOutDir) {
   const resources = join(resolve(appOutDir), "resources");
   const archive = join(resources, "app.asar");
   const metadata = JSON.parse(extractFile(archive, "package.json").toString());
-  for (const name of [
-    "node.exe",
-    "server-bundle.cjs",
-    "web/index.html",
-    "shared/receipt.cjs",
-  ]) {
+  for (const name of ["node.exe", "server-bundle.cjs", "web/index.html"]) {
     if (!existsSync(join(resources, name)))
       throw new Error(`Recurso ausente no aplicativo: ${name}`);
   }
@@ -86,7 +87,7 @@ function verifyPackage(appOutDir) {
   // O Electron é simulado somente para impedir abertura de janelas/processos.
   // As importações locais usam exclusivamente os arquivos presentes no pacote.
   load(join(archive, metadata.main));
-  for (const name of ["desktop/preload.cjs", "desktop/print-agent.cjs"]) {
+  for (const name of ["desktop/preload.cjs"]) {
     new vm.Script(wrap(extractFile(archive, name).toString()), {
       filename: name,
     });
@@ -94,9 +95,52 @@ function verifyPackage(appOutDir) {
   console.log(
     `Pacote ${metadata.version} verificado: módulos de inicialização e recursos presentes.`,
   );
+  return { resources, metadata };
 }
 
-module.exports = async (context) => verifyPackage(context.appOutDir);
+module.exports = async (context) => {
+  const { resources, metadata } = verifyPackage(context.appOutDir);
+  const hash = (name) =>
+    createHash("sha256")
+      .update(readFileSync(join(resources, name)))
+      .digest("hex");
+  const manifest = { version: metadata.version, files: {} };
+  for (const name of ["app.asar", "server-bundle.cjs"])
+    manifest.files[name] = hash(name);
+  writeFileSync(
+    join(resources, "pronto-build.json"),
+    JSON.stringify(manifest, null, 2) + "\n",
+  );
+  const quote = (value) => value.replaceAll("$", "$$").replaceAll('"', '$\\"');
+  const lines = [
+    "!macro ProntoInstallCritical",
+    '  SetOutPath "$INSTDIR\\resources"',
+    "  SetOverwrite on",
+  ];
+  for (const name of [...Object.keys(manifest.files), "pronto-build.json"]) {
+    lines.push(
+      "  ClearErrors",
+      `  File /oname=${name} "${quote(join(resources, name))}"`,
+      "  IfErrors ProntoCriticalFailure",
+      '  ${StdUtils.HashFile} $R8 "SHA2-256" "$INSTDIR\\resources\\' +
+        name +
+        '"',
+      `  StrCmp $R8 "${hash(name)}" 0 ProntoCriticalFailure`,
+    );
+  }
+  lines.push(
+    "  Goto ProntoCriticalDone",
+    "  ProntoCriticalFailure:",
+    '    MessageBox MB_OK|MB_ICONSTOP "Não foi possível substituir e verificar os arquivos do Pronto. Feche o programa, inclusive a janela de erro, e execute o reparador novamente. A atualização não foi concluída."',
+    "    Abort",
+    "  ProntoCriticalDone:",
+    '  SetOutPath "$INSTDIR"',
+    "!macroend",
+  );
+  const runtime = join(context.packager.projectDir, ".runtime");
+  mkdirSync(runtime, { recursive: true });
+  writeFileSync(join(runtime, "critical-files.nsh"), lines.join("\n") + "\n");
+};
 module.exports.verifyPackage = verifyPackage;
 if (require.main === module)
   verifyPackage(process.argv[2] || "release/win-unpacked");

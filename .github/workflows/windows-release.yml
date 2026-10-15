@@ -29,12 +29,12 @@ jobs:
       - name: Verificar pedidos e impressão
         run: npm test
       - name: Gerar instalador Windows de 64 bits
-        run: npm run build:windows -- --publish never
+        run: npm run build:windows
       - name: Preparar código-fonte e verificação do instalador
         run: |
           npm run package:source
           cd release
-          sha256sum Pronto-Gestor-*-Windows-x64.exe > ../artifacts/SHA256SUMS.txt
+          sha256sum Pronto-Gestor-*-Windows-x64.exe Reparar-Pronto-*.exe > ../artifacts/SHA256SUMS.txt
       - name: Publicar versão de teste com arquivos para download
         env:
           GH_TOKEN: ${{ github.token }}
@@ -42,6 +42,7 @@ jobs:
         run: |
           gh release create "$PRONTO_TAG" \
             release/Pronto-Gestor-*-Windows-x64.exe \
+            release/Reparar-Pronto-*.exe \
             artifacts/Pronto-Gestor-Codigo-Fonte.zip \
             artifacts/SHA256SUMS.txt \
             COMECAR-AQUI.md \

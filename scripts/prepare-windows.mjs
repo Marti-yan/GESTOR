@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile, copyFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { build } from "esbuild";
@@ -49,4 +49,22 @@ await build({
   outfile: ".runtime/server.cjs",
   sourcemap: false,
 });
-console.log("Servidor empacotado e runtime Windows verificado.");
+await mkdir(".runtime/desktop", { recursive: true });
+await build({
+  entryPoints: ["desktop/main.cjs"],
+  bundle: true,
+  platform: "node",
+  target: "node24",
+  format: "cjs",
+  external: ["electron"],
+  outfile: ".runtime/desktop/main.cjs",
+  sourcemap: false,
+});
+for (const name of [
+  "preload.cjs",
+  "icon.png",
+  "icon.ico",
+  "THIRD-PARTY-NOTICES.txt",
+])
+  await copyFile(`desktop/${name}`, `.runtime/desktop/${name}`);
+console.log("Servidor e desktop empacotados; runtime Windows verificado.");

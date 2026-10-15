@@ -1,4 +1,4 @@
-# Pronto Gestor — MVP 0.1.1
+# Pronto Gestor — MVP 0.1.2
 
 Cardápio digital → pedido persistido → gestor → comanda térmica automática.
 
@@ -6,14 +6,16 @@ Este primeiro MVP foi preparado para **Elgin i8 USB, papel de 80 mm, usando o dr
 
 ## Começar pelo instalador Windows
 
-A versão **0.1.1** corrige a falha de abertura `Cannot find module '../shared/receipt.cjs'` e o carregamento da tela inicial quando o caminho de instalação contém um diretório oculto. O módulo de comanda passa a ser carregado de `resources/shared` no aplicativo instalado. Uma verificação automática agora carrega as dependências do processo principal a partir do pacote final antes de gerar o instalador.
+A versão **0.1.2** inclui o gerador de comanda e o agente no próprio arquivo do processo principal. Ela não depende mais de um import externo de `receipt.cjs` para abrir o desktop. A atualização também substitui os arquivos críticos diretamente e confere seus hashes no destino, interrompendo em caso de falha. A barra de título mostra a versão em execução.
 
-Baixe o **[pacote Windows em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.1.1.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. O script monta o `.exe`, confere o SHA-256 e abre a instalação. O pacote está em uma branch de distribuição separada porque o instalador excede o limite de arquivo comum do Git. Quando a publicação por **[Releases](https://github.com/Marti-yan/GESTOR/releases)** estiver concluída, o `.exe` também poderá ser baixado diretamente em **Assets**.
+**Se você já instalou o gestor e ainda recebe o erro de módulo ausente:** feche o programa, incluindo a janela de erro e a bandeja, e execute o **[reparador 0.1.2](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.1.2/Reparar-Pronto-0.1.2.exe)**. Ele atualiza somente arquivos do programa, mantém `%APPDATA%\Pronto Gestor` e refaz os atalhos. Se o programa ainda for detectado em execução, reinicie o Windows antes de reparar. Ao abrir, confira **Pronto Gestor — 0.1.2** na barra de título.
+
+Para instalar do zero, baixe o **[pacote Windows em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.1.2.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. O script monta o `.exe`, confere o SHA-256 e abre a instalação. O pacote está em uma branch de distribuição separada porque o instalador excede o limite de arquivo comum do Git. Quando a publicação por **[Releases](https://github.com/Marti-yan/GESTOR/releases)** estiver concluída, o `.exe` também poderá ser baixado diretamente em **Assets**.
 
 É possível instalar em outro computador com Windows de 64 bits; o computador de desenvolvimento não precisa estar disponível. Cada instalação mantém seu próprio banco local. Para testar cardápio e pedidos sem a impressora, mantenha a impressão automática desligada e visualize a comanda no gestor.
 
 1. Instale o driver Windows da Elgin i8. Confira que a impressora aparece em **Configurações → Impressoras e scanners** e imprima a página de teste do Windows.
-2. Execute `Pronto-Gestor-0.1.1-Windows-x64.exe` e abra o Pronto Gestor.
+2. Execute `Pronto-Gestor-0.1.2-Windows-x64.exe` e abra o Pronto Gestor.
 3. Crie uma senha de pelo menos 12 caracteres. Em **Minha loja**, informe o nome, taxa de entrega e prazo; em **Cardápio**, edite os produtos de exemplo.
 4. Em **Impressão**, selecione a Elgin i8 em **Comanda geral**, mantenha **80 mm**, salve e clique em **Testar**. Confira legibilidade, margem e avanço/corte do papel. O corte automático depende das preferências do driver.
 5. Ligue **Impressão automática**.

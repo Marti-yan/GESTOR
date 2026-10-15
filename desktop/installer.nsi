@@ -2,8 +2,12 @@
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
 !include "extractAppPackage.nsh"
+!include "${PROJECT_DIR}/desktop/ensure-closed.nsh"
+!include "${PROJECT_DIR}/.runtime/critical-files.nsh"
 
 Name "${PRODUCT_NAME}"
+Caption "Pronto Gestor ${VERSION}"
+CRCCheck force
 InstallDir "$LOCALAPPDATA\Programs\Pronto Gestor"
 InstallDirRegKey HKCU "Software\ProntoGestor" "InstallDir"
 RequestExecutionLevel user
@@ -25,6 +29,10 @@ ShowUninstDetails show
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_LANGUAGE "PortugueseBR"
 
+Function .onInit
+  !insertmacro ProntoRequireClosed
+FunctionEnd
+
 Section "Pronto Gestor" Main
   SetShellVarContext current
   SetOutPath "$INSTDIR"
@@ -36,6 +44,9 @@ Section "Pronto Gestor" Main
   IfFileExists "$INSTDIR\Pronto Gestor.exe" +3
     MessageBox MB_ICONSTOP "Não foi possível extrair o aplicativo. Confira a pasta de instalação."
     Abort
+  ; A cópia geral não confirma se um app.asar antigo foi substituído.
+  ; Reescreva os arquivos críticos com File e confira seus hashes no destino.
+  !insertmacro ProntoInstallCritical
   WriteUninstaller "$INSTDIR\Desinstalar.exe"
   CreateShortcut "$DESKTOP\Pronto Gestor.lnk" "$INSTDIR\Pronto Gestor.exe" "" "$INSTDIR\Pronto Gestor.exe"
   CreateShortcut "$SMPROGRAMS\Pronto Gestor.lnk" "$INSTDIR\Pronto Gestor.exe" "" "$INSTDIR\Pronto Gestor.exe"
