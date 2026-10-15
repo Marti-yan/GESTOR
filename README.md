@@ -6,7 +6,9 @@ Este primeiro MVP foi preparado para **Elgin i8 USB, papel de 80 mm, usando o dr
 
 ## Começar pelo instalador Windows
 
-Baixe o `.exe` na seção **Assets** de **[Releases](https://github.com/Marti-yan/GESTOR/releases)**. É possível instalar em outro computador com Windows de 64 bits; o computador de desenvolvimento não precisa estar disponível. Cada instalação mantém seu próprio banco local. Para testar cardápio e pedidos sem a impressora, mantenha a impressão automática desligada e visualize a comanda no gestor.
+Baixe o **[pacote Windows em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.1.0.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. O script monta o `.exe`, confere o SHA-256 e abre a instalação. O pacote está em uma branch de distribuição separada porque o instalador excede o limite de arquivo comum do Git. Quando a publicação por **[Releases](https://github.com/Marti-yan/GESTOR/releases)** estiver concluída, o `.exe` também poderá ser baixado diretamente em **Assets**.
+
+É possível instalar em outro computador com Windows de 64 bits; o computador de desenvolvimento não precisa estar disponível. Cada instalação mantém seu próprio banco local. Para testar cardápio e pedidos sem a impressora, mantenha a impressão automática desligada e visualize a comanda no gestor.
 
 1. Instale o driver Windows da Elgin i8. Confira que a impressora aparece em **Configurações → Impressoras e scanners** e imprima a página de teste do Windows.
 2. Execute `Pronto-Gestor-0.1.0-Windows-x64.exe` e abra o Pronto Gestor.
@@ -115,7 +117,7 @@ npm run build:windows
 
 O processo baixa o Node.js Windows da distribuição oficial, verifica o SHA-256, empacota a API e gera o instalador em `release/`. A compilação não utiliza um certificado de assinatura comercial; o Windows pode mostrar o aviso de editor desconhecido.
 
-O workflow `.github/workflows/windows-release.yml` faz esse processo no GitHub Actions ao enviar uma tag `v*`: instala dependências, executa os testes, compila e publica uma **pré-versão** com instalador, código-fonte, guia e SHA-256. Use uma tag nova para cada publicação. O instalador excede o limite de arquivo comum do Git e fica nos anexos da Release; bancos e configurações locais não entram na publicação.
+O workflow `.github/workflows/windows-release.yml` está configurado para fazer esse processo no GitHub Actions ao enviar uma tag `v*`: instala dependências, executa os testes, compila e publica uma **pré-versão** com instalador, código-fonte, guia e SHA-256. Use uma tag nova para cada publicação. A tag inicial foi enviada, mas o GitHub não iniciou nenhuma execução até a entrega; a configuração de Actions do repositório ainda precisa ser verificada para concluir esse caminho de publicação. O pacote ZIP acima permite testar o instalador existente sem depender desse processo. Bancos e configurações locais não entram na publicação.
 
 ## Testes
 

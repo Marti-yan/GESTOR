@@ -2,7 +2,9 @@
 
 ## Baixar em outro computador
 
-Abra **[Releases no GitHub](https://github.com/Marti-yan/GESTOR/releases)**. Na versão de teste, expanda **Assets** e baixe `Pronto-Gestor-0.1.0-Windows-x64.exe`.
+Baixe o **[pacote Windows em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.1.0.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd** na pasta extraída. O script monta o instalador a partir das três partes, confere sua integridade e abre a instalação. Esse pacote disponibiliza o instalador já gerado enquanto a publicação por Releases não é concluída.
+
+Quando houver uma versão em **[Releases no GitHub](https://github.com/Marti-yan/GESTOR/releases)**, também será possível baixar `Pronto-Gestor-0.1.0-Windows-x64.exe` diretamente na seção **Assets**.
 
 O instalador inclui o servidor e o Node.js. Você não precisa acessar o computador original ou instalar ferramentas de desenvolvimento. Use um computador com Windows de 64 bits.
 
