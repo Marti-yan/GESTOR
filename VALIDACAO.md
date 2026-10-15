@@ -1,0 +1,45 @@
+# Validação do MVP
+
+Data: 15/10/2026. Ambiente de desenvolvimento e build: Linux, Node.js 24.
+
+## Verificações concluídas
+
+- TypeScript e compilação de produção da interface.
+- 11 testes automatizados de API e impressão, todos aprovados.
+- Checkout real no Chromium: produto, observação, identificação do cliente e confirmação.
+- Acompanhamento pelo link exclusivo do pedido.
+- Configuração inicial da senha e acesso ao gestor pelo navegador.
+- Recebimento do pedido no gestor e avanço por preparo, pronto e finalizado.
+- Visualização de comanda com preservação das observações.
+- Layout de celular de 390 px, sem rolagem horizontal no cardápio.
+- Nenhum erro de JavaScript capturado durante o fluxo de navegador.
+- Bundle do servidor: catálogo, criação de pedido, acompanhamento, SQLite e arquivos da interface.
+- Aplicativo Electron executado em Linux com display virtual: servidor incluído, criação inicial da senha, bridge IPC, login e enumeração nativa de impressoras.
+- Integração completa no Electron com impressora simulada: novo pedido → reserva → renderização da comanda → chamada nativa com `silent: true` e largura de 80 mm → aceite salvo. Apenas um envio foi observado. A chamada física foi substituída por uma simulação neste teste.
+- Modelo de comanda em PDF com largura de 80 mm e altura calculada pelo conteúdo.
+- Diário de impressão: uma confirmação perdida é recuperada sem novo envio físico.
+- Diário de impressão: reinício durante o envio gera resultado incerto, sem reimpressão automática.
+- Reserva concorrente de trabalhos e separação de comandas por setor.
+- Instalador Windows NSIS gerado; integridade do arquivo verificada com 7-Zip e correspondência do código/interface empacotados conferida.
+
+## Limites da validação
+
+- O instalador Windows é gerado por compilação cruzada. Não houve execução em um computador Windows real neste ambiente.
+- Não havia uma Elgin i8 USB conectada. Impressão silenciosa foi implementada com a API do Electron, mas a saída física, o driver e o corte precisam do teste no equipamento do restaurante.
+- O recebimento a partir de um celular físico na rede da loja depende de IP, firewall e configuração do Wi-Fi. O layout e as requisições foram exercitados no navegador automatizado.
+- Nenhum site foi publicado em Hostinger ou Sites. A entrega inicial executa o servidor incluído e o cardápio na rede local. O caminho de publicação externa está documentado.
+- Nenhuma integração com marketplace, WhatsApp ou pagamento online foi simulada como se estivesse ativa.
+
+## Evidências locais
+
+As capturas de cardápio, gestor, impressão e a comanda PDF estão na pasta `artifacts/` do workspace. O pedido usado nas capturas é explicitamente um **pedido de teste QA**. O banco de testes e as sessões não entram no pacote de código nem no instalador.
+
+## Aceite no restaurante
+
+1. Instalar/abrir o aplicativo no Windows e criar a senha.
+2. Configurar o driver da Elgin i8 e enviar a comanda de teste.
+3. Abrir o QR Code em um celular da mesma rede.
+4. Criar um pedido com observação, verificar o valor e conferir a impressão.
+5. Desconectar a impressora, enviar outro pedido e verificar o erro/fila.
+6. Reconectar, conferir o papel e solicitar o reenvio controlado.
+7. Encerrar pela bandeja, abrir novamente e verificar a persistência dos pedidos.
