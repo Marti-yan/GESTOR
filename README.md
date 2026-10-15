@@ -1,41 +1,27 @@
-# Pronto Gestor — download para Windows
+# Pronto Gestor 0.1.2 — teste local Windows
 
-MVP 0.1.1: **cardápio digital → pedidos no gestor → impressão térmica**.
+## Já instalou e o gestor continua com erro?
 
-A versão **0.1.1 corrige a falha que impedia abrir o gestor** e o carregamento da tela inicial em diretórios ocultos. Para atualizar, encerre o Pronto pela bandeja e instale na mesma pasta da versão anterior; preserve `%APPDATA%\Pronto Gestor`, onde ficam seus dados.
+1. Feche o Pronto, inclusive a janela de erro e a bandeja.
+2. [Baixe Reparar-Pronto-0.1.2.exe](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.1.2/Reparar-Pronto-0.1.2.exe) e execute.
+3. Confira a pasta da instalação existente, conclua e abra o programa pelo reparador. A barra de título deve mostrar **Pronto Gestor — 0.1.2**.
 
-## Instalar em outro computador
+O reparador tem aproximadamente 1,8 MB, substitui os arquivos do programa e confere seus hashes. Ele preserva pedidos, senha e configurações em `%APPDATA%\Pronto Gestor`. Se o programa ainda estiver em execução, feche-o; se não encontrar a janela/processo, reinicie o Windows antes de reparar.
 
-1. **[Baixe o pacote ZIP completo](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.1.1.zip)** (aproximadamente 121 MB).
-2. Clique com o botão direito no ZIP e escolha **Extrair tudo**. Abra a pasta extraída.
-3. Dê dois cliques em **Instalar.cmd**. Ele junta as três partes, confere o SHA-256 e abre `Pronto-Gestor-0.1.1-Windows-x64.exe`.
-4. Conclua a instalação e abra **Pronto Gestor**. Crie uma senha com pelo menos 12 caracteres.
+O novo desktop inclui a comanda no próprio processo principal, sem depender de `shared/receipt.cjs` externo. Falhas de substituição ou de integridade interrompem o reparo.
 
-O instalador inclui o servidor e o Node.js. Não é necessário Git, Node.js, Docker ou acesso ao computador original. Recomendação para o piloto: Windows 11 de 64 bits, 8 GB de RAM e pelo menos 2 GB livres em SSD, além do espaço para dados.
+## Instalação nova
 
-## Testar sem a impressora
+[Baixe o ZIP completo](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.1.2.zip), escolha **Extrair tudo** e abra **Instalar.cmd**. O script monta o instalador a partir das três partes, confere o SHA-256 e abre a instalação. Windows de 64 bits; servidor e Node.js incluídos. O computador original não precisa estar disponível.
 
-- Mantenha a impressão automática desligada.
-- Clique no botão do celular, no topo do gestor, para abrir o cardápio. Você pode usar o navegador do próprio computador ou um celular no mesmo Wi-Fi.
-- Envie um pedido e confira em **Pedidos → Novos**. Visualize a comanda e avance pelos estados de preparo.
+## Testar
 
-## Testar com a Elgin i8 USB de 80 mm
+Abra o cardápio pelo botão do celular no gestor, use a mesma rede Wi-Fi e envie um pedido. Confira sua chegada em **Pedidos → Novos**. Para imprimir, instale o driver da Elgin i8 USB, selecione a impressora e papel de 80 mm em **Impressão**, salve e envie a comanda de teste antes de ligar a impressão automática.
 
-Instale o driver Windows da impressora e imprima a página de teste do Windows. No gestor, abra **Impressão**, selecione a Elgin em **Comanda geral**, escolha **80 mm**, salve e clique em **Testar**. Depois, ative a impressão automática e envie outro pedido pelo cardápio.
+O teste permanece local. Consulte [COMECAR-AQUI.md](COMECAR-AQUI.md). Os hashes dos executáveis estão em [SHA256SUMS.txt](SHA256SUMS.txt).
 
-Confira o passo a passo completo em [COMECAR-AQUI.md](COMECAR-AQUI.md).
+## Validação
 
-## Sobre o pacote
+12 testes automatizados, build e conteúdo dos executáveis verificados. O pacote foi exercitado com Electron/Node Linux sem o arquivo externo de comanda: abertura, pedido anterior preservado, novo pedido e visualização de comanda passaram. O instalador/reparador ainda não foi executado em Windows real neste ambiente e a saída física na Elgin precisa de validação.
 
-O `.exe` tem 121 MB e excede o limite de arquivo comum do GitHub. As três partes deste pacote permitem disponibilizar o instalador existente enquanto a publicação por GitHub Releases é configurada. `Instalar.cmd` apenas junta arquivos locais, verifica sua integridade e abre o instalador; ele não baixa programas nem altera as proteções do Windows.
-
-O SHA-256 esperado está em [SHA256SUMS.txt](SHA256SUMS.txt). Se a conferência falhar, o instalador não será aberto pelo script. Não execute diretamente as partes `.bin`.
-
-## Limites do MVP
-
-- O cardápio atende a rede local; o computador precisa estar ligado com o aplicativo ativo.
-- Cada instalação usa um banco próprio, sem sincronização automática entre computadores.
-- O catálogo contém produtos de exemplo editáveis. Os pagamentos são feitos na entrega ou retirada.
-- O aplicativo não possui certificado de assinatura comercial. O instalador não foi executado em Windows real neste ambiente, e a saída física na Elgin ainda precisa ser validada.
-
-Código-fonte e documentação: [MVP no GitHub](https://github.com/Marti-yan/GESTOR/tree/codex/mvp-pronto-gestor). Alterações para revisão: [PR #1](https://github.com/Marti-yan/GESTOR/pull/1).
+Código e documentação: [MVP no GitHub](https://github.com/Marti-yan/GESTOR/tree/codex/mvp-pronto-gestor).

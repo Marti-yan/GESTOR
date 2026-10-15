@@ -1,1 +1,2 @@
-ffe7a41d742ee32c12d4c1fcc36d43cb06d3278284ef067da28adeeb57aa586b  Pronto-Gestor-0.1.1-Windows-x64.exe
+b68d2cc4fafaaaf9af0f7791efef2467e4e064a49d352b603999f641d4756cc7  Pronto-Gestor-0.1.2-Windows-x64.exe
+23c5912c0904e74f4c94060bf0412a16340d5c1f41f8ee759dc9a0104c460b14  Reparar-Pronto-0.1.2.exe
