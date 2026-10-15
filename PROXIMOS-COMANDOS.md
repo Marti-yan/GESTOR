@@ -4,13 +4,13 @@ Estes são pedidos prontos para as próximas etapas de desenvolvimento. O MVP at
 
 ## 1. Validar a Elgin i8 na operação real
 
-> Ajuste o perfil da Elgin i8 USB de 80 mm com base no teste físico: margens, tamanho da fonte, altura da página, acentos, corte e comportamento com falta de papel. Preserve o envio silencioso e registre os modelos/versões de driver homologados.
+> Homologue o envio ESC/POS RAW e a alternativa HTML da Elgin i8 USB de 80 mm com base no teste físico: fonte, colunas, acentos, avanço, guilhotina, falta de papel e reconexão USB. Preserve os modelos por setor, o aceite antes de imprimir pedidos do cardápio e o diário que evita reenviar automaticamente uma comanda incerta. Registre os modelos/versões de driver e firmware validados.
 
 Aceite: pedido curto e longo legíveis, sem corte de texto; falha visível; reimpressão identificada. Depende da impressora física.
 
 ## 2. Publicar para clientes fora da loja
 
-> Prepare o Pronto para produção na minha hospedagem Hostinger Business. Confirme recursos do plano, implemente persistência MySQL ou PostgreSQL gerenciado, migre o repositório SQLite, configure HTTPS, variáveis de ambiente, backup e monitoramento. Conecte o gestor Windows ao servidor publicado. Não altere dados ou compre serviços sem a autorização correspondente.
+> Prepare o Pronto em um contêiner isolado na minha VPS Integrator Host de 4 vCPUs e 6 GB de RAM, preservando o Atende Chat existente. Inspecione portas, uso real e proxy antes de alterar serviços. Publique uma instância da API com banco em volume persistente, HTTPS, backup e monitoramento; conecte o gestor Windows. Avalie a Hostinger Business para arquivos estáticos e domínio se houver benefício. Mantenha a impressão no computador da loja e entregue um procedimento de reversão.
 
 Aceite: cliente em outra rede faz pedido, gestor recebe e Elgin imprime; dados sobrevivem a novo deploy e reinício. A migração deve preservar pedidos e evitar reaplicar comandas antigas.
 

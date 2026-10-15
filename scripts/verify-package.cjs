@@ -3,6 +3,8 @@ const {
   readFileSync,
   writeFileSync,
   mkdirSync,
+  readdirSync,
+  statSync,
 } = require("node:fs");
 const { createHash } = require("node:crypto");
 const {
@@ -92,6 +94,12 @@ function verifyPackage(appOutDir) {
       filename: name,
     });
   }
+  if (
+    !extractFile(archive, "desktop/print-raw.ps1")
+      .toString()
+      .includes("WritePrinter")
+  )
+    throw new Error("O suporte de impressão RAW não está no pacote.");
   console.log(
     `Pacote ${metadata.version} verificado: módulos de inicialização e recursos presentes.`,
   );
@@ -105,7 +113,11 @@ module.exports = async (context) => {
       .update(readFileSync(join(resources, name)))
       .digest("hex");
   const manifest = { version: metadata.version, files: {} };
-  for (const name of ["app.asar", "server-bundle.cjs"])
+  const webFiles = readdirSync(join(resources, "web"), { recursive: true })
+    .filter((name) => statSync(join(resources, "web", name)).isFile())
+    .map((name) => "web/" + name.split(sep).join("/"))
+    .sort();
+  for (const name of ["app.asar", "server-bundle.cjs", ...webFiles])
     manifest.files[name] = hash(name);
   writeFileSync(
     join(resources, "pronto-build.json"),
@@ -118,12 +130,15 @@ module.exports = async (context) => {
     "  SetOverwrite on",
   ];
   for (const name of [...Object.keys(manifest.files), "pronto-build.json"]) {
+    const destination = name.replaceAll("/", "\\"),
+      fileName = name.split("/").at(-1);
     lines.push(
+      `  SetOutPath "$INSTDIR\\resources\\${dirname(name) === "." ? "" : dirname(name).replaceAll("/", "\\")}"`,
       "  ClearErrors",
-      `  File /oname=${name} "${quote(join(resources, name))}"`,
+      `  File /oname=${fileName} "${quote(join(resources, name))}"`,
       "  IfErrors ProntoCriticalFailure",
       '  ${StdUtils.HashFile} $R8 "SHA2-256" "$INSTDIR\\resources\\' +
-        name +
+        destination +
         '"',
       `  StrCmp $R8 "${hash(name)}" 0 ProntoCriticalFailure`,
     );

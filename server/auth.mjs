@@ -23,26 +23,56 @@ export function verifyPassword(password, stored) {
     return false;
   }
 }
-export function readSessionToken(req) {
+export function readSessionToken(req, cookieName = "pronto_session") {
   const bearer = req.headers.authorization;
   if (typeof bearer === "string" && bearer.startsWith("Bearer "))
     return bearer.slice(7);
   const cookie = (req.headers.cookie || "")
     .split(";")
     .map((v) => v.trim())
-    .find((v) => v.startsWith("pronto_session="));
-  return cookie
-    ? decodeURIComponent(cookie.slice("pronto_session=".length))
-    : "";
+    .find((v) => v.startsWith(cookieName + "="));
+  try {
+    return cookie
+      ? decodeURIComponent(cookie.slice(cookieName.length + 1))
+      : "";
+  } catch {
+    return "";
+  }
 }
 export function authenticate(db, req) {
   const token = readSessionToken(req);
   if (!token || token.length > 160) return false;
   return Boolean(
     db
-      .prepare("SELECT 1 FROM sessions WHERE token_hash=? AND expires_at>?")
+      .prepare(
+        "SELECT 1 FROM sessions WHERE token_hash=? AND expires_at>? AND role='admin'",
+      )
       .get(tokenHash(token), Date.now()),
   );
+}
+export function staffSession(db, req) {
+  const token = readSessionToken(req, "pronto_staff_session");
+  if (!token || token.length > 160) return null;
+  return (
+    db
+      .prepare(
+        "SELECT actor_name AS name FROM sessions WHERE token_hash=? AND expires_at>? AND role='waiter'",
+      )
+      .get(tokenHash(token), Date.now()) || null
+  );
+}
+export function issueStaffSession(db, res, name, { secure = false } = {}) {
+  const token = randomBytes(32).toString("hex");
+  db.prepare(
+    "INSERT INTO sessions(token_hash,expires_at,role,actor_name) VALUES (?,?,'waiter',?)",
+  ).run(tokenHash(token), Date.now() + 12 * 60 * 60 * 1000, name);
+  res.cookie("pronto_staff_session", token, {
+    httpOnly: true,
+    sameSite: "strict",
+    secure,
+    maxAge: 12 * 60 * 60 * 1000,
+    path: "/",
+  });
 }
 export function issueSession(db, req, res, { secure = false } = {}) {
   const token = randomBytes(32).toString("hex");

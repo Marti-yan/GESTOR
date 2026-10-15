@@ -52,8 +52,12 @@ import {
 import { QRCodeSVG } from "qrcode.react";
 import { api, money, time, parseMoney, navigate, createId } from "./api";
 import { FoodArt } from "./art";
+import { OrderEntry, StaffApp, StaffSettings } from "./Staff";
+import { ReceiptDesigner } from "./ReceiptDesigner";
+import { CategoryManager } from "./Categories";
 import type {
   CartItem,
+  Category,
   DesktopInfo,
   Order,
   OrderStatus,
@@ -212,14 +216,33 @@ function Banner({ message }: { message: string }) {
 export function App() {
   const [route, setRoute] = useState(
     () =>
-      window.location.hash.slice(1) || (window.prontoDesktop ? "/gestor" : "/"),
+      window.location.hash.slice(1) ||
+      (window.location.pathname.startsWith("/garcom")
+        ? "/garcom"
+        : window.prontoDesktop
+          ? "/gestor"
+          : "/"),
   );
   const [toast, setToast] = useState("");
   useEffect(() => {
-    const handler = () => setRoute(window.location.hash.slice(1) || "/");
+    const handler = () =>
+      setRoute(
+        window.location.hash.slice(1) ||
+          (window.location.pathname.startsWith("/garcom") ? "/garcom" : "/"),
+      );
     window.addEventListener("hashchange", handler);
     return () => window.removeEventListener("hashchange", handler);
   }, []);
+  useEffect(() => {
+    document
+      .querySelector('link[rel="manifest"]')
+      ?.setAttribute(
+        "href",
+        route.startsWith("/garcom")
+          ? "/garcom.webmanifest"
+          : "/manifest.webmanifest",
+      );
+  }, [route]);
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => setToast(""), 4200);
@@ -228,7 +251,9 @@ export function App() {
   }, [toast]);
   return (
     <>
-      {route.startsWith("/gestor") ? (
+      {route.startsWith("/garcom") ? (
+        <StaffApp />
+      ) : route.startsWith("/gestor") ? (
         <Manager route={route} notify={setToast} />
       ) : route.startsWith("/acompanhar/") ? (
         <Tracking token={route.split("/")[2]} />
@@ -246,6 +271,7 @@ export function App() {
 function Menu({ notify }: { notify: (s: string) => void }) {
   const [store, setStore] = useState<Store>(emptyStore),
     [products, setProducts] = useState<Product[]>([]),
+    [categoryRecords, setCategoryRecords] = useState<Category[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
   const [search, setSearch] = useState(""),
@@ -263,10 +289,13 @@ function Menu({ notify }: { notify: (s: string) => void }) {
     [checkout, setCheckout] = useState(false),
     [mobileCart, setMobileCart] = useState(false);
   useEffect(() => {
-    api<{ store: Store; products: Product[] }>("/catalog")
+    api<{ store: Store; products: Product[]; categories: Category[] }>(
+      "/catalog",
+    )
       .then((r) => {
         setStore(r.store);
         setProducts(r.products);
+        setCategoryRecords(r.categories);
         setCart((current) =>
           current.flatMap((line) => {
             const product = r.products.find((p) => p.id === line.product.id);
@@ -280,13 +309,16 @@ function Menu({ notify }: { notify: (s: string) => void }) {
   useEffect(() => {
     localStorage.setItem("pronto-cart", JSON.stringify(cart));
   }, [cart]);
-  const categories = ["Todos", ...new Set(products.map((p) => p.category))];
-  const filtered = products.filter(
-    (p) =>
-      (category === "Todos" || p.category === category) &&
-      `${p.name} ${p.description}`
-        .toLocaleLowerCase("pt-BR")
-        .includes(search.toLocaleLowerCase("pt-BR")),
+  const categories = [
+    "Todos",
+    ...categoryRecords
+      .filter((c) => products.some((p) => p.category === c.name))
+      .map((c) => c.name),
+  ];
+  const filtered = products.filter((p) =>
+    `${p.name} ${p.description}`
+      .toLocaleLowerCase("pt-BR")
+      .includes(search.toLocaleLowerCase("pt-BR")),
   );
   const total = cart.reduce((sum, i) => sum + i.product.price * i.quantity, 0),
     count = cart.reduce((sum, i) => sum + i.quantity, 0);
@@ -512,7 +544,16 @@ function Menu({ notify }: { notify: (s: string) => void }) {
             {categories.map((c) => (
               <button
                 key={c}
-                onClick={() => setCategory(c)}
+                onClick={() => {
+                  setCategory(c);
+                  document
+                    .getElementById(
+                      c === "Todos"
+                        ? "menu-products"
+                        : "menu-cat-" + encodeURIComponent(c),
+                    )
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
                 className={category === c ? "active" : ""}
               >
                 {c === "Todos" && <UtensilsCrossed size={15} />} {c}
@@ -520,44 +561,65 @@ function Menu({ notify }: { notify: (s: string) => void }) {
             ))}
           </div>
           {error && <Banner message={error} />}
-          <div className="products-grid">
-            {loading
-              ? Array.from({ length: 6 }, (_, i) => (
-                  <div className="product-skeleton" key={i} />
-                ))
-              : filtered.map((p, i) => (
-                  <button
-                    className="product-card"
-                    key={p.id}
-                    onClick={() => {
-                      setSelected(p);
-                      setQuantity(1);
-                      setNotes("");
-                    }}
-                    disabled={!store.open}
-                    style={{ animationDelay: `${i * 40}ms` }}
+          <div className="menu-category-lists">
+            {loading ? (
+              <p>Carregando o cardápio…</p>
+            ) : (
+              categoryRecords
+                .filter((c) => filtered.some((p) => p.category === c.name))
+                .map((c) => (
+                  <section
+                    className="menu-category-section"
+                    id={"menu-cat-" + encodeURIComponent(c.name)}
+                    key={c.id}
                   >
-                    <div className={`product-image art-${p.art}`}>
-                      {p.featured && (
-                        <span className="product-tag">
-                          <Flame size={12} /> Favorito da casa
-                        </span>
-                      )}
-                      <FoodArt kind={p.art} />
-                      <span className="product-add">
-                        <Plus size={21} />
+                    <div className="menu-category-title">
+                      <h3>{c.name}</h3>
+                      <span>
+                        {filtered.filter((p) => p.category === c.name).length}{" "}
+                        opções
                       </span>
                     </div>
-                    <div className="product-copy">
-                      <h3>{p.name}</h3>
-                      <p>{p.description}</p>
-                      <div>
-                        <strong>{money(p.price)}</strong>
-                        <span>Preparado na hora</span>
-                      </div>
+                    <div className="menu-product-list">
+                      {filtered
+                        .filter((p) => p.category === c.name)
+                        .map((p, i) => (
+                          <button
+                            className="product-card"
+                            key={p.id}
+                            onClick={() => {
+                              setSelected(p);
+                              setQuantity(1);
+                              setNotes("");
+                            }}
+                            disabled={!store.open}
+                            style={{ animationDelay: `${i * 40}ms` }}
+                          >
+                            <div className={`product-image art-${p.art}`}>
+                              {p.featured && (
+                                <span className="product-tag">
+                                  <Flame size={12} /> Favorito da casa
+                                </span>
+                              )}
+                              <FoodArt kind={p.art} />
+                              <span className="product-add">
+                                <Plus size={21} />
+                              </span>
+                            </div>
+                            <div className="product-copy">
+                              <h3>{p.name}</h3>
+                              <p>{p.description}</p>
+                              <div>
+                                <strong>{money(p.price)}</strong>
+                                <span>Preparado na hora</span>
+                              </div>
+                            </div>
+                          </button>
+                        ))}
                     </div>
-                  </button>
-                ))}
+                  </section>
+                ))
+            )}
           </div>
           {!loading && !filtered.length && (
             <Empty icon={<Search size={28} />} heading="Nenhum item encontrado">
@@ -1091,7 +1153,7 @@ function Manager({
               <Printer />
             </div>
           </div>
-          <small>PRONTO GESTOR • MVP 0.1</small>
+          <small>PRONTO GESTOR • MVP 0.2</small>
         </div>
         <main className="login-form-wrap">
           <form onSubmit={login} className="login-form">
@@ -1203,6 +1265,7 @@ function Manager({
               icon: <Printer size={19} />,
               label: "Impressão",
             },
+            { id: "garcom", icon: <Smartphone size={19} />, label: "Garçons" },
             { id: "loja", icon: <Settings2 size={19} />, label: "Minha loja" },
           ].map((item) => (
             <a
@@ -1231,7 +1294,7 @@ function Manager({
             <LogOut size={17} /> Sair do gestor
           </button>
           <span className="sidebar-version">
-            PRONTO GESTOR <b>v0.1.0</b>
+            PRONTO GESTOR <b>v{desktop?.version || "0.2.0"}</b>
           </span>
         </div>
       </aside>
@@ -1244,6 +1307,7 @@ function Manager({
                 pedidos: "Pedidos",
                 cardapio: "Cardápio",
                 impressao: "Impressão",
+                garcom: "Garçons",
                 loja: "Configurações",
               }[section] || "Pedidos"}
             </strong>
@@ -1282,6 +1346,8 @@ function Manager({
             <CatalogManager notify={notify} />
           ) : section === "impressao" ? (
             <Printing notify={notify} desktop={desktop} />
+          ) : section === "garcom" ? (
+            <StaffSettings desktop={desktop} notify={notify} />
           ) : section === "loja" ? (
             <StoreSettings
               store={store}
@@ -1304,7 +1370,8 @@ function Manager({
             <span className="tiny-dot" /> Dados salvos no servidor
           </span>
           <span>
-            {desktop ? "Aplicativo Windows" : "Gestor web"} • Pronto 0.1
+            {desktop ? "Aplicativo Windows" : "Gestor web"} • Pronto{" "}
+            {desktop?.version || "0.2.0"}
           </span>
         </footer>
       </div>
@@ -1390,7 +1457,8 @@ function Orders({
     [selected, setSelected] = useState<Order | null>(null),
     [busy, setBusy] = useState(false),
     [lastSync, setLastSync] = useState(""),
-    [sound, setSound] = useState(false);
+    [sound, setSound] = useState(false),
+    [entry, setEntry] = useState(false);
   const seen = useRef<Set<string> | null>(null);
   const soundRef = useRef(sound);
   soundRef.current = sound;
@@ -1508,7 +1576,7 @@ function Orders({
   const nextAction: Partial<
     Record<OrderStatus, { status: OrderStatus; label: string }>
   > = {
-    new: { status: "preparing", label: "Iniciar preparo" },
+    new: { status: "preparing", label: "Aceitar e iniciar preparo" },
     preparing: { status: "ready", label: "Marcar como pronto" },
     ready: { status: "completed", label: "Finalizar pedido" },
   };
@@ -1531,14 +1599,7 @@ function Orders({
             <strong>{store.open ? "Loja aberta" : "Loja pausada"}</strong>
             <ChevronDown size={15} />
           </button>
-          <button
-            className="button primary"
-            onClick={() =>
-              window.prontoDesktop
-                ? window.prontoDesktop.openMenu()
-                : navigate("/")
-            }
-          >
+          <button className="button primary" onClick={() => setEntry(true)}>
             <Plus size={17} /> Novo pedido
           </button>
         </div>
@@ -1550,7 +1611,7 @@ function Orders({
             value: todayOrders.length,
             icon: <ShoppingBag size={20} />,
             tone: "orange",
-            detail: "Recebidos pelo cardápio",
+            detail: "Cardápio, salão e balcão",
           },
           {
             label: "Em andamento",
@@ -1687,10 +1748,16 @@ function Orders({
                   </div>
                 ) : list.length ? (
                   list.map((order) => (
-                    <button
+                    <article
                       className={`order-card ${order.status === "new" ? "is-new" : ""}`}
                       key={order.id}
                       onClick={() => setSelected(order)}
+                      tabIndex={0}
+                      aria-label={`Resumo do pedido ${order.number}`}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && e.target === e.currentTarget)
+                          setSelected(order);
+                      }}
                     >
                       <div className="order-card-top">
                         <strong>
@@ -1704,7 +1771,12 @@ function Orders({
                       <h3>{order.customerName}</h3>
                       <div className="order-meta">
                         <span>
-                          <Smartphone size={12} /> Cardápio digital
+                          <Smartphone size={12} />{" "}
+                          {order.source === "waiter"
+                            ? "Garçom"
+                            : order.source === "manager"
+                              ? "Gestor"
+                              : "Cardápio digital"}
                         </span>
                         <span>
                           {order.fulfillment === "delivery" ? (
@@ -1714,7 +1786,9 @@ function Orders({
                           )}{" "}
                           {order.fulfillment === "delivery"
                             ? "Entrega"
-                            : "Retirada"}
+                            : order.fulfillment === "dinein"
+                              ? "Salão"
+                              : "Retirada"}
                         </span>
                       </div>
                       <div className="order-card-items">
@@ -1727,6 +1801,12 @@ function Orders({
                           <small>+{order.items.length - 3} itens</small>
                         )}
                       </div>
+                      {order.tableName && (
+                        <div className="order-table-badge">
+                          Mesa {order.tableName}
+                          {order.actorName ? ` · ${order.actorName}` : ""}
+                        </div>
+                      )}
                       {order.notes && (
                         <div className="order-note">
                           <span>OBS.</span>
@@ -1736,7 +1816,11 @@ function Orders({
                       <div className="order-card-bottom">
                         <strong>{money(order.total)}</strong>
                         <span>
-                          {order.payment === "cash" ? "Dinheiro" : "Cartão"}
+                          {order.payment === "cash"
+                            ? "Dinheiro"
+                            : order.payment === "pending"
+                              ? "A definir"
+                              : "Cartão"}
                         </span>
                       </div>
                       <div className="order-print-status">
@@ -1747,21 +1831,32 @@ function Orders({
                           <span className="danger-text">
                             Conferir impressão
                           </span>
-                        ) : order.printJobs?.every(
+                        ) : order.printJobs?.length &&
+                          order.printJobs.every(
                             (j) => j.state === "spooled",
                           ) ? (
                           "Comandas enviadas"
+                        ) : order.status === "new" ? (
+                          "Aguardando aceite para imprimir"
                         ) : (
                           "Comanda na fila"
                         )}
                       </div>
                       {nextAction[status] && (
-                        <div className="card-action">
+                        <button
+                          type="button"
+                          className="card-action"
+                          disabled={busy}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            move(order, nextAction[status]!.status);
+                          }}
+                        >
                           {nextAction[status]!.label}
                           <ArrowRight size={15} />
-                        </div>
+                        </button>
                       )}
-                    </button>
+                    </article>
                   ))
                 ) : (
                   <div className="column-empty">
@@ -1803,6 +1898,22 @@ function Orders({
           );
         })}
       </div>
+      {entry && (
+        <Modal
+          title="Lançar pedido no gestor"
+          wide
+          onClose={() => setEntry(false)}
+        >
+          <OrderEntry
+            mode="manager"
+            onCreated={(order) => {
+              setEntry(false);
+              notify(`Pedido #${order.number} aceito e enviado à cozinha`);
+              refresh();
+            }}
+          />
+        </Modal>
+      )}
       {filter === "all" && visible.some((o) => o.status === "cancelled") && (
         <div className="cancelled-list">
           <h3>Cancelados</h3>
@@ -1849,26 +1960,39 @@ function Orders({
                 <span>
                   {selected.fulfillment === "delivery"
                     ? "Endereço de entrega"
-                    : "Retirada no local"}
+                    : selected.fulfillment === "dinein"
+                      ? "Consumo no local"
+                      : "Retirada no local"}
                 </span>
                 <strong>
                   {selected.fulfillment === "delivery"
                     ? selected.address
-                    : "O cliente retira na loja."}
+                    : selected.fulfillment === "dinein"
+                      ? `Mesa ${selected.tableName}${selected.actorName ? ` • ${selected.actorName}` : ""}`
+                      : "O cliente retira na loja."}
                 </strong>
               </div>
               <div>
                 <span>
-                  Pagamento na{" "}
-                  {selected.fulfillment === "delivery" ? "entrega" : "retirada"}
+                  Pagamento{" "}
+                  {selected.fulfillment === "delivery"
+                    ? "na entrega"
+                    : selected.fulfillment === "dinein"
+                      ? "no local"
+                      : "na retirada"}
                 </span>
                 <strong>
                   {selected.payment === "cash"
                     ? "Dinheiro"
-                    : "Cartão — levar maquininha"}
+                    : selected.payment === "pending"
+                      ? "A definir / no balcão"
+                      : "Cartão — levar maquininha"}
                 </strong>
                 {selected.changeFor && (
-                  <small>Troco para {money(selected.changeFor)}</small>
+                  <small>
+                    Troco para {money(selected.changeFor)} • Devolver{" "}
+                    {money(selected.changeFor - selected.total)}
+                  </small>
                 )}
               </div>
             </div>
@@ -1965,14 +2089,20 @@ function Orders({
 
 function CatalogManager({ notify }: { notify: (s: string) => void }) {
   const [products, setProducts] = useState<Product[]>([]),
+    [categories, setCategories] = useState<Category[]>([]),
+    [categoryFilter, setCategoryFilter] = useState(""),
     [error, setError] = useState(""),
     [editing, setEditing] = useState<Product | null>(null),
     [search, setSearch] = useState("");
   const load = useCallback(
     () =>
-      api<{ products: Product[] }>("/admin/catalog")
+      api<{ products: Product[]; categories: Category[] }>("/admin/catalog")
         .then((r) => {
           setProducts(r.products);
+          setCategories(r.categories);
+          setCategoryFilter((current) =>
+            r.categories.some((c) => c.name === current) ? current : "",
+          );
           setError("");
         })
         .catch((e) => setError(errorText(e))),
@@ -2008,7 +2138,7 @@ function CatalogManager({ notify }: { notify: (s: string) => void }) {
               id: "",
               name: "",
               description: "",
-              category: "Burgers",
+              category: categories[0]?.name || "",
               price: 0,
               available: true,
               station: "Cozinha",
@@ -2021,6 +2151,35 @@ function CatalogManager({ notify }: { notify: (s: string) => void }) {
         </button>
       </div>
       {error && <Banner message={error} />}
+      <CategoryManager
+        categories={categories}
+        onChanged={load}
+        notify={notify}
+        onAddProduct={(category) =>
+          setEditing({
+            id: "",
+            name: "",
+            description: "",
+            category,
+            price: 0,
+            available: true,
+            station: /bebida/i.test(category) ? "Bar" : "Cozinha",
+            art: /bebida/i.test(category) ? "soda" : "burger",
+            featured: false,
+          })
+        }
+      />
+      <div className="entry-categories">
+        {["", ...categories.map((c) => c.name)].map((c) => (
+          <button
+            key={c}
+            className={categoryFilter === c ? "active" : ""}
+            onClick={() => setCategoryFilter(c)}
+          >
+            {c || "Todas as categorias"}
+          </button>
+        ))}
+      </div>
       <div className="section-card">
         <div className="section-card-header">
           <h2>
@@ -2046,7 +2205,11 @@ function CatalogManager({ notify }: { notify: (s: string) => void }) {
             <span />
           </div>
           {products
-            .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+            .filter(
+              (p) =>
+                (!categoryFilter || p.category === categoryFilter) &&
+                p.name.toLowerCase().includes(search.toLowerCase()),
+            )
             .map((p) => (
               <div className="catalog-table-row" key={p.id}>
                 <div>
@@ -2085,6 +2248,7 @@ function CatalogManager({ notify }: { notify: (s: string) => void }) {
       {editing && (
         <ProductForm
           product={editing}
+          categories={categories}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
@@ -2098,10 +2262,12 @@ function CatalogManager({ notify }: { notify: (s: string) => void }) {
 }
 function ProductForm({
   product,
+  categories,
   onClose,
   onSaved,
 }: {
   product: Product;
+  categories: Category[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -2166,12 +2332,18 @@ function ProductForm({
           </label>
           <label className="field">
             Categoria
-            <input
+            <select
               required
               value={draft.category}
-              maxLength={60}
               onChange={(e) => setDraft({ ...draft, category: e.target.value })}
-            />
+            >
+              <option value="">Selecione a categoria</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.name}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
         <label className="field">
@@ -2336,7 +2508,7 @@ function Printing({
           </h2>
           <p>
             {desktop
-              ? "Novos pedidos entram na fila e são enviados sem abrir o diálogo de impressão."
+              ? "Cardápio: imprime após o aceite. Garçom e gestor: entram aceitos e na fila automaticamente."
               : "O navegador permite visualizar comandas. A impressão silenciosa é feita pelo gestor instalado."}
           </p>
         </div>
@@ -2478,6 +2650,10 @@ function Printing({
                   Testar
                 </button>
               </div>
+              <ReceiptDesigner
+                target={t}
+                onChange={(options) => edit(t.id, { options })}
+              />
             </div>
           ))}
         </div>
@@ -2521,7 +2697,8 @@ function Printing({
             icon={<Printer size={27} />}
             heading="Nenhuma comanda por aqui"
           >
-            Os trabalhos aparecem quando um pedido chega pelo cardápio.
+            As comandas aparecem após aceitar o cardápio ou lançar pelo garçom e
+            gestor.
           </Empty>
         ) : (
           <div className="print-jobs">

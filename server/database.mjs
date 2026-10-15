@@ -49,6 +49,30 @@ export function openDatabase(directory) {
     CREATE INDEX IF NOT EXISTS idx_print_state ON print_jobs(state, created_at);
     CREATE INDEX IF NOT EXISTS idx_items_order ON order_items(order_id);
   `);
+  const addColumn = (table, name, definition) => {
+    if (
+      !db
+        .prepare(`PRAGMA table_info(${table})`)
+        .all()
+        .some((c) => c.name === name)
+    )
+      db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${definition}`);
+  };
+  for (const [name, definition] of [
+    ["source", "TEXT NOT NULL DEFAULT 'menu'"],
+    ["table_name", "TEXT NOT NULL DEFAULT ''"],
+    ["pickup_code", "TEXT NOT NULL DEFAULT ''"],
+    ["actor_name", "TEXT NOT NULL DEFAULT ''"],
+    ["accepted_at", "TEXT"],
+  ])
+    addColumn("orders", name, definition);
+  addColumn("order_items", "category", "TEXT NOT NULL DEFAULT ''");
+  addColumn("print_targets", "options", "TEXT NOT NULL DEFAULT '{}'");
+  addColumn("sessions", "role", "TEXT NOT NULL DEFAULT 'admin'");
+  addColumn("sessions", "actor_name", "TEXT NOT NULL DEFAULT ''");
+  db.exec(
+    "CREATE TABLE IF NOT EXISTS categories(id TEXT PRIMARY KEY,name TEXT UNIQUE NOT NULL,sort INTEGER NOT NULL DEFAULT 0)",
+  );
   const seeded = db
     .prepare("SELECT value FROM settings WHERE key='store'")
     .get();
@@ -168,6 +192,15 @@ export function openDatabase(directory) {
   db.prepare(
     "INSERT OR IGNORE INTO print_targets(id,label,station) VALUES ('geral','Comanda geral','*')",
   ).run();
+  const existingCategories = db
+    .prepare(
+      "SELECT category,MIN(sort) AS position FROM products GROUP BY category ORDER BY position,category",
+    )
+    .all();
+  for (const [position, c] of existingCategories.entries())
+    db.prepare(
+      "INSERT OR IGNORE INTO categories(id,name,sort) VALUES (?,?,?)",
+    ).run(randomUUID(), c.category, position);
   return db;
 }
 
@@ -209,6 +242,11 @@ export function readOrder(db, id, { privateData = true } = {}) {
     deliveryFee: row.delivery_fee,
     total: row.total,
     status: row.status,
+    source: row.source,
+    tableName: row.table_name,
+    pickupCode: row.pickup_code,
+    actorName: row.actor_name,
+    acceptedAt: row.accepted_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     items: items.map((i) => ({
@@ -219,6 +257,7 @@ export function readOrder(db, id, { privateData = true } = {}) {
       quantity: i.quantity,
       notes: i.notes,
       station: i.station,
+      category: i.category,
     })),
   };
   if (privateData)
@@ -240,6 +279,12 @@ export function enqueuePrintJobs(db, orderId, now) {
     .map((r) => r.station);
   for (const target of targets) {
     if (target.station !== "*" && !stations.includes(target.station)) continue;
+    if (
+      db
+        .prepare("SELECT 1 FROM print_jobs WHERE order_id=? AND target_id=?")
+        .get(orderId, target.id)
+    )
+      continue;
     db.prepare(
       "INSERT INTO print_jobs(id,order_id,target_id,state,created_at,updated_at) VALUES (?,?,?,?,?,?)",
     ).run(randomUUID(), orderId, target.id, "pending", now, now);

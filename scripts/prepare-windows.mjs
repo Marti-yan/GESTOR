@@ -62,6 +62,7 @@ await build({
 });
 for (const name of [
   "preload.cjs",
+  "print-raw.ps1",
   "icon.png",
   "icon.ico",
   "THIRD-PARTY-NOTICES.txt",

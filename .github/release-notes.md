@@ -1,23 +1,16 @@
-MVP para testar **cardápio digital → recebimento no gestor → impressão térmica**. A versão 0.1.2 inclui o gerador de comanda e o agente no próprio arquivo do processo principal. O instalador completo e o reparador substituem os arquivos críticos diretamente e verificam seu SHA-256 no destino.
+Pronto Gestor 0.2.0: pedidos por cardápio, garçom e gestor, com impressão térmica configurável.
 
-Se o programa já estiver instalado e continuar com erro, feche-o e execute `Reparar-Pronto-0.1.2.exe`. O reparador preserva os pedidos e configurações em APPDATA. Ao abrir o aplicativo, confira **Pronto Gestor — 0.1.2** na barra de título.
+- Cardápio imprime após aceitar; garçom/gestor entram aceitos e na fila.
+- Garçom com PIN, mesa, senha, quantidades, observações, troco e próprios pedidos.
+- Categorias e itens com preferências independentes de lista/cards no lançamento interno.
+- Categorias cadastráveis, renomeáveis e ordenáveis; cardápio público em listas agrupadas.
+- Envio ESC/POS RAW à Elgin i8, conteúdo completo e um corte no final; alternativa HTML.
+- Modelos Expedição, Cozinha e Compacta por saída, com prévia e destaques configuráveis.
+- Botões do quadro avançam sem abrir o resumo.
+- Atualizador preserva dados e substitui aplicativo, API e interface com verificação de hashes.
 
-### Como testar em outro computador
+Para atualizar uma instalação existente, feche o aplicativo pela bandeja e execute `Reparar-Pronto-0.2.0.exe`. Para instalar do zero, use o instalador completo. Ao abrir, confira a versão 0.2.0 na barra de título.
 
-1. Em **Assets**, baixe `Pronto-Gestor-0.1.2-Windows-x64.exe` e instale em um computador com Windows de 64 bits. O servidor local e o Node.js já estão incluídos.
-2. Abra o Pronto Gestor e crie sua senha, com pelo menos 12 caracteres.
-3. Edite os produtos de exemplo em **Cardápio** e os dados em **Minha loja**.
-4. Para testar sem impressora, mantenha a impressão automática desligada. Abra o cardápio pelo botão do celular no topo do gestor; use o QR Code no celular, conectado ao mesmo Wi-Fi, ou abra o endereço no próprio computador.
-5. Faça um pedido e confira sua chegada em **Pedidos → Novos**. Você também pode visualizar a comanda e testar os estados do pedido.
-6. Para imprimir, instale o driver da **Elgin i8 USB**, teste pelo Windows e depois selecione a impressora em **Impressão → Comanda geral**, com **80 mm**. Salve, clique em **Testar** e só então ative a impressão automática.
+O teste inicial continua local, sem VPS. Celular e gestor precisam estar na mesma rede. No celular por HTTP, use o navegador; instalação como PWA exige HTTPS. Pagamentos são registrados para recebimento presencial, sem confirmação online.
 
-Consulte o arquivo `COMECAR-AQUI.md` para o passo a passo. Recomendação para o piloto: Windows 11 de 64 bits, 8 GB de RAM e SSD com 2 GB livres, além do espaço para os dados.
-
-### Limites desta versão
-
-- O cardápio funciona na rede local. O computador precisa ficar ligado com o aplicativo ativo. Não é necessário acessar o computador onde o programa foi desenvolvido nem contratar uma VPS para esse teste.
-- Cada instalação usa seu próprio banco local. Os pedidos e configurações de um computador não aparecem automaticamente no outro.
-- Os pagamentos são feitos na entrega ou retirada; não há cobrança online.
-- O aplicativo ainda não tem certificado de assinatura comercial. A instalação em Windows real e a impressão física na Elgin precisam ser validadas pelo usuário; os testes automatizados não substituem essa validação.
-
-O arquivo `SHA256SUMS.txt` permite conferir a integridade do instalador. O ZIP de código-fonte contém o projeto e a interface compilada, sem bancos de clientes ou credenciais.
+Consulte `COMECAR-AQUI.md` e `IMPRESSAO.md`. A Elgin física e o envio nativo Windows precisam de validação no equipamento. O aplicativo não possui certificado comercial de assinatura.

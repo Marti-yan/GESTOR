@@ -1,9 +1,19 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
+import { EventEmitter } from "node:events";
+import { PassThrough } from "node:stream";
 const require = createRequire(import.meta.url);
 const { PrintAgent } = require("../desktop/print-agent.cjs");
-const { renderReceipt, testOrder } = require("../shared/receipt.cjs");
+const {
+  renderReceipt,
+  renderEscPos,
+  normalizeReceiptOptions,
+  wrapText,
+  testOrder,
+} = require("../shared/receipt.cjs");
+const { printRaw } = require("../desktop/raw-print.cjs");
+const iconv = require("iconv-lite");
 
 test("comanda Elgin 80 mm escapa texto e separa setores sem vazar endereço para cozinha", () => {
   const order = testOrder();
@@ -22,12 +32,14 @@ test("comanda Elgin 80 mm escapa texto e separa setores sem vazar endereço para
     { name: "Minha loja" },
     { width: 80, station: "Cozinha", label: "Cozinha" },
   );
-  assert.match(kitchen, /@page\{size:80mm auto/);
+  assert.match(kitchen, /body\{width:80mm/);
   assert.ok(!kitchen.includes("<script>"));
   assert.ok(kitchen.includes("&lt;script&gt;"));
   assert.ok(!kitchen.includes("Endereço privado"));
   assert.ok(!kitchen.includes("Refrigerante"));
-  assert.ok(kitchen.includes("Sem cebola"));
+  assert.ok(kitchen.includes("SEM CEBOLA"));
+  assert.ok(!kitchen.includes("DEVOLVER:"));
+  assert.ok(!kitchen.includes("R$"));
   const general = renderReceipt(
     order,
     { name: "Minha loja" },
@@ -35,6 +47,144 @@ test("comanda Elgin 80 mm escapa texto e separa setores sem vazar endereço para
   );
   assert.ok(general.includes("Endereço privado"));
   assert.ok(general.includes("Refrigerante"));
+});
+
+test("ESC/POS inclui todos os itens, troco e fim antes de um único corte", () => {
+  const data = renderEscPos(
+    testOrder(),
+    { name: "Lanchonete São João" },
+    { width: 80, station: "*", options: { bottomFeed: 0 } },
+  );
+  assert.deepEqual([...data.subarray(0, 2)], [27, 64]);
+  assert.deepEqual([...data.subarray(-4)], [29, 86, 66, 0]);
+  const cutPositions = [];
+  for (let n = 0; n < data.length - 1; n++)
+    if (data[n] === 29 && data[n + 1] === 86) cutPositions.push(n);
+  assert.deepEqual(cutPositions, [data.length - 4]);
+  const text = iconv.decode(data, "cp860");
+  for (const content of [
+    "Lanchonete São João",
+    "MESA 12",
+    "SENHA A123",
+    "3x Brasa Clássico",
+    "SEM CEBOLA",
+    "2x Refrigerante",
+    "Água Mineral",
+    "TROCO PARA:",
+    "DEVOLVER:",
+    "4,40",
+    "FIM DA COMANDA #123",
+  ])
+    assert.ok(text.includes(content), content);
+  assert.ok(text.indexOf("BEBIDAS") > text.indexOf("Brasa"));
+  assert.ok(!data.includes(Buffer.from([27, 100]))); // Não avança papel no início.
+});
+
+test("comanda longa de 58 mm mantém o último item e notas sem injetar controles", () => {
+  const order = testOrder();
+  order.customerName = "Nome\x1d\x56\x41\x00\x0c";
+  order.items = Array.from({ length: 40 }, (_, i) => ({
+    name: `Item ${i + 1} de nome longo com vários detalhes`,
+    quantity: 2,
+    price: 100,
+    station: "Cozinha",
+    notes: "Observação longa ".repeat(14),
+    category: "Lanches",
+  }));
+  const data = renderEscPos(
+    order,
+    { name: "Loja" },
+    {
+      width: 58,
+      station: "*",
+      options: { codepage: "ascii", leftPadding: 2, cut: "none" },
+    },
+  );
+  const text = data.toString("ascii");
+  assert.ok(text.includes("Item 40"));
+  assert.ok(text.includes("FIM DA COMANDA #123"));
+  assert.ok(!data.includes(Buffer.from([29, 86])));
+  assert.ok(!data.includes(12));
+  const stripped = text
+    .replace(/\x1b[@]/g, "")
+    .replace(/\x1b[taEM3dJ][\s\S]/g, "")
+    .replace(/\x1d[!B][\s\S]/g, "");
+  assert.ok(stripped.split("\n").every((line) => line.length <= 32));
+  assert.ok(data.length > 10000);
+  assert.deepEqual(
+    wrapText("X".repeat(70), 28).map((s) => s.length),
+    [28, 28, 14],
+  );
+  const o = normalizeReceiptOptions(
+    {
+      columns: 500,
+      topFeed: -20,
+      bottomFeed: 999,
+      cut: "invalid",
+      footer: "Mensagem\x1b\x1d",
+    },
+    58,
+  );
+  assert.equal(o.columns, 32);
+  assert.equal(o.topFeed, 0);
+  assert.equal(o.bottomFeed, 8);
+  assert.equal(o.cut, "partial");
+  assert.equal(o.footer, "Mensagem");
+});
+
+function mockSpool(result, code = 0) {
+  let input = "",
+    invocation;
+  const spawnProcess = (command, args, options) => {
+    invocation = { command, args, options };
+    const child = new EventEmitter();
+    child.stdin = new PassThrough();
+    child.stdout = new PassThrough();
+    child.stderr = new PassThrough();
+    child.kill = () => {};
+    child.stdin.on("data", (chunk) => (input += chunk));
+    child.stdin.on("finish", () =>
+      queueMicrotask(() => {
+        child.stdout.write(JSON.stringify(result));
+        child.emit("close", code);
+      }),
+    );
+    return child;
+  };
+  return {
+    spawnProcess,
+    input: () => JSON.parse(input),
+    invocation: () => invocation,
+  };
+}
+test("ponte Windows envia o buffer completo pelo stdin e respeita confirmação do spooler", async () => {
+  const mock = mockSpool({ ok: true, jobId: 123, bytes: 90000 });
+  const bytes = Buffer.alloc(90000, 0x7a),
+    name = 'ELGIN " i8 $(literal)';
+  const result = await printRaw(name, bytes, {
+    spawnProcess: mock.spawnProcess,
+  });
+  assert.equal(result.jobId, 123);
+  assert.equal(mock.input().printer, name);
+  assert.deepEqual(Buffer.from(mock.input().data, "base64"), bytes);
+  assert.equal(mock.invocation().command, "powershell.exe");
+  assert.ok(!mock.invocation().args.some((s) => s.includes(name)));
+});
+test("ponte distingue falha antes do envio de resultado incerto", async () => {
+  for (const uncertain of [false, true]) {
+    const mock = mockSpool(
+      { ok: false, error: "USB desconectado", uncertain },
+      1,
+    );
+    await assert.rejects(
+      printRaw("ELGIN i8", Buffer.from("comanda"), {
+        spawnProcess: mock.spawnProcess,
+      }),
+      (error) =>
+        error.message.includes("USB desconectado") &&
+        error.uncertain === uncertain,
+    );
+  }
 });
 test("impressão bem-sucedida usa um efeito físico e grava o aceite antes de confirmar ao servidor", async () => {
   let journal = {},

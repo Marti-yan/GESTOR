@@ -26,7 +26,13 @@ const { networkInterfaces } = require("node:os");
 const net = require("node:net");
 const { PrintAgent } = require("./print-agent.cjs");
 // O build inclui a comanda e o agente no mesmo arquivo do processo principal.
-const { renderReceipt, testOrder } = require("../shared/receipt.cjs");
+const {
+  renderReceipt,
+  renderEscPos,
+  normalizeReceiptOptions,
+  testOrder,
+} = require("../shared/receipt.cjs");
+const { printRaw } = require("./raw-print.cjs");
 
 let mainWindow,
   tray,
@@ -117,7 +123,7 @@ async function requestApi(path, method = "GET", body, extraHeaders = {}) {
     !/^\/(?:auth|catalog|admin|orders|track|health)(?:\/|$)/.test(path) ||
     path.includes("..") ||
     path.includes("://") ||
-    !["GET", "POST", "PUT", "PATCH"].includes(method)
+    !["GET", "POST", "PUT", "PATCH", "DELETE"].includes(method)
   )
     throw new Error("Operação não permitida.");
   const headers = {
@@ -169,18 +175,30 @@ function createAgent() {
   printAgent = new PrintAgent({
     api: (path, method, body) => requestApi(path, method, { ...body, agentId }),
     print: (job) =>
-      printHtml(
-        renderReceipt(job.order, job.store, job.target, {
-          reprint: job.reprint,
-        }),
-        job.target,
-      ),
+      printReceipt(job.order, job.store, job.target, { reprint: job.reprint }),
     loadJournal: () => readJson(journalFile, {}),
     saveJournal: (journal) => atomicJson(journalFile, journal),
     onError: (message) => {
       printerError = message;
     },
   });
+}
+async function printReceipt(order, store, target, flags = {}) {
+  if (
+    !target ||
+    ![58, 80].includes(target.width) ||
+    typeof target.deviceName !== "string" ||
+    !target.deviceName
+  )
+    throw new Error("Selecione uma impressora instalada no Windows.");
+  const options = normalizeReceiptOptions(target?.options, target?.width);
+  if (options.transport === "driver")
+    return printHtml(renderReceipt(order, store, target, flags), target);
+  const printers = await mainWindow.webContents.getPrintersAsync();
+  if (!printers.some((p) => p.name === target.deviceName))
+    throw new Error("Selecione uma impressora instalada no Windows.");
+  await printRaw(target.deviceName, renderEscPos(order, store, target, flags));
+  printerError = null;
 }
 async function printHtml(html, target) {
   if (
@@ -197,12 +215,13 @@ async function printHtml(html, target) {
     );
   const window = new BrowserWindow({
     show: false,
-    width: 500,
+    width: Math.ceil((target.width * 96) / 25.4),
     height: 800,
     webPreferences: {
       sandbox: true,
       contextIsolation: true,
       nodeIntegration: false,
+      backgroundThrottling: false,
     },
   });
   window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
@@ -215,8 +234,12 @@ async function printHtml(html, target) {
       "data:text/html;charset=utf-8," + encodeURIComponent(secureHtml),
     );
     const height = await window.webContents.executeJavaScript(
-      "Math.ceil(document.body.getBoundingClientRect().height)",
+      "(async()=>{await document.fonts.ready;return Math.ceil(document.getElementById('receipt').scrollHeight)})()",
     );
+    if ((height * 25400) / 96 > 2000000)
+      throw new Error(
+        "Comanda muito longa para o driver. Selecione o modo ESC/POS.",
+      );
     await new Promise((resolve, reject) => {
       let finished = false;
       const timeout = setTimeout(() => {
@@ -236,13 +259,11 @@ async function printHtml(html, target) {
           printBackground: true,
           color: false,
           copies: 1,
+          scaleFactor: 100,
           margins: { marginType: "none" },
           pageSize: {
             width: target.width * 1000,
-            height: Math.max(
-              50000,
-              Math.min(2000000, Math.ceil((height * 25400) / 96) + 8000),
-            ),
+            height: Math.max(50000, Math.ceil((height * 25400) / 96) + 2000),
           },
         },
         (success, reason) => {
@@ -346,10 +367,7 @@ function registerIpc() {
     if (!sessionToken) throw new Error("Entre no gestor primeiro.");
     if (printAgent.busy) throw new Error("Aguarde a comanda atual terminar.");
     const { store } = await requestApi("/catalog");
-    await printHtml(
-      renderReceipt(testOrder(), store, target, { test: true }),
-      target,
-    );
+    await printReceipt(testOrder(), store, target, { test: true });
     return { ok: true };
   });
   ipcMain.handle("pronto:open-menu", async (event) => {
@@ -363,6 +381,8 @@ function registerIpc() {
     const { orders, store } = await requestApi("/admin/orders");
     const order = orders.find((o) => o.id === id);
     if (!order) throw new Error("Pedido não encontrado.");
+    const { targets } = await requestApi("/admin/printing");
+    const general = targets.find((t) => t.enabled && t.station === "*");
     const preview = new BrowserWindow({
       width: 420,
       height: 800,
@@ -379,8 +399,9 @@ function registerIpc() {
       "data:text/html;charset=utf-8," +
         encodeURIComponent(
           renderReceipt(order, store, {
-            width: 80,
-            label: "Visualização — comanda geral",
+            ...general,
+            width: general?.width || 80,
+            label: general?.label || "Visualização — comanda geral",
             station: "*",
           }),
         ),

@@ -1,3 +1,4 @@
+export type Category = { id: string; name: string; sort: number };
 export type Store = {
   name: string;
   subtitle: string;
@@ -54,9 +55,14 @@ export type Order = {
   number: number;
   customerName: string;
   phone?: string;
-  fulfillment: "pickup" | "delivery";
+  fulfillment: "pickup" | "delivery" | "dinein";
   address?: string;
-  payment: "cash" | "card";
+  payment: "cash" | "card" | "pending";
+  source: "menu" | "waiter" | "manager";
+  tableName: string;
+  pickupCode: string;
+  actorName: string;
+  acceptedAt: string | null;
   changeFor: number | null;
   notes: string;
   subtotal: number;
@@ -81,6 +87,30 @@ export type PrintTarget = {
   width: 58 | 80;
   station: string;
   enabled: boolean;
+  options?: ReceiptOptions;
+};
+export type ReceiptOptions = {
+  preset?: "expedition" | "kitchen" | "compact";
+  transport?: "escpos" | "driver";
+  fontSize?: number;
+  lineSpacing?: number;
+  columns?: number;
+  leftPadding?: number;
+  topFeed?: number;
+  bottomFeed?: number;
+  cut?: "partial" | "full" | "none";
+  codepage?: "cp860" | "cp850" | "ascii";
+  highlightQuantities?: boolean;
+  highlightNotes?: boolean;
+  highlightTable?: boolean;
+  highlightTicket?: boolean;
+  highlightChange?: boolean;
+  groupBeverages?: boolean;
+  noteStyle?: "box" | "inverted" | "bold";
+  showStore?: boolean;
+  showPhone?: boolean;
+  showPrices?: boolean;
+  footer?: string;
 };
 export type PrintJob = {
   id: string;

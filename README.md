@@ -1,26 +1,27 @@
-# Pronto Gestor — MVP 0.1.2
+# Pronto Gestor — MVP 0.2.0
 
-Cardápio digital → pedido persistido → gestor → comanda térmica automática.
+Cardápio digital → aceite no gestor → comanda térmica. Garçom e gestor também lançam pedidos diretamente.
 
-Este primeiro MVP foi preparado para **Elgin i8 USB, papel de 80 mm, usando o driver do Windows**. A impressão física depende da configuração do equipamento e deve ser validada pelo botão de teste. O aplicativo também aceita outras impressoras instaladas no Windows e papel de 58 mm.
+Preparado para **Elgin i8 USB de 80 mm**, com envio ESC/POS pela fila do Windows, sem diálogo e com um corte no final. Há alternativa HTML pelo driver e suporte a 58 mm. O teste físico da Elgin ainda precisa ser feito no restaurante. Veja **[IMPRESSAO.md](IMPRESSAO.md)** para modelos, destaques, guilhotina e diagnóstico.
 
 ## Começar pelo instalador Windows
 
-A versão **0.1.2** inclui o gerador de comanda e o agente no próprio arquivo do processo principal. Ela não depende mais de um import externo de `receipt.cjs` para abrir o desktop. A atualização também substitui os arquivos críticos diretamente e confere seus hashes no destino, interrompendo em caso de falha. A barra de título mostra a versão em execução.
+A versão **0.2.0** adiciona o Pronto Garçom, categorias cadastráveis e ordenáveis, lançamento interno modular e modelos de comanda configuráveis. Os botões do quadro avançam o pedido sem abrir o resumo. O gerador de comanda continua incluído no processo principal, corrigindo o erro antigo de `receipt.cjs`. A atualização substitui aplicativo, API e interface, conferindo os hashes no destino. A barra de título mostra a versão em execução.
 
-**Se você já instalou o gestor e ainda recebe o erro de módulo ausente:** feche o programa, incluindo a janela de erro e a bandeja, e execute o **[reparador 0.1.2](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.1.2/Reparar-Pronto-0.1.2.exe)**. Ele atualiza somente arquivos do programa, mantém `%APPDATA%\Pronto Gestor` e refaz os atalhos. Se o programa ainda for detectado em execução, reinicie o Windows antes de reparar. Ao abrir, confira **Pronto Gestor — 0.1.2** na barra de título.
+**Já tem o gestor instalado?** Feche o programa pela bandeja e execute o **[atualizador 0.2.0](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.2.0/Reparar-Pronto-0.2.0.exe)**. Ele mantém `%APPDATA%\Pronto Gestor` e refaz os atalhos. Se o programa ainda for detectado em execução, reinicie o Windows antes de atualizar. Ao abrir, confira **Pronto Gestor — 0.2.0** na barra de título.
 
-Para instalar do zero, baixe o **[pacote Windows em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.1.2.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. O script monta o `.exe`, confere o SHA-256 e abre a instalação. O pacote está em uma branch de distribuição separada porque o instalador excede o limite de arquivo comum do Git. Quando a publicação por **[Releases](https://github.com/Marti-yan/GESTOR/releases)** estiver concluída, o `.exe` também poderá ser baixado diretamente em **Assets**.
+Para instalar do zero, baixe o **[pacote Windows em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.2.0.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. O script monta o `.exe`, confere o SHA-256 e abre a instalação. O pacote está em uma branch de distribuição separada porque o instalador excede o limite de arquivo comum do Git.
 
 É possível instalar em outro computador com Windows de 64 bits; o computador de desenvolvimento não precisa estar disponível. Cada instalação mantém seu próprio banco local. Para testar cardápio e pedidos sem a impressora, mantenha a impressão automática desligada e visualize a comanda no gestor.
 
 1. Instale o driver Windows da Elgin i8. Confira que a impressora aparece em **Configurações → Impressoras e scanners** e imprima a página de teste do Windows.
-2. Execute `Pronto-Gestor-0.1.2-Windows-x64.exe` e abra o Pronto Gestor.
+2. Execute `Pronto-Gestor-0.2.0-Windows-x64.exe` e abra o Pronto Gestor.
 3. Crie uma senha de pelo menos 12 caracteres. Em **Minha loja**, informe o nome, taxa de entrega e prazo; em **Cardápio**, edite os produtos de exemplo.
-4. Em **Impressão**, selecione a Elgin i8 em **Comanda geral**, mantenha **80 mm**, salve e clique em **Testar**. Confira legibilidade, margem e avanço/corte do papel. O corte automático depende das preferências do driver.
+4. Em **Impressão**, selecione a Elgin i8 em **Comanda geral**, mantenha **80 mm** e modo **ESC/POS**. Personalize o modelo, salve e clique em **Testar**. Confira mesa, três lanches, bebidas, troco e o marcador FIM antes do corte.
 5. Ligue **Impressão automática**.
 6. Clique no ícone do celular no topo do gestor. Abra o QR Code no celular, na **mesma rede Wi-Fi/LAN** do computador.
-7. Faça um pedido no cardápio. Ele deve aparecer em **Pedidos → Novos** e entrar na fila de impressão.
+7. Faça um pedido no cardápio. Ele aparece em **Pedidos → Novos** sem imprimir. Clique em **Aceitar e iniciar preparo** para enviá-lo à fila.
+8. Em **Garçons**, habilite o acesso e defina um PIN. Abra o QR Code no celular, entre com nome e PIN e faça um lançamento. Esse pedido entra em preparo e na fila sem outro aceite.
 
 O instalador inclui Electron, Node.js e o servidor. **O restaurante não precisa instalar ferramentas de desenvolvimento, Node.js ou Docker.**
 
@@ -39,7 +40,10 @@ Recomendação inicial para operação: Windows 11 de 64 bits, 8 GB de RAM, SSD 
 
 ## Escopo entregue
 
-- Cardápio responsivo, busca, categorias, carrinho e observações por item.
+- Cardápio público responsivo em listas agrupadas por categoria, com busca, carrinho e observações por item.
+- Cadastro, renomeação e ordem das categorias; cadastro de produtos dentro de cada categoria.
+- Garçom com PIN, mesa, senha de retirada, observações, rascunho local e acompanhamento dos próprios lançamentos.
+- Lançamento interno no gestor e garçom: categoria → item; categorias e itens têm preferências independentes de lista/cards (quatro combinações), salvas por dispositivo e módulo.
 - Checkout para retirada ou entrega, endereço textual, telefone e pagamento na entrega/retirada.
 - Preços e taxa recalculados no servidor; divergência de total impede envio silencioso.
 - Identificador de idempotência para não duplicar um reenvio do mesmo pedido.
@@ -48,7 +52,8 @@ Recomendação inicial para operação: Windows 11 de 64 bits, 8 GB de RAM, SSD 
 - Transições de preparo, pronto, finalizado e cancelado, com controle de concorrência.
 - Edição de produtos, preço, disponibilidade, categoria e setor.
 - Configuração de loja, pausa de recebimento, taxa fixa e prazo estimado.
-- Impressão silenciosa pelo Electron, com seleção explícita da impressora do Windows.
+- Impressão silenciosa ESC/POS pela fila do Windows, com alternativa HTML pelo Electron.
+- Modelos Expedição, Cozinha e Compacta por saída, com prévia e opções de fonte, observações, bebidas, mesa, senha, quantidades, troco, avanço e guilhotina.
 - Comanda geral e saídas adicionais por setor, inclusive na mesma impressora física.
 - Fila persistente no servidor e diário local de resultados de impressão.
 - Falhas e resultados incertos visíveis, com reenvio confirmado pelo operador.
@@ -72,7 +77,7 @@ O catálogo inicial é **exemplo editável**. Não existem pedidos falsos pré-c
 
 Após o envio físico, o resultado é salvo localmente antes da confirmação ao servidor. Uma falha somente nessa confirmação é recuperada sem repetir o efeito físico. Um reinício durante o envio exige conferência. A aplicação não promete impressão física exatamente uma vez.
 
-Os trabalhos são criados no recebimento do pedido. Cancelar um pedido impede o envio das comandas ainda não iniciadas; não recolhe papel já impresso nem interrompe trabalho em andamento. Avise a cozinha nesses casos.
+Pedidos do cardápio criam trabalhos **no aceite**. Lançamentos do garçom e gestor já entram aceitos e criam os trabalhos ao salvar. Comandas antigas de pedidos ainda novos também aguardam aceite. Cancelar um pedido impede o envio das comandas ainda não iniciadas; não recolhe papel já impresso nem interrompe trabalho em andamento. Avise a cozinha nesses casos.
 
 Configure **um computador principal** para a impressão automática neste MVP. A seleção de impressora corresponde ao nome instalado no Windows desse computador.
 
@@ -96,6 +101,7 @@ npm run dev
 
 - Cardápio: `http://127.0.0.1:5173/#/`
 - Gestor: `http://127.0.0.1:5173/#/gestor`
+- Garçom: `http://127.0.0.1:5173/#/garcom`
 - API: `http://127.0.0.1:4317/api/health`
 - Na primeira execução local, o gestor permite criar a senha.
 
@@ -131,7 +137,7 @@ npm run build
 npm run verify:package # depois do build Windows; confere módulos e recursos empacotados
 ```
 
-Há testes para cálculo de preço, idempotência concorrente, autenticação, disponibilidade, estados, taxa/troco, reserva de impressão, expiração, cancelamento, proteção de origem, comanda setorizada e recuperação da fila local.
+Há testes para migração do banco 0.1, preço, idempotência concorrente, aceite, origem do pedido, papéis de acesso, PIN, categorias, modelos, taxa/troco, reserva de impressão, expiração, cancelamento, comanda longa, comandos ESC/POS, envio completo ao spooler e recuperação da fila local. O envio nativo Windows e o mecanismo físico da Elgin precisam de validação no equipamento; os testes da ponte usam um spooler simulado.
 
 ## Servidor externo e Hostinger
 
@@ -155,14 +161,14 @@ Para conectar o Windows, use **Minha loja → Conexão do aplicativo → Configu
 
 **Hostinger Business:** o suporte a Node.js não garante que um arquivo SQLite local sobreviva aos fluxos de deploy. Antes de usar em produção nesse plano, implemente e valide um adaptador MySQL/serviço gerenciado ou confirme um volume persistente suportado. Não publique assumindo que a pasta de build seja armazenamento durável. O próximo comando para essa adaptação está em `PROXIMOS-COMANDOS.md`.
 
-O PWA tem manifesto e cache dos arquivos estáticos, mas pedidos sempre dependem do servidor e não são enviados offline. Instalação e service worker em celulares geralmente precisam de HTTPS; o cardápio web funciona na LAN por HTTP.
+Cardápio e garçom têm manifestos e cache da interface, mas pedidos sempre dependem do servidor e não são enviados offline. O rascunho do garçom fica no aparelho. Instalação como PWA e service worker em celulares precisam de HTTPS; na LAN por HTTP, use o navegador. Não exponha o servidor local à internet para contornar esse requisito.
 
 ## Estrutura
 
 ```text
 src/                  Interface React/TypeScript
 server/               API Express e SQLite
-shared/receipt.cjs    Modelo HTML de comanda
+shared/receipt.cjs    Modelos HTML e ESC/POS da comanda
 desktop/              Electron, bridge e agente de impressão
 scripts/              Desenvolvimento, build Windows e pacote fonte
 tests/                Testes de API e impressão

@@ -32,7 +32,11 @@ async function fixture(t, options = {}) {
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
-    return { status: response.status, body: await response.json() };
+    return {
+      status: response.status,
+      body: await response.json(),
+      headers: response.headers,
+    };
   }
   const login = await request("/auth/login", {
     method: "POST",
@@ -109,7 +113,8 @@ test("pedido calcula valores no servidor e é visível no gestor protegido", asy
   assert.equal(result.body.order.items[0].price, 2490);
   const dashboard = await request("/admin/orders", { auth: true });
   assert.equal(dashboard.body.orders.length, 1);
-  assert.equal(dashboard.body.orders[0].printJobs.length, 1);
+  assert.equal(dashboard.body.orders[0].printJobs.length, 0);
+  assert.equal(dashboard.body.orders[0].status, "new");
   const tracking = await request("/track/" + result.body.trackingToken);
   assert.equal(tracking.status, 200);
   assert.equal(tracking.body.order.phone, undefined);
@@ -123,7 +128,19 @@ test("reenvio e concorrência com a mesma chave criam somente um pedido e uma co
   );
   assert.equal(new Set(results.map((r) => r.body.order.id)).size, 1);
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM orders").get().n, 1);
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM print_jobs").get().n, 0);
+  const id = results[0].body.order.id;
+  const accept = () =>
+    request(`/admin/orders/${id}/status`, {
+      method: "PATCH",
+      auth: true,
+      body: { expectedStatus: "new", status: "preparing" },
+    });
+  await Promise.all([accept(), accept()]);
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM print_jobs").get().n, 1);
+  assert.ok(
+    db.prepare("SELECT accepted_at FROM orders WHERE id=?").get(id).accepted_at,
+  );
   const changed = await create(
     request,
     orderBody({ customerName: "Outro nome" }),
@@ -263,6 +280,11 @@ test("fila setorizada é persistente e duas instâncias não reservam a mesma co
     }),
   );
   assert.equal(result.status, 201);
+  await request(`/admin/orders/${result.body.order.id}/status`, {
+    method: "PATCH",
+    auth: true,
+    body: { expectedStatus: "new", status: "preparing" },
+  });
   const claims = await Promise.all([
     request("/admin/printing/claim", {
       method: "POST",
@@ -321,7 +343,12 @@ test("cancelamento remove comandas ainda não iniciadas e logout revoga a sessã
   await request(`/admin/orders/${id}/status`, {
     method: "PATCH",
     auth: true,
-    body: { status: "cancelled", expectedStatus: "new" },
+    body: { status: "preparing", expectedStatus: "new" },
+  });
+  await request(`/admin/orders/${id}/status`, {
+    method: "PATCH",
+    auth: true,
+    body: { status: "cancelled", expectedStatus: "preparing" },
   });
   assert.equal(
     db.prepare("SELECT state FROM print_jobs WHERE order_id=?").get(id).state,
@@ -342,4 +369,352 @@ test("escritas de outra origem são rejeitadas", async (t) => {
     body: { open: false },
   });
   assert.equal(result.status, 403);
+});
+
+test("cardápio não pode forçar aceite; comandas antigas pendentes aguardam aceite", async (t) => {
+  const { request, db } = await fixture(t);
+  const r = await create(
+    request,
+    orderBody({
+      source: "waiter",
+      status: "preparing",
+      acceptedAt: new Date().toISOString(),
+    }),
+  );
+  const id = r.body.order.id;
+  assert.equal(r.body.order.source, "menu");
+  assert.equal(r.body.order.status, "new");
+  assert.equal(r.body.order.acceptedAt, null);
+  // Fila existente da versão anterior: não pode escapar antes do aceite.
+  db.prepare(
+    "UPDATE print_targets SET device_name='ELGIN i8' WHERE id='geral'",
+  ).run();
+  db.prepare(
+    "INSERT INTO print_jobs(id,order_id,target_id,state,created_at,updated_at) VALUES (?,?,'geral','pending',?,?)",
+  ).run(randomUUID(), id, new Date().toISOString(), new Date().toISOString());
+  const claim = () =>
+    request("/admin/printing/claim", {
+      method: "POST",
+      auth: true,
+      body: { agentId: "teste" },
+    });
+  assert.equal((await claim()).body.job, null);
+  await request(`/admin/orders/${id}/status`, {
+    method: "PATCH",
+    auth: true,
+    body: { status: "preparing", expectedStatus: "new" },
+  });
+  assert.equal((await claim()).body.job.order.id, id);
+  assert.equal(
+    db.prepare("SELECT COUNT(*) AS n FROM print_jobs WHERE order_id=?").get(id)
+      .n,
+    1,
+  );
+});
+
+test("garçom tem sessão própria, lança por mesa e não acessa administração", async (t) => {
+  const { request, db } = await fixture(t);
+  assert.equal(
+    (await request("/staff/orders", { method: "POST", body: orderBody() }))
+      .status,
+    401,
+  );
+  assert.equal(
+    (
+      await request("/admin/staff", {
+        method: "PUT",
+        auth: true,
+        body: { enabled: true, pin: "123" },
+      })
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await request("/admin/staff", {
+        method: "PUT",
+        auth: true,
+        body: { enabled: true, pin: "654321" },
+      })
+    ).status,
+    200,
+  );
+  const stored = JSON.parse(
+    db.prepare("SELECT value FROM settings WHERE key='staff'").get().value,
+  );
+  assert.ok(!stored.password.includes("654321"));
+  const login = await request("/staff/login", {
+    method: "POST",
+    body: { name: "Ana", pin: "654321" },
+  });
+  assert.equal(login.status, 200);
+  assert.match(login.headers.get("set-cookie"), /HttpOnly/);
+  const Cookie = login.headers.get("set-cookie").split(";")[0];
+  for (const path of [
+    "/admin/orders",
+    "/admin/catalog",
+    "/admin/printing",
+    "/admin/staff",
+  ])
+    assert.equal(
+      (await request(path, { headers: { Cookie } })).status,
+      401,
+      path,
+    );
+  const key = randomUUID(),
+    body = orderBody({
+      fulfillment: "dinein",
+      tableName: "Varanda 2",
+      payment: "pending",
+      customerName: "",
+      phone: "",
+    });
+  const send = () =>
+    request("/staff/orders", {
+      method: "POST",
+      headers: { Cookie, "Idempotency-Key": key },
+      body,
+    });
+  const first = await send(),
+    again = await send();
+  assert.equal(first.status, 201);
+  assert.equal(again.body.order.id, first.body.order.id);
+  assert.equal(first.body.order.status, "preparing");
+  assert.equal(first.body.order.source, "waiter");
+  assert.equal(first.body.order.actorName, "Ana");
+  assert.equal(first.body.order.tableName, "Varanda 2");
+  assert.ok(first.body.order.acceptedAt);
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM print_jobs").get().n, 1);
+  const own = await request("/staff/orders", { headers: { Cookie } });
+  assert.equal(own.body.orders.length, 1);
+  assert.equal(own.body.orders[0].phone, undefined);
+  assert.equal(
+    (
+      await request("/admin/orders", {
+        auth: true,
+        method: "POST",
+        headers: { "Idempotency-Key": key },
+        body,
+      })
+    ).status,
+    409,
+  );
+  await request("/admin/staff", {
+    method: "PUT",
+    auth: true,
+    body: { enabled: false },
+  });
+  assert.equal(
+    (await request("/staff/orders", { headers: { Cookie } })).status,
+    401,
+  );
+  assert.equal((await request("/admin/orders", { auth: true })).status, 200);
+});
+
+test("gestor aceita diretamente mesmo com cardápio pausado e valida os preços", async (t) => {
+  const { request, db } = await fixture(t);
+  await request("/admin/store", {
+    method: "PATCH",
+    auth: true,
+    body: { open: false, minimumOrder: 99999 },
+  });
+  const body = orderBody({
+    phone: "",
+    fulfillment: "pickup",
+    payment: "pending",
+  });
+  const r = await request("/admin/orders", {
+    auth: true,
+    method: "POST",
+    headers: { "Idempotency-Key": randomUUID() },
+    body,
+  });
+  assert.equal(r.status, 201);
+  assert.equal(r.body.order.source, "manager");
+  assert.equal(r.body.order.status, "preparing");
+  assert.equal(r.body.order.total, 4980);
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM print_jobs").get().n, 1);
+  const bad = await request("/admin/orders", {
+    auth: true,
+    method: "POST",
+    headers: { "Idempotency-Key": randomUUID() },
+    body: { ...body, expectedTotal: 1 },
+  });
+  assert.equal(bad.status, 409);
+});
+
+test("categorias podem ser ordenadas e renomeadas sem mudar o histórico", async (t) => {
+  const { request } = await fixture(t);
+  const created = await create(request),
+    oldName = created.body.order.items[0].category;
+  assert.equal(
+    (
+      await request("/admin/categories", {
+        method: "POST",
+        auth: true,
+        body: { name: "Sobremesas" },
+      })
+    ).status,
+    201,
+  );
+  assert.equal(
+    (
+      await request("/admin/categories", {
+        method: "POST",
+        auth: true,
+        body: { name: "sobremesas" },
+      })
+    ).status,
+    409,
+  );
+  let categories = (await request("/catalog")).body.categories;
+  const reversed = categories.map((c) => c.id).reverse();
+  assert.equal(
+    (
+      await request("/admin/categories/order", {
+        method: "PUT",
+        auth: true,
+        body: { ids: reversed },
+      })
+    ).status,
+    200,
+  );
+  assert.deepEqual(
+    (await request("/catalog")).body.categories.map((c) => c.id),
+    reversed,
+  );
+  assert.equal(
+    (
+      await request("/admin/categories/order", {
+        method: "PUT",
+        auth: true,
+        body: { ids: [reversed[0], reversed[0]] },
+      })
+    ).status,
+    409,
+  );
+  const burgers = categories.find((c) => c.name === oldName);
+  assert.equal(
+    (
+      await request(`/admin/categories/${burgers.id}`, {
+        method: "PATCH",
+        auth: true,
+        body: { name: "Lanches" },
+      })
+    ).status,
+    200,
+  );
+  assert.equal(
+    (await request("/catalog")).body.products.find(
+      (p) => p.id === "brasa-classico",
+    ).category,
+    "Lanches",
+  );
+  assert.equal(
+    (await request("/admin/orders", { auth: true })).body.orders[0].items[0]
+      .category,
+    oldName,
+  );
+  assert.equal(
+    (
+      await request(`/admin/categories/${burgers.id}`, {
+        method: "DELETE",
+        auth: true,
+      })
+    ).status,
+    409,
+  );
+  const dessert = categories.find((c) => c.name === "Sobremesas");
+  const product = {
+    name: "Pudim",
+    description: "Fatia",
+    category: "Sobremesas",
+    price: 900,
+    station: "Cozinha",
+    art: "burger",
+  };
+  assert.equal(
+    (
+      await request("/admin/products", {
+        method: "POST",
+        auth: true,
+        body: { ...product, category: "Não cadastrada" },
+      })
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await request("/admin/products", {
+        method: "POST",
+        auth: true,
+        body: product,
+      })
+    ).status,
+    201,
+  );
+  assert.equal(
+    (
+      await request(`/admin/categories/${dessert.id}`, {
+        method: "DELETE",
+        auth: true,
+      })
+    ).status,
+    409,
+  );
+});
+
+test("modelos por saída são persistidos e usados pela prévia e fila", async (t) => {
+  const { request } = await fixture(t);
+  const target = {
+    id: "geral",
+    label: "Expedição",
+    station: "*",
+    deviceName: "ELGIN i8",
+    width: 80,
+    enabled: true,
+    options: {
+      preset: "compact",
+      cut: "full",
+      topFeed: 0,
+      bottomFeed: 1,
+      highlightNotes: true,
+      footer: "CONFERIR TODOS OS ITENS",
+    },
+  };
+  assert.equal(
+    (
+      await request("/admin/printing/targets", {
+        method: "PUT",
+        auth: true,
+        body: { targets: [target] },
+      })
+    ).status,
+    200,
+  );
+  const saved = (await request("/admin/printing", { auth: true })).body
+    .targets[0];
+  assert.equal(saved.options.cut, "full");
+  assert.equal(saved.options.fontSize, 12);
+  const preview = await request("/admin/printing/preview", {
+    method: "POST",
+    auth: true,
+    body: { target: saved },
+  });
+  assert.equal(preview.status, 200);
+  assert.ok(preview.body.html.includes("CONFERIR TODOS OS ITENS"));
+  assert.ok(preview.body.html.includes("FIM DA COMANDA"));
+  const o = await request("/admin/orders", {
+    method: "POST",
+    auth: true,
+    headers: { "Idempotency-Key": randomUUID() },
+    body: orderBody(),
+  });
+  const claimed = await request("/admin/printing/claim", {
+    method: "POST",
+    auth: true,
+    body: { agentId: "pc" },
+  });
+  assert.equal(claimed.body.job.order.id, o.body.order.id);
+  assert.equal(claimed.body.job.target.options.footer, target.options.footer);
 });
