@@ -1,2 +1,6 @@
-b68d2cc4fafaaaf9af0f7791efef2467e4e064a49d352b603999f641d4756cc7  Pronto-Gestor-0.1.2-Windows-x64.exe
-23c5912c0904e74f4c94060bf0412a16340d5c1f41f8ee759dc9a0104c460b14  Reparar-Pronto-0.1.2.exe
+268125458f8ec92da114c2fbeecdf17c3a4fb9baa3439c8b7dcd91be163f3085  Pronto-Gestor-0.2.0-Windows-x64.exe
+2e99e91e03d42b74dd700e5fa24910cba97c33b04a99bdfb6ac648ce58f8cad6  Reparar-Pronto-0.2.0.exe
+5ea5bcbfa23fc443a0c887ee2ccc3d73a8a669a8609ab5ba5ea890ff0b89d7c7  instalador.parte1.bin
+b600ebfb77833e1f9e78f6cca054be8ddbd84e6ba15909b4f4aa4939c8c504af  instalador.parte2.bin
+268f8dfc45f352dec349845e590ca4c2fa343ae64d9d4c38dfdb514252480bfd  instalador.parte3.bin
+8c00e8cb44c7fc58a74d786a1462705db05d21e9449fdb6ad856e16ab9ac2786  Pronto-Gestor-Codigo-Fonte.zip

@@ -1,39 +1,55 @@
-# Testar o Pronto Gestor
+# Testar o Pronto Gestor 0.2.0 na rede local
 
-## Baixar em outro computador
+## Atualizar a instalação existente
 
-**Já instalou e o gestor continua com erro?** Feche o programa, incluindo a janela de erro e a bandeja, e execute o **[reparador 0.1.2](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.1.2/Reparar-Pronto-0.1.2.exe)**. Confira a pasta da instalação existente e conclua. Ele substitui os arquivos do programa, verifica os hashes e preserva seus dados em `%APPDATA%\Pronto Gestor`. Se detectar o programa ainda em execução, reinicie o Windows antes de reparar. A barra de título deve mostrar **0.1.2** ao abrir.
+Feche o gestor pela bandeja, baixe e execute o **[atualizador 0.2.0](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.2.0/Reparar-Pronto-0.2.0.exe)**. Se houver uma janela de erro, feche-a também. Confira a pasta da instalação e conclua. O programa substitui aplicativo, servidor e interface e verifica os hashes. Seus pedidos, senha e configurações em `%APPDATA%\Pronto Gestor` são preservados. Ao abrir, confira **Pronto Gestor — 0.2.0** na barra de título.
 
-Para uma instalação nova, baixe o **[pacote Windows 0.1.2 em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.1.2.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd** na pasta extraída. O script monta o instalador a partir das três partes, confere sua integridade e abre a instalação. Esse pacote disponibiliza o instalador já gerado enquanto a publicação por Releases não é concluída.
+Para instalar do zero, baixe o **[pacote Windows 0.2.0 em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.2.0.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. Ele une as três partes, confere o SHA-256 e abre o instalador. O Node.js e o servidor já estão incluídos. Use Windows de 64 bits; não é necessário acessar o computador original.
 
-Quando houver uma versão em **[Releases no GitHub](https://github.com/Marti-yan/GESTOR/releases)**, também será possível baixar `Pronto-Gestor-0.1.2-Windows-x64.exe` diretamente na seção **Assets**.
+Cada instalação mantém seus dados locais. Instalar em outro computador não sincroniza o banco do primeiro.
 
-A versão 0.1.2 inclui os módulos de comanda no processo principal e verifica a substituição dos arquivos na atualização. Para atualizar, instale na mesma pasta da versão anterior. O banco e as configurações em `%APPDATA%\Pronto Gestor` são preservados.
+## Configurar a Elgin i8 e testar o aceite
 
-O instalador inclui o servidor e o Node.js. Você não precisa acessar o computador original ou instalar ferramentas de desenvolvimento. Use um computador com Windows de 64 bits.
+1. Instale o driver da **Elgin i8 USB** e imprima a página de teste do Windows.
+2. Abra o gestor e crie sua senha, caso seja uma instalação nova.
+3. Em **Impressão**, selecione sua Elgin, papel **80 mm**, e expanda **Modelo, destaques e corte**.
+4. Escolha **ESC/POS — Elgin i8**, avanço inicial zero e corte parcial. Salve as saídas.
+5. Clique em **Testar**. Confira mesa 12, senha A123, três lanches, bebidas, observações, troco e **FIM DA COMANDA #123** antes do corte.
+6. Após conferir o papel, ligue **Impressão automática**.
+7. Abra o cardápio pelo ícone do celular no topo, usando outro celular no mesmo Wi-Fi. Faça um pedido: ele aparece em **Novos e ainda não imprime**.
+8. Clique em **Aceitar e iniciar preparo**. O pedido avança e entra na fila. O botão não deve abrir o resumo. Os botões Pronto e Finalizar também avançam diretamente, sem gerar outra comanda.
 
-Para testar **sem impressora**, instale, crie a senha e mantenha a impressão automática desligada. Abra o cardápio pelo botão do celular no topo do gestor, envie um pedido e confira em **Pedidos → Novos**. O celular precisa estar no mesmo Wi-Fi; você também pode abrir o link no navegador do próprio computador. É possível visualizar a comanda antes de ter a Elgin conectada.
+Para testar sem impressora, mantenha a impressão automática desligada e use a visualização da comanda. Detalhes de modelos, guilhotina, duas cozinhas e diagnóstico em **[IMPRESSAO.md](IMPRESSAO.md)**.
 
-Cada computador guarda seus próprios pedidos e configurações. A instalação em outro computador começa com dados novos e produtos de exemplo; não sincroniza com a instalação anterior.
+## Categorias e produtos
 
-## Primeiro pedido na Elgin i8
+Em **Cardápio**, crie ou renomeie as categorias e ajuste a ordem pelas setas. Use **Adicionar item** na categoria desejada e cadastre nome, preço e setor de impressão. O cardápio público mostra listas agrupadas por categoria nessa mesma ordem. Renomear categorias não altera a comanda de pedidos anteriores.
 
-1. Instale o driver Windows da **Elgin i8 USB** e imprima a página de teste do Windows.
-2. Execute o instalador **Pronto-Gestor-0.1.2-Windows-x64.exe** e abra o aplicativo.
-3. Crie uma senha com pelo menos 12 caracteres.
-4. Vá em **Minha loja** e edite os dados. Em **Cardápio**, adapte os produtos de exemplo.
-5. Vá em **Impressão**, selecione sua Elgin na saída **Comanda geral**, mantenha **80 mm** e clique em **Salvar saídas**.
-6. Clique em **Testar**. Confira fonte, margens e saída do papel.
-7. Ligue **Impressão automática**.
-8. Clique no ícone do **celular**, no topo. Abra o QR Code em um celular conectado ao mesmo Wi-Fi do computador.
-9. Faça o pedido. Ele aparecerá em **Pedidos → Novos** e será enviado para a impressora.
+## Garçom no celular
 
-Se o celular não abrir o cardápio, confira a rede privada e a permissão do servidor no firewall do Windows. O endereço não pode ser `127.0.0.1` no celular.
+1. No gestor, abra **Garçons**, habilite o acesso e defina um PIN de 6 a 12 números.
+2. Abra o QR Code pelo celular no mesmo Wi-Fi. Entre com o nome do garçom e o PIN.
+3. Escolha como visualizar as **categorias**, usando os botões de lista ou cards. Toque em uma categoria.
+4. Escolha como visualizar os **itens** dessa categoria, também em lista ou cards. Essa escolha é independente da anterior: há quatro combinações, salvas no aparelho.
+5. Adicione os itens, quantidades e observações. Informe mesa ou retirada, senha opcional, pagamento e troco quando houver.
+6. Toque em **Aceitar e enviar à cozinha**. O pedido já entra em preparo e na fila do gestor. Em **Meus pedidos**, acompanhe os lançamentos do nome usado no login.
 
-Mantenha o computador ligado. Fechar a janela deixa o aplicativo na bandeja; para encerrar o servidor, use a opção **Encerrar Pronto e parar servidor** na bandeja.
+O PIN permite lançar pedidos, sem acesso às configurações administrativas. Alterar ou desativar o acesso no gestor encerra as sessões da equipe. O rascunho é salvo no aparelho; pedidos não são enviados offline.
 
-O primeiro uso funciona na **rede local**, sem VPS. Para clientes fora da loja, a publicação externa é uma próxima etapa. Pagamentos deste MVP são feitos na entrega ou retirada.
+**PWA no teste local:** por HTTP na LAN, abra no navegador. Instalar como aplicativo e usar o service worker no celular exige HTTPS, que será configurado na etapa de publicação. Não é necessária VPS para testar as funções acima.
 
-O instalador foi gerado, mas não foi executado em um Windows real neste ambiente. A Elgin física ainda precisa ser validada pelo teste acima. O aplicativo não possui certificado de assinatura comercial.
+## Lançamento no próprio gestor
 
-Consulte **README.md** para requisitos, código, backup e implantação, e **PROXIMOS-COMANDOS.md** para evoluir o projeto.
+Em **Pedidos → Novo pedido**, escolha categoria e produto pelo mesmo módulo. As preferências de categorias e itens são independentes das do garçom e ficam salvas nesse computador. O lançamento já entra aceito e na fila.
+
+## Rede e funcionamento
+
+- O computador precisa ficar ligado e com o gestor ativo. Fechar a janela mantém o servidor na bandeja; use **Encerrar Pronto e parar servidor** para encerrá-lo.
+- Celular e computador precisam estar na mesma rede, sem isolamento de clientes. Se o Windows solicitar, permita a porta do servidor na rede privada.
+- Use o IP exibido no QR Code; `127.0.0.1` no celular aponta para o próprio celular.
+- O teste local não depende de internet nem VPS. A conexão Wi-Fi/LAN entre os aparelhos é necessária.
+- Antes de atualizar ou guardar um backup, encerre pela bandeja e copie a pasta de dados completa.
+
+O executável foi gerado e os fluxos foram verificados em Linux com Electron. O instalador e a ponte nativa de impressão precisam ser conferidos em Windows real, junto com a Elgin física. O programa ainda não possui certificado de assinatura comercial.
+
+Requisitos, código e backup em **README.md**; próximas etapas em **PROXIMOS-COMANDOS.md**.
