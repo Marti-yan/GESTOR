@@ -1,12 +1,14 @@
 # Pronto Gestor — download para Windows
 
-MVP 0.1.0: **cardápio digital → pedidos no gestor → impressão térmica**.
+MVP 0.1.1: **cardápio digital → pedidos no gestor → impressão térmica**.
+
+A versão **0.1.1 corrige a falha que impedia abrir o gestor** e o carregamento da tela inicial em diretórios ocultos. Para atualizar, encerre o Pronto pela bandeja e instale na mesma pasta da versão anterior; preserve `%APPDATA%\Pronto Gestor`, onde ficam seus dados.
 
 ## Instalar em outro computador
 
-1. **[Baixe o pacote ZIP completo](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.1.0.zip)** (aproximadamente 121 MB).
+1. **[Baixe o pacote ZIP completo](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.1.1.zip)** (aproximadamente 121 MB).
 2. Clique com o botão direito no ZIP e escolha **Extrair tudo**. Abra a pasta extraída.
-3. Dê dois cliques em **Instalar.cmd**. Ele junta as três partes, confere o SHA-256 e abre `Pronto-Gestor-0.1.0-Windows-x64.exe`.
+3. Dê dois cliques em **Instalar.cmd**. Ele junta as três partes, confere o SHA-256 e abre `Pronto-Gestor-0.1.1-Windows-x64.exe`.
 4. Conclua a instalação e abra **Pronto Gestor**. Crie uma senha com pelo menos 12 caracteres.
 
 O instalador inclui o servidor e o Node.js. Não é necessário Git, Node.js, Docker ou acesso ao computador original. Recomendação para o piloto: Windows 11 de 64 bits, 8 GB de RAM e pelo menos 2 GB livres em SSD, além do espaço para dados.

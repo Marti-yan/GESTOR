@@ -1,1 +1,1 @@
-d19bc9018faca64052f8414948c5941e29b506296140e0c9f38cd07fd6feb507  Pronto-Gestor-0.1.0-Windows-x64.exe
+ffe7a41d742ee32c12d4c1fcc36d43cb06d3278284ef067da28adeeb57aa586b  Pronto-Gestor-0.1.1-Windows-x64.exe
