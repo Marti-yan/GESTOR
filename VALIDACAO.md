@@ -1,11 +1,11 @@
-# Validação do MVP
+# Validação do MVP 0.1.1
 
 Data: 15/10/2026. Ambiente de desenvolvimento e build: Linux, Node.js 24.
 
 ## Verificações concluídas
 
 - TypeScript e compilação de produção da interface.
-- 11 testes automatizados de API e impressão, todos aprovados.
+- 12 testes automatizados de API e impressão, todos aprovados, incluindo abertura da página inicial a partir de diretório oculto.
 - Checkout real no Chromium: produto, observação, identificação do cliente e confirmação.
 - Acompanhamento pelo link exclusivo do pedido.
 - Configuração inicial da senha e acesso ao gestor pelo navegador.
@@ -21,6 +21,9 @@ Data: 15/10/2026. Ambiente de desenvolvimento e build: Linux, Node.js 24.
 - Diário de impressão: reinício durante o envio gera resultado incerto, sem reimpressão automática.
 - Reserva concorrente de trabalhos e separação de comandas por setor.
 - Instalador Windows NSIS gerado; integridade do arquivo verificada com 7-Zip e correspondência do código/interface empacotados conferida.
+- A falha `Cannot find module '../shared/receipt.cjs'` foi reproduzida no pacote 0.1.0 e corrigida com o carregamento a partir de `process.resourcesPath`.
+- A verificação de dependências do pacote final é executada automaticamente em `afterPack`, antes de gerar o instalador; o pacote antigo falhou nessa verificação e o novo passou.
+- O `app.asar`, o bundle da API, a interface e o módulo de comanda da distribuição Windows 0.1.1 foram executados com Electron Linux e Node Linux, em pasta de teste separada. Nesse modo empacotado: tela inicial, senha por IPC, pedido pelo endpoint público, pedido visível no gestor e janela de comanda passaram. Apenas os executáveis nativos foram substituídos pelos equivalentes Linux nesse teste; isso não equivale a executar o instalador no Windows.
 
 ## Limites da validação
 
@@ -29,6 +32,7 @@ Data: 15/10/2026. Ambiente de desenvolvimento e build: Linux, Node.js 24.
 - O recebimento a partir de um celular físico na rede da loja depende de IP, firewall e configuração do Wi-Fi. O layout e as requisições foram exercitados no navegador automatizado.
 - Nenhum site foi publicado em Hostinger ou Sites. A entrega inicial executa o servidor incluído e o cardápio na rede local. O caminho de publicação externa está documentado.
 - Nenhuma integração com marketplace, WhatsApp ou pagamento online foi simulada como se estivesse ativa.
+- O teste atual permanece local, conforme solicitado. A VPS Integrator Host e o Atende Chat não foram acessados ou alterados.
 
 ## Evidências locais
 

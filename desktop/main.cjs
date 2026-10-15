@@ -25,7 +25,11 @@ const { randomBytes, randomUUID, createHash } = require("node:crypto");
 const { networkInterfaces } = require("node:os");
 const net = require("node:net");
 const { PrintAgent } = require("./print-agent.cjs");
-const { renderReceipt, testOrder } = require("../shared/receipt.cjs");
+const { renderReceipt, testOrder } = require(
+  app.isPackaged
+    ? join(process.resourcesPath, "shared", "receipt.cjs")
+    : join(__dirname, "..", "shared", "receipt.cjs"),
+);
 
 let mainWindow,
   tray,

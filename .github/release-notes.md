@@ -1,8 +1,8 @@
-MVP para testar **cardápio digital → recebimento no gestor → impressão térmica**.
+MVP para testar **cardápio digital → recebimento no gestor → impressão térmica**. A versão 0.1.1 corrige a abertura do gestor no aplicativo empacotado: o módulo de comanda é carregado do diretório correto de recursos. O build agora verifica as dependências dentro do pacote antes de gerar o instalador.
 
 ### Como testar em outro computador
 
-1. Em **Assets**, baixe `Pronto-Gestor-0.1.0-Windows-x64.exe` e instale em um computador com Windows de 64 bits. O servidor local e o Node.js já estão incluídos.
+1. Em **Assets**, baixe `Pronto-Gestor-0.1.1-Windows-x64.exe` e instale em um computador com Windows de 64 bits. O servidor local e o Node.js já estão incluídos.
 2. Abra o Pronto Gestor e crie sua senha, com pelo menos 12 caracteres.
 3. Edite os produtos de exemplo em **Cardápio** e os dados em **Minha loja**.
 4. Para testar sem impressora, mantenha a impressão automática desligada. Abra o cardápio pelo botão do celular no topo do gestor; use o QR Code no celular, conectado ao mesmo Wi-Fi, ou abra o endereço no próprio computador.

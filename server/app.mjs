@@ -1,4 +1,5 @@
 import express from "express";
+import packageInfo from "../package.json" with { type: "json" };
 import { randomUUID, randomBytes, createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
@@ -150,7 +151,7 @@ export function createApplication({
     ).run(stamp, now);
   }
   app.get("/api/health", (_req, res) =>
-    res.json({ ok: true, version: "0.1.0" }),
+    res.json({ ok: true, version: packageInfo.version }),
   );
   app.get("/api/catalog", (_req, res) =>
     res.json({
@@ -187,12 +188,10 @@ export function createApplication({
         "password",
         hashPassword(password),
       );
-      res
-        .status(201)
-        .json({
-          ok: true,
-          ...issueSession(db, req, res, { secure: secureCookie }),
-        });
+      res.status(201).json({
+        ok: true,
+        ...issueSession(db, req, res, { secure: secureCookie }),
+      });
     }),
   );
   app.post(
@@ -351,12 +350,10 @@ export function createApplication({
         ).run(randomUUID(), id, "new", now);
         enqueuePrintJobs(db, id, now);
       });
-      res
-        .status(201)
-        .json({
-          order: readOrder(db, id, { privateData: false }),
-          trackingToken,
-        });
+      res.status(201).json({
+        order: readOrder(db, id, { privateData: false }),
+        trackingToken,
+      });
     }),
   );
   app.get(
@@ -430,20 +427,18 @@ export function createApplication({
     wrap((req, res) => {
       const order = readOrder(db, req.params.id);
       if (!order) fail(404, "Pedido não encontrado.");
-      res
-        .type("html")
-        .send(
-          receipt.renderReceipt(
-            order,
-            readStore(db),
-            {
-              width: req.query.width === "58" ? 58 : 80,
-              label: "Comanda geral",
-              station: "*",
-            },
-            { reprint: true },
-          ),
-        );
+      res.type("html").send(
+        receipt.renderReceipt(
+          order,
+          readStore(db),
+          {
+            width: req.query.width === "58" ? 58 : 80,
+            label: "Comanda geral",
+            station: "*",
+          },
+          { reprint: true },
+        ),
+      );
     }),
   );
   app.get("/api/admin/catalog", admin, (_req, res) =>
@@ -724,29 +719,27 @@ export function createApplication({
     }),
   );
   app.get("/manifest.webmanifest", (_req, res) =>
-    res
-      .type("application/manifest+json")
-      .json({
-        name: readStore(db).name,
-        short_name: "Pronto",
-        start_url: "/",
-        display: "standalone",
-        background_color: "#f7f7f2",
-        theme_color: "#ef5a36",
-        icons: [
-          {
-            src: "/icon.svg",
-            sizes: "any",
-            type: "image/svg+xml",
-            purpose: "any",
-          },
-        ],
-      }),
+    res.type("application/manifest+json").json({
+      name: readStore(db).name,
+      short_name: "Pronto",
+      start_url: "/",
+      display: "standalone",
+      background_color: "#f7f7f2",
+      theme_color: "#ef5a36",
+      icons: [
+        {
+          src: "/icon.svg",
+          sizes: "any",
+          type: "image/svg+xml",
+          purpose: "any",
+        },
+      ],
+    }),
   );
   if (existsSync(webDir)) {
     app.use(express.static(webDir, { index: false }));
     app.get(/^(?!\/api\/).*/, (_req, res) =>
-      res.sendFile(resolve(webDir, "index.html")),
+      res.sendFile("index.html", { root: resolve(webDir) }),
     );
   }
   app.use("/api", (_req, res) =>
@@ -762,13 +755,11 @@ export function createApplication({
         .status(413)
         .json({ error: "O pedido ultrapassou o tamanho permitido." });
     if (!error.status) console.error("Falha na requisição:", error.message);
-    res
-      .status(error.status || 500)
-      .json({
-        error: error.status
-          ? error.message
-          : "Não foi possível concluir agora. Tente novamente.",
-      });
+    res.status(error.status || 500).json({
+      error: error.status
+        ? error.message
+        : "Não foi possível concluir agora. Tente novamente.",
+    });
   });
   return { app, db };
 }

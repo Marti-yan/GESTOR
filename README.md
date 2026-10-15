@@ -1,4 +1,4 @@
-# Pronto Gestor — MVP 0.1
+# Pronto Gestor — MVP 0.1.1
 
 Cardápio digital → pedido persistido → gestor → comanda térmica automática.
 
@@ -6,12 +6,14 @@ Este primeiro MVP foi preparado para **Elgin i8 USB, papel de 80 mm, usando o dr
 
 ## Começar pelo instalador Windows
 
-Baixe o **[pacote Windows em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.1.0.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. O script monta o `.exe`, confere o SHA-256 e abre a instalação. O pacote está em uma branch de distribuição separada porque o instalador excede o limite de arquivo comum do Git. Quando a publicação por **[Releases](https://github.com/Marti-yan/GESTOR/releases)** estiver concluída, o `.exe` também poderá ser baixado diretamente em **Assets**.
+A versão **0.1.1** corrige a falha de abertura `Cannot find module '../shared/receipt.cjs'` e o carregamento da tela inicial quando o caminho de instalação contém um diretório oculto. O módulo de comanda passa a ser carregado de `resources/shared` no aplicativo instalado. Uma verificação automática agora carrega as dependências do processo principal a partir do pacote final antes de gerar o instalador.
+
+Baixe o **[pacote Windows em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.1.1.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. O script monta o `.exe`, confere o SHA-256 e abre a instalação. O pacote está em uma branch de distribuição separada porque o instalador excede o limite de arquivo comum do Git. Quando a publicação por **[Releases](https://github.com/Marti-yan/GESTOR/releases)** estiver concluída, o `.exe` também poderá ser baixado diretamente em **Assets**.
 
 É possível instalar em outro computador com Windows de 64 bits; o computador de desenvolvimento não precisa estar disponível. Cada instalação mantém seu próprio banco local. Para testar cardápio e pedidos sem a impressora, mantenha a impressão automática desligada e visualize a comanda no gestor.
 
 1. Instale o driver Windows da Elgin i8. Confira que a impressora aparece em **Configurações → Impressoras e scanners** e imprima a página de teste do Windows.
-2. Execute `Pronto-Gestor-0.1.0-Windows-x64.exe` e abra o Pronto Gestor.
+2. Execute `Pronto-Gestor-0.1.1-Windows-x64.exe` e abra o Pronto Gestor.
 3. Crie uma senha de pelo menos 12 caracteres. Em **Minha loja**, informe o nome, taxa de entrega e prazo; em **Cardápio**, edite os produtos de exemplo.
 4. Em **Impressão**, selecione a Elgin i8 em **Comanda geral**, mantenha **80 mm**, salve e clique em **Testar**. Confira legibilidade, margem e avanço/corte do papel. O corte automático depende das preferências do driver.
 5. Ligue **Impressão automática**.
@@ -124,6 +126,7 @@ O workflow `.github/workflows/windows-release.yml` está configurado para fazer 
 ```bash
 npm test
 npm run build
+npm run verify:package # depois do build Windows; confere módulos e recursos empacotados
 ```
 
 Há testes para cálculo de preço, idempotência concorrente, autenticação, disponibilidade, estados, taxa/troco, reserva de impressão, expiração, cancelamento, proteção de origem, comanda setorizada e recuperação da fila local.
@@ -168,3 +171,5 @@ release/              Instalador Windows gerado
 Limites do MVP: uma loja, até 200 produtos, uma instância da API e até 250 pedidos exibidos no gestor. O banco preserva os demais pedidos, mas a interface ainda não possui paginação/relatórios completos. Ilustrações são representações visuais, substituíveis por fotos em uma próxima etapa. O alerta sonoro no navegador depende da permissão de reprodução após interação.
 
 Veja os próximos passos em **[PROXIMOS-COMANDOS.md](PROXIMOS-COMANDOS.md)**.
+
+Para aproveitar uma VPS que já roda outro sistema e a Hostinger Business, consulte **[INFRAESTRUTURA.md](INFRAESTRUTURA.md)**.

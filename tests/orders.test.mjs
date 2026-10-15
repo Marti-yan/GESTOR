@@ -1,17 +1,18 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { createApplication } from "../server/app.mjs";
 
 const password = "teste-exclusivo-com-12-caracteres";
-async function fixture(t) {
+async function fixture(t, options = {}) {
   const directory = mkdtempSync(join(tmpdir(), "pronto-test-"));
   const { app, db } = createApplication({
     dataDir: directory,
     adminPassword: password,
+    ...options,
   });
   const server = await new Promise((resolve) => {
     const s = app.listen(0, "127.0.0.1", () => resolve(s));
@@ -44,8 +45,29 @@ async function fixture(t) {
     db.close();
     rmSync(directory, { recursive: true, force: true });
   });
-  return { request, db };
+  return { request, db, base };
 }
+test("tela inicial funciona quando o aplicativo está em um diretório oculto", async (t) => {
+  const webDir = mkdtempSync(join(tmpdir(), ".pronto-web-"));
+  t.after(() => rmSync(webDir, { recursive: true, force: true }));
+  writeFileSync(
+    join(webDir, "index.html"),
+    "<!doctype html><title>Gestor empacotado</title>",
+  );
+  writeFileSync(join(webDir, "app.js"), "console.log('gestor');");
+  const { base } = await fixture(t, { webDir });
+  for (const path of ["/", "/#/gestor", "/index.html"]) {
+    const response = await fetch(base + path);
+    assert.equal(response.status, 200, path);
+    assert.match(response.headers.get("content-type"), /text\/html/);
+    assert.match(await response.text(), /Gestor empacotado/);
+  }
+  assert.equal((await fetch(base + "/app.js")).status, 200);
+  const missing = await fetch(base + "/api/inexistente");
+  assert.equal(missing.status, 404);
+  assert.match(missing.headers.get("content-type"), /application\/json/);
+});
+
 function orderBody(extra = {}) {
   return {
     customerName: "Cliente de Teste",
