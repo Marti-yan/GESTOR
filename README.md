@@ -1,33 +1,34 @@
-# Pronto Gestor 0.2.0 — teste local Windows
+# Pronto Gestor 0.3.0 — teste local Windows
 
-## Atualizar
+## Atualizar uma instalação existente
 
-Feche o Pronto pela bandeja e [baixe Reparar-Pronto-0.2.0.exe](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.2.0/Reparar-Pronto-0.2.0.exe). O atualizador substitui aplicativo, API e interface e verifica os hashes. Preserva pedidos, senha e configurações em `%APPDATA%\Pronto Gestor`. Ao abrir, confira **Pronto Gestor — 0.2.0** na barra de título. O arquivo tem aproximadamente 2 MB e exige uma instalação anterior.
+Feche pela bandeja e [baixe Reparar-Pronto-0.3.0.exe](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.3.0/Reparar-Pronto-0.3.0.exe). Ele substitui aplicativo, API e interface com hashes conferidos, preservando pedidos e configurações em APPDATA. Confira **0.3.0** na barra de título.
+
+A versão 0.2.0 não tinha atualização integrada. Depois deste primeiro arquivo, use **Minha loja → Atualizações do gestor → Buscar atualização** para consultar as próximas versões. Internet é necessária para baixar; a operação dos pedidos continua local, sem VPS.
 
 ## Instalar do zero
 
-[Baixe o ZIP completo](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.2.0.zip), escolha **Extrair tudo** e abra **Instalar.cmd**. Ele une as três partes, verifica o SHA-256 e abre o instalador. Windows de 64 bits; servidor e Node.js incluídos. O computador original não precisa estar disponível. Cada computador mantém seu próprio banco.
+[Baixe o ZIP completo](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.3.0.zip), escolha **Extrair tudo** e abra **Instalar.cmd**. Ele une as três partes e verifica o SHA-256 do instalador. Windows de 64 bits; servidor e Node.js incluídos.
 
-## Novidades
+## O que mudou
 
-- Garçom com PIN, mesa, senha, observações, troco e acompanhamento dos próprios lançamentos.
-- Categorias e itens em módulos, com preferências independentes de lista/cards: quatro combinações salvas por aparelho.
-- Cadastro e ordem das categorias, produtos por categoria e cardápio público em listas agrupadas.
-- Pedidos do cardápio imprimem após o aceite; garçom e gestor entram aceitos e na fila.
-- Botões do quadro avançam sem abrir o resumo.
-- ESC/POS RAW para Elgin i8, conteúdo completo e um corte no final; alternativa HTML pelo driver.
-- Modelos por saída com prévia, destaques para quantidades, observações, mesa, senha, bebidas e troco, além de fonte, recuo, avanços e guilhotina.
+- Editor de comanda em três passos, com prévia e indicação de alterações pendentes.
+- Espaço extra entre linhas em milímetros, que funciona inclusive em letra grande.
+- Modelos prontos: geral, batata e balcão opcional. Confira as impressoras e produtos selecionados na batata.
+- Total bem grande e posição de cada via: **2 COMANDAS — VIA 1/2**, **3 COMANDAS — VIA 2/3**. Aviso obrigatório em todas as vias.
+- Destaques por categoria e grupo de adicionais: negrito, caixinha ou fundo preto.
+- Complementos e adicionais com preços por unidade, mínimos, máximos e limites por opção, disponíveis no cardápio, gestor e garçom.
+- Cozinha como padrão; caixa pequena para acrescentar uma via do balcão, inclusive pelo resumo do pedido do cardápio.
+- Download de atualizações pela main/master do GitHub, com tamanho e SHA-256 conferidos antes da instalação.
 
-## Testar
+## Conferir antes de atender
 
-Siga [COMECAR-AQUI.md](COMECAR-AQUI.md) e [IMPRESSAO.md](IMPRESSAO.md). O teste é local, sem VPS. Celular e gestor precisam estar no mesmo Wi-Fi. Por HTTP no celular, use o navegador; instalar como PWA exige HTTPS. O pedido depende da conexão, e rascunhos ficam salvos no aparelho.
+Siga [COMECAR-AQUI.md](COMECAR-AQUI.md), [IMPRESSAO.md](IMPRESSAO.md) e [ATUALIZACOES.md](ATUALIZACOES.md). Instale o driver da Elgin i8 USB, selecione 80 mm/ESC-POS, salve e teste. Confira itens, observações, contagem de comandas e **FIM** antes de ativar a impressão automática.
 
-Em Impressão, selecione a Elgin, 80 mm e modo ESC/POS. Teste e confira o marcador **FIM DA COMANDA #123** antes de ativar a impressão automática. O computador principal precisa permanecer ligado.
+Ao instalar pela atualização integrada, o aplicativo fecha e a impressão automática é pausada. Conclua o assistente, abra o gestor e confira antes de reativar.
 
-## Validação
+33 testes passaram, incluindo migrações 0.1/0.2, fila, múltiplas vias, adicionais, espaçamento e atualizador. A interface foi conferida em Electron/Linux: prévia com 280 px de diferença entre espaçamentos, seleção obrigatória de adicionais, preços e três comandas com batata e balcão. O atualizador foi extraído e seus recursos comparados ao manifesto de hashes.
 
-22 testes automatizados passaram, junto com TypeScript, build e verificação do pacote. O Electron foi exercitado em Linux com os recursos finais: aceite sem abrir resumo, lançamento pelo gestor e garçom, quatro visualizações e persistência das preferências, rascunho limpo após envio, prévia e cardápio mobile sem transbordamento. Os arquivos extraídos do atualizador correspondem ao manifesto de hashes.
+A impressão física e a instalação nativa no Windows ainda precisam de validação com a Elgin. O executável não possui certificado comercial de assinatura. O PWA no celular exige HTTPS para instalar; o navegador funciona na LAN HTTP.
 
-O instalador e a ponte nativa Windows ainda precisam ser conferidos em Windows real com a Elgin física. O aplicativo não possui certificado comercial de assinatura. Os hashes estão em [SHA256SUMS.txt](SHA256SUMS.txt).
-
-Código e documentação: [projeto](https://github.com/Marti-yan/GESTOR/tree/codex/mvp-pronto-gestor). O ZIP de código não contém banco nem credenciais.
+Código: [projeto](https://github.com/Marti-yan/GESTOR/tree/codex/mvp-pronto-gestor). O pacote não contém banco da loja ou credenciais. Hashes: [SHA256SUMS.txt](SHA256SUMS.txt).
