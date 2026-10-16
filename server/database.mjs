@@ -2,6 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
+import printing from "../shared/printing.cjs";
 
 export function openDatabase(directory) {
   mkdirSync(directory, { recursive: true });
@@ -67,7 +68,25 @@ export function openDatabase(directory) {
   ])
     addColumn("orders", name, definition);
   addColumn("order_items", "category", "TEXT NOT NULL DEFAULT ''");
+  addColumn("order_items", "modifiers", "TEXT NOT NULL DEFAULT '[]'");
+  addColumn("order_items", "base_price", "INTEGER");
+  addColumn("products", "modifier_group_ids", "TEXT NOT NULL DEFAULT '[]'");
+  addColumn("orders", "counter_requested", "INTEGER NOT NULL DEFAULT 0");
   addColumn("print_targets", "options", "TEXT NOT NULL DEFAULT '{}'");
+  addColumn("print_targets", "location", "TEXT NOT NULL DEFAULT 'kitchen'");
+  addColumn("print_targets", "filter", "TEXT");
+  for (const [name, definition] of [
+    ["batch_id", "TEXT NOT NULL DEFAULT ''"],
+    ["batch_index", "INTEGER NOT NULL DEFAULT 1"],
+    ["batch_count", "INTEGER NOT NULL DEFAULT 1"],
+    ["target_snapshot", "TEXT"],
+    ["purpose", "TEXT NOT NULL DEFAULT 'production'"],
+    ["late_extra", "INTEGER NOT NULL DEFAULT 0"],
+  ])
+    addColumn("print_jobs", name, definition);
+  db.exec(
+    "CREATE TABLE IF NOT EXISTS modifier_groups(id TEXT PRIMARY KEY,definition TEXT NOT NULL)",
+  );
   addColumn("sessions", "role", "TEXT NOT NULL DEFAULT 'admin'");
   addColumn("sessions", "actor_name", "TEXT NOT NULL DEFAULT ''");
   db.exec(
@@ -201,6 +220,81 @@ export function openDatabase(directory) {
     db.prepare(
       "INSERT OR IGNORE INTO categories(id,name,sort) VALUES (?,?,?)",
     ).run(randomUUID(), c.category, position);
+  if (
+    !db
+      .prepare("SELECT 1 FROM settings WHERE key='printing-templates-v3'")
+      .get()
+  ) {
+    const general = db
+      .prepare("SELECT * FROM print_targets WHERE id='geral'")
+      .get();
+    if (general) {
+      const options = JSON.parse(general.options || "{}");
+      if (!options.preset || options.preset === "expedition")
+        db.prepare("UPDATE print_targets SET options=? WHERE id=?").run(
+          JSON.stringify({
+            ...options,
+            preset: "kitchen",
+            showPrices: false,
+            showPhone: false,
+          }),
+          "geral",
+        );
+    }
+    const potatoes = db
+      .prepare("SELECT id,name,art FROM products")
+      .all()
+      .filter(
+        (p) =>
+          /batata/i.test(p.name) || ["fries", "loaded-fries"].includes(p.art),
+      )
+      .map((p) => p.id);
+    const insert = db.prepare(
+      "INSERT OR IGNORE INTO print_targets(id,label,device_name,width,station,enabled,options,location,filter) VALUES (?,?,?,?,?,1,?,?,?)",
+    );
+    insert.run(
+      "batata",
+      "Comanda-batata",
+      general?.device_name || "",
+      general?.width || 80,
+      "*",
+      JSON.stringify({ preset: "minimal" }),
+      "kitchen",
+      JSON.stringify({ mode: "products", values: potatoes }),
+    );
+    insert.run(
+      "balcao",
+      "Via do balcão",
+      general?.device_name || "",
+      general?.width || 80,
+      "*",
+      JSON.stringify({ preset: "expedition" }),
+      "counter",
+      JSON.stringify({ mode: "all", values: [] }),
+    );
+    db.prepare(
+      "INSERT INTO settings(key,value) VALUES ('printing-templates-v3','1')",
+    ).run();
+  }
+  const legacyOrders = db
+    .prepare(
+      "SELECT DISTINCT order_id FROM print_jobs WHERE batch_id='' ORDER BY rowid",
+    )
+    .all();
+  for (const { order_id } of legacyOrders) {
+    const jobs = db
+      .prepare(
+        "SELECT id FROM print_jobs WHERE order_id=? AND state<>'cancelled' ORDER BY rowid",
+      )
+      .all(order_id);
+    jobs.forEach((j, index) =>
+      db
+        .prepare(
+          "UPDATE print_jobs SET batch_id=?,batch_index=?,batch_count=? WHERE id=?",
+        )
+        .run(order_id, index + 1, jobs.length, j.id),
+    );
+  }
   return db;
 }
 
@@ -247,6 +341,7 @@ export function readOrder(db, id, { privateData = true } = {}) {
     pickupCode: row.pickup_code,
     actorName: row.actor_name,
     acceptedAt: row.accepted_at,
+    printAtCounter: Boolean(row.counter_requested),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     items: items.map((i) => ({
@@ -258,35 +353,93 @@ export function readOrder(db, id, { privateData = true } = {}) {
       notes: i.notes,
       station: i.station,
       category: i.category,
+      basePrice: i.base_price ?? i.price,
+      modifiers: JSON.parse(i.modifiers || "[]"),
     })),
   };
   if (privateData)
     order.printJobs = db
       .prepare(
-        "SELECT id,target_id AS targetId,state,attempt,last_error AS lastError FROM print_jobs WHERE order_id=? ORDER BY created_at",
+        "SELECT id,target_id AS targetId,state,attempt,last_error AS lastError,batch_index AS receiptIndex,batch_count AS receiptCount,purpose FROM print_jobs WHERE order_id=? ORDER BY created_at,rowid",
       )
       .all(id);
   return order;
 }
 
-export function enqueuePrintJobs(db, orderId, now) {
-  const targets = db
-    .prepare("SELECT * FROM print_targets WHERE enabled=1")
-    .all();
-  const stations = db
-    .prepare("SELECT DISTINCT station FROM order_items WHERE order_id=?")
-    .all(orderId)
-    .map((r) => r.station);
-  for (const target of targets) {
-    if (target.station !== "*" && !stations.includes(target.station)) continue;
-    if (
-      db
-        .prepare("SELECT 1 FROM print_jobs WHERE order_id=? AND target_id=?")
-        .get(orderId, target.id)
-    )
-      continue;
-    db.prepare(
-      "INSERT INTO print_jobs(id,order_id,target_id,state,created_at,updated_at) VALUES (?,?,?,?,?,?)",
-    ).run(randomUUID(), orderId, target.id, "pending", now, now);
+export function readPrintTarget(row) {
+  return {
+    id: row.id,
+    label: row.label,
+    deviceName: row.device_name,
+    width: row.width,
+    station: row.station,
+    enabled: Boolean(row.enabled),
+    location: row.location || "kitchen",
+    filter: printing.normalizeFilter(
+      row.filter ? JSON.parse(row.filter) : null,
+      row.station,
+    ),
+    options: JSON.parse(row.options || "{}"),
+  };
+}
+export function enqueuePrintJobs(
+  db,
+  orderId,
+  now,
+  { counterOnly = false } = {},
+) {
+  const order = readOrder(db, orderId),
+    targets = printing
+      .matchingTargets(
+        db
+          .prepare("SELECT * FROM print_targets WHERE enabled=1 ORDER BY rowid")
+          .all()
+          .map(readPrintTarget),
+        order.items,
+        order.printAtCounter,
+      )
+      .filter((t) => !counterOnly || t.location === "counter");
+  if (order.printAtCounter && !targets.some((t) => t.location === "counter")) {
+    const e = new Error(
+      "Configure e habilite uma impressora de balcão antes de solicitar essa via.",
+    );
+    e.status = 409;
+    throw e;
   }
+  const existing = db
+    .prepare(
+      "SELECT * FROM print_jobs WHERE order_id=? AND state<>'cancelled' ORDER BY rowid",
+    )
+    .all(orderId);
+  const additions = targets.filter(
+    (t) => !existing.some((j) => j.target_id === t.id),
+  );
+  if (!additions.length) return;
+  const count = existing.length + additions.length,
+    batch = existing[0]?.batch_id || randomUUID(),
+    late = existing.some((j) =>
+      ["printing", "spooled", "uncertain"].includes(j.state),
+    );
+  db.prepare(
+    "UPDATE print_jobs SET batch_id=?,batch_count=? WHERE order_id=? AND state IN ('pending','claimed','failed')",
+  ).run(batch, count, orderId);
+  additions.forEach((t, index) =>
+    db
+      .prepare(
+        "INSERT INTO print_jobs(id,order_id,target_id,state,created_at,updated_at,batch_id,batch_index,batch_count,target_snapshot,purpose,late_extra) VALUES (?,?,?,'pending',?,?,?,?,?,?,?,?)",
+      )
+      .run(
+        randomUUID(),
+        orderId,
+        t.id,
+        now,
+        now,
+        batch,
+        existing.length + index + 1,
+        count,
+        JSON.stringify(t),
+        t.location === "counter" ? "counter" : "production",
+        late ? 1 : 0,
+      ),
+  );
 }

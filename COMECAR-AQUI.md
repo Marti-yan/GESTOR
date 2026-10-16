@@ -1,10 +1,10 @@
-# Testar o Pronto Gestor 0.2.0 na rede local
+# Testar o Pronto Gestor 0.3.0 na rede local
 
 ## Atualizar a instalação existente
 
-Feche o gestor pela bandeja, baixe e execute o **[atualizador 0.2.0](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.2.0/Reparar-Pronto-0.2.0.exe)**. Se houver uma janela de erro, feche-a também. Confira a pasta da instalação e conclua. O programa substitui aplicativo, servidor e interface e verifica os hashes. Seus pedidos, senha e configurações em `%APPDATA%\Pronto Gestor` são preservados. Ao abrir, confira **Pronto Gestor — 0.2.0** na barra de título.
+Feche o gestor pela bandeja, baixe e execute o **[atualizador 0.3.0](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.3.0/Reparar-Pronto-0.3.0.exe)**. Se houver uma janela de erro, feche-a também. Confira a pasta da instalação e conclua. O programa substitui aplicativo, servidor e interface e verifica os hashes. Seus pedidos, senha e configurações em `%APPDATA%\Pronto Gestor` são preservados. Ao abrir, confira **Pronto Gestor — 0.3.0** na barra de título.
 
-Para instalar do zero, baixe o **[pacote Windows 0.2.0 em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.2.0.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. Ele une as três partes, confere o SHA-256 e abre o instalador. O Node.js e o servidor já estão incluídos. Use Windows de 64 bits; não é necessário acessar o computador original.
+Para instalar do zero, baixe o **[pacote Windows 0.3.0 em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.3.0.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. Ele une as três partes, confere o SHA-256 e abre o instalador. O Node.js e o servidor já estão incluídos. Use Windows de 64 bits; não é necessário acessar o computador original.
 
 Cada instalação mantém seus dados locais. Instalar em outro computador não sincroniza o banco do primeiro.
 
@@ -12,9 +12,9 @@ Cada instalação mantém seus dados locais. Instalar em outro computador não s
 
 1. Instale o driver da **Elgin i8 USB** e imprima a página de teste do Windows.
 2. Abra o gestor e crie sua senha, caso seja uma instalação nova.
-3. Em **Impressão**, selecione sua Elgin, papel **80 mm**, e expanda **Modelo, destaques e corte**.
+3. Em **Impressão**, selecione sua Elgin, papel **80 mm**, e expanda a saída geral.
 4. Escolha **ESC/POS — Elgin i8**, avanço inicial zero e corte parcial. Salve as saídas.
-5. Clique em **Testar**. Confira mesa 12, senha A123, três lanches, bebidas, observações, troco e **FIM DA COMANDA #123** antes do corte.
+5. Clique em **Testar este modelo**. Confira o aviso **2 COMANDAS**, mesa 12, senha A123, três lanches, bebidas, batata, observações, troco e **FIM DA COMANDA #123** antes do corte.
 6. Após conferir o papel, ligue **Impressão automática**.
 7. Abra o cardápio pelo ícone do celular no topo, usando outro celular no mesmo Wi-Fi. Faça um pedido: ele aparece em **Novos e ainda não imprime**.
 8. Clique em **Aceitar e iniciar preparo**. O pedido avança e entra na fila. O botão não deve abrir o resumo. Os botões Pronto e Finalizar também avançam diretamente, sem gerar outra comanda.
@@ -32,7 +32,7 @@ Em **Cardápio**, crie ou renomeie as categorias e ajuste a ordem pelas setas. U
 3. Escolha como visualizar as **categorias**, usando os botões de lista ou cards. Toque em uma categoria.
 4. Escolha como visualizar os **itens** dessa categoria, também em lista ou cards. Essa escolha é independente da anterior: há quatro combinações, salvas no aparelho.
 5. Adicione os itens, quantidades e observações. Informe mesa ou retirada, senha opcional, pagamento e troco quando houver.
-6. Toque em **Aceitar e enviar à cozinha**. O pedido já entra em preparo e na fila do gestor. Em **Meus pedidos**, acompanhe os lançamentos do nome usado no login.
+6. Se quiser uma via extra, marque **Imprimir também no balcão**. Toque em **Aceitar e enviar à cozinha**. O pedido já entra em preparo e na fila do gestor. Em **Meus pedidos**, acompanhe os lançamentos do nome usado no login.
 
 O PIN permite lançar pedidos, sem acesso às configurações administrativas. Alterar ou desativar o acesso no gestor encerra as sessões da equipe. O rascunho é salvo no aparelho; pedidos não são enviados offline.
 
@@ -41,6 +41,14 @@ O PIN permite lançar pedidos, sem acesso às configurações administrativas. A
 ## Lançamento no próprio gestor
 
 Em **Pedidos → Novo pedido**, escolha categoria e produto pelo mesmo módulo. As preferências de categorias e itens são independentes das do garçom e ficam salvas nesse computador. O lançamento já entra aceito e na fila.
+
+## Complementos, adicionais e destaques
+
+Em **Cardápio → Complementos e adicionais**, crie grupos e opções, defina preços e limites e vincule os grupos em **Editar produto**. Eles aparecem ao escolher o item no cardápio, gestor e garçom. Em **Impressão**, escolha categorias e grupos para destacar com caixinha, negrito ou fundo preto. Os modelos geral, batata e balcão já estão cadastrados; confira os produtos selecionados na batata e as impressoras de cada saída.
+
+## Próximas atualizações pelo aplicativo
+
+Depois de instalar a 0.3.0, use **Minha loja → Atualizações do gestor → Buscar atualização**. Quando houver versão mais nova publicada, baixe e abra o instalador pelo próprio gestor. O arquivo é verificado antes de instalar. A operação permanece local, sem VPS. Consulte **ATUALIZACOES.md**.
 
 ## Rede e funcionamento
 

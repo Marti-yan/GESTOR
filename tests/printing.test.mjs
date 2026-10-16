@@ -72,7 +72,7 @@ test("ESC/POS inclui todos os itens, troco e fim antes de um único corte", () =
     "Água Mineral",
     "TROCO PARA:",
     "DEVOLVER:",
-    "4,40",
+    "39,50",
     "FIM DA COMANDA #123",
   ])
     assert.ok(text.includes(content), content);
@@ -295,4 +295,86 @@ test("reinício durante o efeito físico pede conferência e não gera uma segun
   assert.equal(physical, 0);
   assert.equal(reports[0].state, "uncertain");
   assert.equal(journal["job-3"].acknowledged, true);
+});
+
+test("espaço extra é avanço físico inclusive em fonte grande e não some com a altura da fonte", () => {
+  const small = renderEscPos(
+    testOrder(),
+    { name: "Loja" },
+    { width: 80, options: { fontSize: 18, lineGapMm: 0, itemGapMm: 0 } },
+  );
+  const spaced = renderEscPos(
+    testOrder(),
+    { name: "Loja" },
+    { width: 80, options: { fontSize: 18, lineGapMm: 2, itemGapMm: 0 } },
+  );
+  assert.ok(spaced.length > small.length);
+  assert.ok(spaced.includes(Buffer.from([27, 74, 16])));
+  assert.ok(!small.includes(Buffer.from([27, 74, 16])));
+  assert.ok(spaced.includes(Buffer.from([29, 33, 1])));
+  assert.equal(normalizeReceiptOptions({ lineSpacing: 48 }).lineGapMm, 3);
+  assert.equal(
+    normalizeReceiptOptions({ lineSpacing: 48, lineGapMm: 0.5 }).lineGapMm,
+    0.5,
+  );
+});
+
+test("comanda-batata só traz batata e número, preservando o aviso obrigatório de múltiplas vias", () => {
+  const target = {
+    width: 80,
+    label: "Comanda-batata",
+    location: "kitchen",
+    filter: { mode: "products", values: ["batata-crocante"] },
+    options: { preset: "minimal" },
+  };
+  const flags = { receipt: { count: 3, index: 2 } };
+  const html = renderReceipt(testOrder(), { name: "Loja" }, target, flags),
+    bytes = renderEscPos(testOrder(), { name: "Loja" }, target, flags),
+    text = iconv.decode(bytes, "cp860");
+  for (const value of ["3 COMANDAS", "VIA 2/3", "Batata Crocante", "#123"])
+    assert.ok(html.includes(value), value);
+  for (const value of [
+    "Brasa Clássico",
+    "Refrigerante Lata",
+    "TESTE DE COMANDA COMPLETA",
+    "TROCO PARA",
+    "MESA 12",
+  ])
+    assert.ok(!html.includes(value), value);
+  assert.ok(bytes.includes(Buffer.from([29, 33, 0x22])));
+  assert.ok(text.includes("3 COMANDAS"));
+  assert.ok(text.includes("FIM DA COMANDA"));
+  assert.ok(
+    renderReceipt(testOrder(), { name: "Loja" }, target, {
+      ...flags,
+      test: true,
+    }).includes("NÃO PRODUZIR"),
+  );
+});
+
+test("categoria e grupo de adicionais recebem destaques independentes", () => {
+  const order = testOrder();
+  order.items[0].modifiers = [
+    {
+      groupId: "molhos",
+      groupName: "Molhos escolhidos",
+      name: "Barbecue",
+      quantity: 1,
+      price: 0,
+    },
+  ];
+  const html = renderReceipt(
+    order,
+    { name: "Loja" },
+    {
+      width: 80,
+      options: {
+        categoryHighlights: [{ category: "Bebidas", style: "box" }],
+        addonGroupHighlights: [{ groupId: "molhos", style: "inverted" }],
+      },
+    },
+  );
+  assert.match(html, /class="block box item bold/);
+  assert.match(html, /class="block inverted\s+bold[^>]*>Molhos escolhidos/);
+  assert.ok(html.includes("Barbecue"));
 });

@@ -7,8 +7,12 @@ contextBridge.exposeInMainWorld(
     info: () => ipcRenderer.invoke("pronto:info"),
     printers: () => ipcRenderer.invoke("pronto:printers"),
     configure: (config) => ipcRenderer.invoke("pronto:configure", config),
-    testPrint: (target) => ipcRenderer.invoke("pronto:test-print", target),
+    testPrint: (target, targets) =>
+      ipcRenderer.invoke("pronto:test-print", { target, targets }),
     openMenu: () => ipcRenderer.invoke("pronto:open-menu"),
+    checkUpdate: () => ipcRenderer.invoke("pronto:check-update"),
+    downloadUpdate: () => ipcRenderer.invoke("pronto:download-update"),
+    installUpdate: () => ipcRenderer.invoke("pronto:install-update"),
     previewReceipt: (orderId) =>
       ipcRenderer.invoke("pronto:preview-receipt", orderId),
   }),

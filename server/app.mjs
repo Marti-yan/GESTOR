@@ -9,7 +9,15 @@ import {
   readStore,
   readOrder,
   enqueuePrintJobs,
+  readPrintTarget,
 } from "./database.mjs";
+import printing from "../shared/printing.cjs";
+import {
+  readModifierGroups,
+  validateModifierGroup,
+  productGroupIds,
+  priceModifiers,
+} from "./modifiers.mjs";
 import {
   hashPassword,
   verifyPassword,
@@ -134,24 +142,25 @@ export function createApplication({
   };
   const currentPassword = () =>
     db.prepare("SELECT value FROM settings WHERE key='password'").get()?.value;
-  const publicProducts = () =>
-    db
+  const publicProducts = () => {
+    const groups = readModifierGroups(db);
+    return db
       .prepare("SELECT * FROM products ORDER BY sort,name")
       .all()
       .map((p) => ({
         ...p,
         available: Boolean(p.available),
         featured: Boolean(p.featured),
+        modifierGroupIds: JSON.parse(p.modifier_group_ids || "[]"),
+        modifierGroups: groups.filter((g) =>
+          JSON.parse(p.modifier_group_ids || "[]").includes(g.id),
+        ),
       }));
+  };
   const categories = () =>
     db.prepare("SELECT id,name,sort FROM categories ORDER BY sort,name").all();
   const cleanTarget = (t) => ({
-    id: t.id,
-    label: t.label,
-    deviceName: t.device_name,
-    width: t.width,
-    station: t.station,
-    enabled: Boolean(t.enabled),
+    ...readPrintTarget(t),
     options: receipt.normalizeReceiptOptions(
       JSON.parse(t.options || "{}"),
       t.width,
@@ -416,10 +425,13 @@ export function createApplication({
           409,
           "Um item ficou indisponível. Revise o cardápio antes de enviar.",
         );
+      const priced = priceModifiers(db, product, i.modifiers);
       return {
         productId: product.id,
         name: product.name,
-        price: product.price,
+        price: priced.price,
+        basePrice: product.price,
+        modifiers: priced.modifiers,
         quantity: i.quantity,
         notes: text(i.notes, 250),
         station: product.station,
@@ -478,8 +490,10 @@ export function createApplication({
         internal ? now : null,
         id,
       );
+      if (internal && body.printAtCounter === true)
+        db.prepare("UPDATE orders SET counter_requested=1 WHERE id=?").run(id);
       const insert = db.prepare(
-        "INSERT INTO order_items(id,order_id,product_id,name,price,quantity,notes,station,category) VALUES (?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO order_items(id,order_id,product_id,name,price,quantity,notes,station,category,base_price,modifiers) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
       );
       for (const line of lines)
         insert.run(
@@ -492,6 +506,8 @@ export function createApplication({
           line.notes,
           line.station,
           line.category,
+          line.basePrice,
+          JSON.stringify(line.modifiers),
         );
       db.prepare(
         "INSERT INTO order_events(id,order_id,status,created_at) VALUES (?,?,?,?)",
@@ -589,6 +605,42 @@ export function createApplication({
       res.json({ order: readOrder(db, order.id) });
     }),
   );
+  app.post(
+    "/api/admin/orders/:id/counter",
+    admin,
+    wrap((req, res) => {
+      const order = readOrder(db, req.params.id);
+      if (!order) fail(404, "Pedido não encontrado.");
+      if (order.status === "cancelled")
+        fail(409, "Pedido cancelado não pode ser impresso.");
+      const enabled = req.body?.enabled !== false;
+      if (!enabled && order.status !== "new")
+        fail(409, "A via já foi solicitada. Confira a fila de impressão.");
+      if (
+        enabled &&
+        !db
+          .prepare(
+            "SELECT 1 FROM print_targets WHERE location='counter' AND enabled=1",
+          )
+          .get()
+      )
+        fail(
+          409,
+          "Habilite a saída de balcão em Impressão antes de solicitar essa via.",
+        );
+      transaction(db, () => {
+        db.prepare("UPDATE orders SET counter_requested=? WHERE id=?").run(
+          enabled ? 1 : 0,
+          order.id,
+        );
+        if (enabled && order.status !== "new")
+          enqueuePrintJobs(db, order.id, new Date().toISOString(), {
+            counterOnly: true,
+          });
+      });
+      res.json({ order: readOrder(db, order.id) });
+    }),
+  );
   app.get(
     "/api/admin/orders/:id/receipt",
     admin,
@@ -625,6 +677,57 @@ export function createApplication({
       products: publicProducts(),
       store: readStore(db),
       categories: categories(),
+      modifierGroups: readModifierGroups(db),
+    }),
+  );
+  app.get("/api/admin/modifier-groups", admin, (_req, res) =>
+    res.json({ groups: readModifierGroups(db) }),
+  );
+  app.post(
+    "/api/admin/modifier-groups",
+    admin,
+    wrap((req, res) => {
+      if (readModifierGroups(db).length >= 60)
+        fail(400, "São permitidos até 60 grupos.");
+      const group = validateModifierGroup(req.body);
+      db.prepare("INSERT INTO modifier_groups(id,definition) VALUES (?,?)").run(
+        group.id,
+        JSON.stringify(group),
+      );
+      res.status(201).json({ group });
+    }),
+  );
+  app.put(
+    "/api/admin/modifier-groups/:id",
+    admin,
+    wrap((req, res) => {
+      if (
+        !db
+          .prepare("SELECT 1 FROM modifier_groups WHERE id=?")
+          .get(req.params.id)
+      )
+        fail(404, "Grupo não encontrado.");
+      const group = validateModifierGroup(req.body, req.params.id);
+      db.prepare("UPDATE modifier_groups SET definition=? WHERE id=?").run(
+        JSON.stringify(group),
+        group.id,
+      );
+      res.json({ group });
+    }),
+  );
+  app.delete(
+    "/api/admin/modifier-groups/:id",
+    admin,
+    wrap((req, res) => {
+      if (
+        db
+          .prepare("SELECT modifier_group_ids FROM products")
+          .all()
+          .some((p) => JSON.parse(p.modifier_group_ids).includes(req.params.id))
+      )
+        fail(409, "Desvincule o grupo dos produtos antes de excluir.");
+      db.prepare("DELETE FROM modifier_groups WHERE id=?").run(req.params.id);
+      res.json({ ok: true });
     }),
   );
   app.post(
@@ -695,6 +798,25 @@ export function createApplication({
           name,
           old.name,
         );
+        for (const row of db.prepare("SELECT * FROM print_targets").all()) {
+          const target = cleanTarget(row);
+          if (target.filter.mode === "categories")
+            target.filter.values = target.filter.values.map((v) =>
+              v === old.name ? name : v,
+            );
+          target.options.categoryHighlights =
+            target.options.categoryHighlights.map((r) => ({
+              ...r,
+              category: r.category === old.name ? name : r.category,
+            }));
+          db.prepare(
+            "UPDATE print_targets SET filter=?,options=? WHERE id=?",
+          ).run(
+            JSON.stringify(target.filter),
+            JSON.stringify(target.options),
+            row.id,
+          );
+        }
       });
       res.json({ categories: categories() });
     }),
@@ -731,6 +853,7 @@ export function createApplication({
       if (!db.prepare("SELECT 1 FROM categories WHERE name=?").get(category))
         fail(400, "Cadastre a categoria antes de adicionar o produto.");
       const count = db.prepare("SELECT COUNT(*) AS n FROM products").get().n;
+      const groupIds = productGroupIds(db, b.modifierGroupIds);
       if (count >= 200) fail(400, "O MVP suporta até 200 produtos.");
       db.prepare(
         "INSERT INTO products(id,name,description,category,price,station,art,sort) VALUES (?,?,?,?,?,?,?,?)",
@@ -743,6 +866,10 @@ export function createApplication({
         station,
         text(b.art, 30) || "burger",
         count,
+      );
+      db.prepare("UPDATE products SET modifier_group_ids=? WHERE id=?").run(
+        JSON.stringify(groupIds),
+        id,
       );
       res.status(201).json({ ok: true });
     }),
@@ -775,6 +902,12 @@ export function createApplication({
         fail(400, "Preencha nome, categoria, setor e preço.");
       if (!db.prepare("SELECT 1 FROM categories WHERE name=?").get(category))
         fail(400, "Escolha uma categoria cadastrada.");
+      const groupIds = productGroupIds(
+        db,
+        b.modifierGroupIds === undefined
+          ? JSON.parse(old.modifier_group_ids)
+          : b.modifierGroupIds,
+      );
       db.prepare(
         "UPDATE products SET name=?,description=?,category=?,price=?,station=?,available=?,art=? WHERE id=?",
       ).run(
@@ -785,6 +918,10 @@ export function createApplication({
         station,
         b.available ? 1 : 0,
         text(b.art, 30) || old.art,
+        old.id,
+      );
+      db.prepare("UPDATE products SET modifier_group_ids=? WHERE id=?").run(
+        JSON.stringify(groupIds),
         old.id,
       );
       res.json({ ok: true });
@@ -829,19 +966,45 @@ export function createApplication({
     wrap((req, res) => {
       const t = req.body?.target || {};
       const target = {
+        id: text(t.id, 70),
         width: t.width === 58 ? 58 : 80,
         label: text(t.label, 80) || "Comanda geral",
         station: text(t.station, 60) || "*",
         options: receipt.normalizeReceiptOptions(t.options, t.width),
+        location: t.location === "counter" ? "counter" : "kitchen",
+        filter: printing.normalizeFilter(t.filter, t.station),
       };
       const order = req.body?.orderId
         ? readOrder(db, text(req.body.orderId, 100))
         : receipt.testOrder();
       if (!order) fail(404, "Pedido não encontrado.");
+      const allTargets = Array.isArray(req.body.targets)
+        ? req.body.targets
+        : db
+            .prepare("SELECT * FROM print_targets WHERE enabled=1")
+            .all()
+            .map(cleanTarget);
+      let planned = printing.matchingTargets(
+        allTargets,
+        order.items,
+        Boolean(order.printAtCounter) || target.location === "counter",
+      );
+      if (!planned.some((p) => p.id === target.id))
+        planned = [...planned, target];
       res.json({
         html: receipt.renderReceipt(order, readStore(db), target, {
           test: !req.body?.orderId,
+          receipt: {
+            count:
+              order.printJobs?.find((j) => j.targetId === target.id)
+                ?.receiptCount || planned.length,
+            index:
+              order.printJobs?.find((j) => j.targetId === target.id)
+                ?.receiptIndex ||
+              Math.max(1, planned.findIndex((p) => p.id === target.id) + 1),
+          },
         }),
+        options: target.options,
       });
     }),
   );
@@ -888,15 +1051,26 @@ export function createApplication({
           station: text(t.station, 60) || "*",
           enabled: Boolean(t.enabled),
           options: receipt.normalizeReceiptOptions(t.options, t.width),
+          location: t.location === "counter" ? "counter" : "kitchen",
+          filter: printing.normalizeFilter(t.filter, t.station),
         };
       });
-      if (!targets.some((t) => t.enabled && t.station === "*"))
+      const generalPrinter = targets.find((t) => t.id === "geral")?.deviceName;
+      if (generalPrinter)
+        for (const t of targets)
+          if (t.id !== "geral" && !t.deviceName) t.deviceName = generalPrinter;
+      if (
+        !targets.some(
+          (t) =>
+            t.enabled && t.location === "kitchen" && t.filter.mode === "all",
+        )
+      )
         fail(400, "Mantenha uma comanda geral habilitada.");
       transaction(db, () => {
         db.prepare("UPDATE print_targets SET enabled=0").run();
         for (const t of targets)
           db.prepare(
-            "INSERT INTO print_targets(id,label,device_name,width,station,enabled,options) VALUES (?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET label=excluded.label,device_name=excluded.device_name,width=excluded.width,station=excluded.station,enabled=excluded.enabled,options=excluded.options",
+            "INSERT INTO print_targets(id,label,device_name,width,station,enabled,options,location,filter) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET label=excluded.label,device_name=excluded.device_name,width=excluded.width,station=excluded.station,enabled=excluded.enabled,options=excluded.options,location=excluded.location,filter=excluded.filter",
           ).run(
             t.id,
             t.label,
@@ -905,7 +1079,30 @@ export function createApplication({
             t.station,
             t.enabled ? 1 : 0,
             JSON.stringify(t.options),
+            t.location,
+            JSON.stringify(t.filter),
           );
+        // Layout novo vale para trabalhos ainda pendentes; o filtro do lote é preservado.
+        for (const t of targets)
+          for (const job of db
+            .prepare(
+              "SELECT id,target_snapshot FROM print_jobs WHERE target_id=? AND state='pending' AND target_snapshot IS NOT NULL",
+            )
+            .all(t.id)) {
+            const snap = JSON.parse(job.target_snapshot);
+            db.prepare(
+              "UPDATE print_jobs SET target_snapshot=? WHERE id=?",
+            ).run(
+              JSON.stringify({
+                ...snap,
+                options: t.options,
+                deviceName: t.deviceName,
+                width: t.width,
+                label: t.label,
+              }),
+              job.id,
+            );
+          }
       });
       res.json({ ok: true });
     }),
@@ -929,11 +1126,15 @@ export function createApplication({
         db.prepare(
           "UPDATE print_jobs SET state='claimed',claim_token=?,agent_id=?,lease_until=?,attempt=attempt+1,updated_at=? WHERE id=? AND state='pending'",
         ).run(token, agentId, Date.now() + 120000, now, row.id);
-        const target = cleanTarget(
+        const liveTarget = cleanTarget(
           db
             .prepare("SELECT * FROM print_targets WHERE id=?")
             .get(row.target_id),
         );
+        const target = row.target_snapshot
+          ? JSON.parse(row.target_snapshot)
+          : liveTarget;
+        target.deviceName = liveTarget.deviceName;
         return {
           id: row.id,
           claimToken: token,
@@ -941,6 +1142,11 @@ export function createApplication({
           order: readOrder(db, row.order_id),
           store: readStore(db),
           reprint: row.attempt > 0,
+          receipt: {
+            index: row.batch_index,
+            count: row.batch_count,
+            lateExtra: Boolean(row.late_extra),
+          },
         };
       });
       res.json({ job });
@@ -1044,19 +1250,17 @@ export function createApplication({
     },
   ];
   app.get("/garcom.webmanifest", (_req, res) =>
-    res
-      .type("application/manifest+json")
-      .json({
-        id: "/garcom",
-        name: "Pronto Garçom",
-        short_name: "Garçom",
-        start_url: "/garcom#/garcom",
-        scope: "/",
-        display: "standalone",
-        background_color: "#f6f7f3",
-        theme_color: "#ef5a36",
-        icons: appIcons,
-      }),
+    res.type("application/manifest+json").json({
+      id: "/garcom",
+      name: "Pronto Garçom",
+      short_name: "Garçom",
+      start_url: "/garcom#/garcom",
+      scope: "/",
+      display: "standalone",
+      background_color: "#f6f7f3",
+      theme_color: "#ef5a36",
+      icons: appIcons,
+    }),
   );
   app.get("/manifest.webmanifest", (_req, res) =>
     res.type("application/manifest+json").json({

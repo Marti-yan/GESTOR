@@ -1,4 +1,29 @@
 export type Category = { id: string; name: string; sort: number };
+export type ModifierGroup = {
+  id: string;
+  name: string;
+  kind: "extra" | "complement";
+  min: number;
+  max: number;
+  options: {
+    id: string;
+    name: string;
+    price: number;
+    maxQuantity: number;
+    available: boolean;
+  }[];
+};
+export type ModifierSelection = {
+  groupId: string;
+  optionId: string;
+  quantity: number;
+};
+export type OrderedModifier = ModifierSelection & {
+  groupName: string;
+  kind: "extra" | "complement";
+  name: string;
+  price: number;
+};
 export type Store = {
   name: string;
   subtitle: string;
@@ -20,12 +45,15 @@ export type Product = {
   station: string;
   art: string;
   featured: boolean;
+  modifierGroupIds?: string[];
+  modifierGroups?: ModifierGroup[];
 };
 export type CartItem = {
   product: Product;
   quantity: number;
   notes: string;
   key: string;
+  modifiers?: ModifierSelection[];
 };
 export type OrderStatus =
   | "new"
@@ -49,6 +77,9 @@ export type OrderItem = {
   quantity: number;
   notes: string;
   station: string;
+  category?: string;
+  basePrice?: number;
+  modifiers?: OrderedModifier[];
 };
 export type Order = {
   id: string;
@@ -63,6 +94,7 @@ export type Order = {
   pickupCode: string;
   actorName: string;
   acceptedAt: string | null;
+  printAtCounter?: boolean;
   changeFor: number | null;
   notes: string;
   subtotal: number;
@@ -78,6 +110,9 @@ export type Order = {
     state: PrintState;
     attempt: number;
     lastError: string | null;
+    receiptIndex?: number;
+    receiptCount?: number;
+    purpose?: string;
   }[];
 };
 export type PrintTarget = {
@@ -88,12 +123,19 @@ export type PrintTarget = {
   station: string;
   enabled: boolean;
   options?: ReceiptOptions;
+  location?: "kitchen" | "counter";
+  filter?: {
+    mode: "all" | "categories" | "products" | "station";
+    values: string[];
+  };
 };
 export type ReceiptOptions = {
-  preset?: "expedition" | "kitchen" | "compact";
+  preset?: "expedition" | "kitchen" | "compact" | "minimal";
   transport?: "escpos" | "driver";
   fontSize?: number;
   lineSpacing?: number;
+  lineGapMm?: number;
+  itemGapMm?: number;
   columns?: number;
   leftPadding?: number;
   topFeed?: number;
@@ -111,6 +153,14 @@ export type ReceiptOptions = {
   showPhone?: boolean;
   showPrices?: boolean;
   footer?: string;
+  categoryHighlights?: {
+    category: string;
+    style: "box" | "inverted" | "bold";
+  }[];
+  addonGroupHighlights?: {
+    groupId: string;
+    style: "box" | "inverted" | "bold";
+  }[];
 };
 export type PrintJob = {
   id: string;
@@ -133,6 +183,24 @@ export type DesktopInfo = {
   printerError: string | null;
   lastSync: string | null;
   hasToken: boolean;
+  update?: UpdateState;
+};
+export type UpdateState = {
+  stage:
+    | "idle"
+    | "checking"
+    | "available"
+    | "downloading"
+    | "ready"
+    | "upToDate"
+    | "error"
+    | "incompatible";
+  currentVersion: string;
+  version?: string;
+  progress: number;
+  size?: number;
+  notes?: string[];
+  error?: string;
 };
 export type DesktopBridge = {
   api: (
@@ -149,8 +217,14 @@ export type DesktopBridge = {
     serverUrl?: string;
     autoPrint?: boolean;
   }) => Promise<DesktopInfo>;
-  testPrint: (target: PrintTarget) => Promise<{ ok: boolean }>;
+  testPrint: (
+    target: PrintTarget,
+    targets?: PrintTarget[],
+  ) => Promise<{ ok: boolean }>;
   openMenu: () => Promise<void>;
+  checkUpdate: () => Promise<UpdateState>;
+  downloadUpdate: () => Promise<UpdateState>;
+  installUpdate: () => Promise<{ ok: boolean }>;
   previewReceipt: (orderId: string) => Promise<void>;
 };
 declare global {

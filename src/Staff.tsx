@@ -18,12 +18,26 @@ import {
 import { QRCodeSVG } from "qrcode.react";
 import { api, ApiError, createId, money, parseMoney, time } from "./api";
 import { FoodArt } from "./art";
-import type { Category, DesktopInfo, Order, Product, Store } from "./types";
+import { ItemOptionsForm, unitPrice, selectionNames } from "./ItemOptions";
+import type {
+  Category,
+  DesktopInfo,
+  Order,
+  Product,
+  Store,
+  ModifierSelection,
+} from "./types";
 const message = (e: unknown) =>
   e instanceof Error
     ? e.message
     : "Não foi possível concluir. Tente novamente.";
-type Line = { key: string; productId: string; quantity: number; notes: string };
+type Line = {
+  key: string;
+  productId: string;
+  quantity: number;
+  notes: string;
+  modifiers?: ModifierSelection[];
+};
 type Draft = {
   lines: Line[];
   tableName: string;
@@ -36,6 +50,7 @@ type Draft = {
   notes: string;
   requestKey: string;
   signature: string;
+  printAtCounter: boolean;
 };
 const emptyDraft = (): Draft => ({
   lines: [],
@@ -49,6 +64,7 @@ const emptyDraft = (): Draft => ({
   notes: "",
   requestKey: createId(),
   signature: "",
+  printAtCounter: false,
 });
 export function OrderEntry({
   mode,
@@ -102,6 +118,10 @@ export function OrderEntry({
     } catch {}
   }, [categoryView, itemView, mode]);
   const locked = useRef(false);
+  const [customizing, setCustomizing] = useState<{
+    product: Product;
+    lineKey?: string;
+  } | null>(null);
   useEffect(() => {
     api<{ products: Product[]; store: Store; categories: Category[] }>(
       "/catalog",
@@ -123,25 +143,38 @@ export function OrderEntry({
   const total = draft.lines.reduce(
     (sum, l) =>
       sum +
-      (products.find((p) => p.id === l.productId)?.price || 0) * l.quantity,
+      (products.find((p) => p.id === l.productId)
+        ? unitPrice(products.find((p) => p.id === l.productId)!, l.modifiers)
+        : 0) *
+        l.quantity,
     0,
   );
   const count = draft.lines.reduce((sum, l) => sum + l.quantity, 0);
-  function add(p: Product) {
+  function add(
+    p: Product,
+    quantity = 1,
+    notes = "",
+    modifiers: ModifierSelection[] = [],
+  ) {
     if (locked.current) return;
     setDraft((d) => {
-      const found = d.lines.find((l) => l.productId === p.id && !l.notes);
+      const found = d.lines.find(
+        (l) =>
+          l.productId === p.id &&
+          l.notes === notes &&
+          JSON.stringify(l.modifiers || []) === JSON.stringify(modifiers),
+      );
       return {
         ...d,
         lines: found
           ? d.lines.map((l) =>
               l.key === found.key
-                ? { ...l, quantity: Math.min(20, l.quantity + 1) }
+                ? { ...l, quantity: Math.min(20, l.quantity + quantity) }
                 : l,
             )
           : [
               ...d.lines,
-              { key: createId(), productId: p.id, quantity: 1, notes: "" },
+              { key: createId(), productId: p.id, quantity, notes, modifiers },
             ],
       };
     });
@@ -173,11 +206,13 @@ export function OrderEntry({
           ? parseMoney(draft.change)
           : null,
       notes: draft.notes,
+      printAtCounter: draft.printAtCounter,
       expectedTotal: total,
-      items: draft.lines.map(({ productId, quantity, notes }) => ({
+      items: draft.lines.map(({ productId, quantity, notes, modifiers }) => ({
         productId,
         quantity,
         notes,
+        modifiers: modifiers || [],
       })),
     };
     const signature = JSON.stringify(body),
@@ -223,6 +258,26 @@ export function OrderEntry({
   return (
     <div className="order-entry">
       <section className="entry-products">
+        {customizing && (
+          <div className="entry-customizer">
+            <ItemOptionsForm
+              key={customizing.lineKey || customizing.product.id}
+              product={customizing.product}
+              initial={
+                customizing.lineKey
+                  ? draft.lines.find((l) => l.key === customizing.lineKey)
+                  : undefined
+              }
+              onCancel={() => setCustomizing(null)}
+              onConfirm={(quantity, notes, modifiers) => {
+                if (customizing.lineKey)
+                  line(customizing.lineKey, { quantity, notes, modifiers });
+                else add(customizing.product, quantity, notes, modifiers);
+                setCustomizing(null);
+              }}
+            />
+          </div>
+        )}
         <div className="entry-heading">
           <div>
             <span className="eyebrow muted">LANÇAMENTO DIRETO</span>
@@ -338,7 +393,11 @@ export function OrderEntry({
                   type="button"
                   className="entry-product"
                   disabled={busy}
-                  onClick={() => add(p)}
+                  onClick={() =>
+                    p.modifierGroups?.length
+                      ? setCustomizing({ product: p })
+                      : add(p)
+                  }
                 >
                   <div className="entry-art">
                     <FoodArt kind={p.art} />
@@ -432,8 +491,28 @@ export function OrderEntry({
                       <strong>
                         {l.quantity}× {p?.name || "Produto indisponível"}
                       </strong>
-                      <span>{money((p?.price || 0) * l.quantity)}</span>
+                      <span>
+                        {money(
+                          (p ? unitPrice(p, l.modifiers) : 0) * l.quantity,
+                        )}
+                      </span>
                     </div>
+                    {l.modifiers?.length && p ? (
+                      <p className="entry-modifier-summary">
+                        {selectionNames(p, l.modifiers)}
+                      </p>
+                    ) : null}
+                    {p?.modifierGroups?.length ? (
+                      <button
+                        type="button"
+                        className="button secondary small"
+                        onClick={() =>
+                          setCustomizing({ product: p, lineKey: l.key })
+                        }
+                      >
+                        Editar complementos/adicionais
+                      </button>
+                    ) : null}
                     <div className="entry-line-tools">
                       <button
                         type="button"
@@ -515,6 +594,19 @@ export function OrderEntry({
             <span>Total do pedido</span>
             <strong>{money(total)}</strong>
           </div>
+          <label className="counter-checkbox">
+            <input
+              type="checkbox"
+              checked={draft.printAtCounter}
+              onChange={(e) => patch({ printAtCounter: e.target.checked })}
+            />
+            <span>
+              Imprimir também no balcão
+              <small>
+                Uma via extra. As comandas da cozinha continuam sendo impressas.
+              </small>
+            </span>
+          </label>
           {error && (
             <p className="error-banner" role="alert">
               {error}
@@ -522,7 +614,9 @@ export function OrderEntry({
           )}
           <button
             className="button primary full"
-            disabled={busy || !draft.lines.length || loading}
+            disabled={
+              busy || !draft.lines.length || loading || Boolean(customizing)
+            }
             type="submit"
           >
             {busy ? "Enviando…" : "Aceitar e enviar à cozinha"}

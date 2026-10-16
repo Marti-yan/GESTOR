@@ -718,3 +718,274 @@ test("modelos por saída são persistidos e usados pela prévia e fila", async (
   assert.equal(claimed.body.job.order.id, o.body.order.id);
   assert.equal(claimed.body.job.target.options.footer, target.options.footer);
 });
+
+test("modelos de cozinha geram duas vias apenas se houver batata; balcão é opcional", async (t) => {
+  const { request, db } = await fixture(t);
+  const targets = (await request("/admin/printing", { auth: true })).body
+    .targets;
+  assert.deepEqual(
+    targets.map((t) => t.id),
+    ["geral", "batata", "balcao"],
+  );
+  assert.equal(
+    targets.find((t) => t.id === "batata").options.preset,
+    "minimal",
+  );
+  await request("/admin/printing/targets", {
+    auth: true,
+    method: "PUT",
+    body: { targets: targets.map((t) => ({ ...t, deviceName: "Elgin i8" })) },
+  });
+  const body = orderBody({
+    items: [
+      { productId: "brasa-classico", quantity: 1 },
+      { productId: "batata-crocante", quantity: 1 },
+    ],
+  });
+  const created = await create(request, body);
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM print_jobs").get().n, 0);
+  await request(`/admin/orders/${created.body.order.id}/status`, {
+    auth: true,
+    method: "PATCH",
+    body: { expectedStatus: "new", status: "preparing" },
+  });
+  const jobs = db
+    .prepare("SELECT * FROM print_jobs WHERE order_id=? ORDER BY rowid")
+    .all(created.body.order.id);
+  assert.equal(jobs.length, 2);
+  assert.deepEqual(
+    jobs.map((j) => [j.batch_index, j.batch_count]),
+    [
+      [1, 2],
+      [2, 2],
+    ],
+  );
+  const claims = await Promise.all([
+    request("/admin/printing/claim", {
+      auth: true,
+      method: "POST",
+      body: { agentId: "pc" },
+    }),
+    request("/admin/printing/claim", {
+      auth: true,
+      method: "POST",
+      body: { agentId: "pc" },
+    }),
+  ]);
+  assert.ok(claims.every((c) => c.body.job.receipt.count === 2));
+  const general = claims.find((c) => c.body.job.target.id === "geral").body.job;
+  const potato = claims.find((c) => c.body.job.target.id === "batata").body.job;
+  assert.equal(general.receipt.index, 1);
+  assert.equal(potato.receipt.index, 2);
+  assert.equal(potato.target.filter.mode, "products");
+  const direct = await request("/admin/orders", {
+    auth: true,
+    method: "POST",
+    headers: { "Idempotency-Key": randomUUID() },
+    body: { ...body, printAtCounter: true },
+  });
+  assert.equal(direct.status, 201);
+  assert.equal(
+    db
+      .prepare("SELECT COUNT(*) AS n FROM print_jobs WHERE order_id=?")
+      .get(direct.body.order.id).n,
+    3,
+  );
+  assert.equal(
+    db
+      .prepare(
+        "SELECT batch_count FROM print_jobs WHERE order_id=? AND purpose='counter'",
+      )
+      .get(direct.body.order.id).batch_count,
+    3,
+  );
+  const forged = await create(request, { ...body, printAtCounter: true });
+  assert.equal(forged.body.order.printAtCounter, false);
+});
+
+test("balcão pode ser solicitado no resumo e não duplica comandas", async (t) => {
+  const { request, db } = await fixture(t);
+  const created = await create(request);
+  const id = created.body.order.id;
+  const mark = () =>
+    request(`/admin/orders/${id}/counter`, {
+      auth: true,
+      method: "POST",
+      body: { enabled: true },
+    });
+  assert.equal((await mark()).status, 200);
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM print_jobs").get().n, 0);
+  await request(`/admin/orders/${id}/status`, {
+    auth: true,
+    method: "PATCH",
+    body: { status: "preparing", expectedStatus: "new" },
+  });
+  await Promise.all([mark(), mark()]);
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM print_jobs").get().n, 2);
+  assert.equal(
+    (
+      await request(`/admin/orders/${id}/counter`, {
+        auth: true,
+        method: "POST",
+        body: { enabled: false },
+      })
+    ).status,
+    409,
+  );
+  const other = await create(request);
+  const oid = other.body.order.id;
+  await request(`/admin/orders/${oid}/status`, {
+    auth: true,
+    method: "PATCH",
+    body: { status: "preparing", expectedStatus: "new" },
+  });
+  db.prepare("UPDATE print_jobs SET state='spooled' WHERE order_id=?").run(oid);
+  await request(`/admin/orders/${oid}/counter`, {
+    auth: true,
+    method: "POST",
+    body: { enabled: true },
+  });
+  const extra = db
+    .prepare("SELECT * FROM print_jobs WHERE order_id=? AND purpose='counter'")
+    .get(oid);
+  assert.equal(extra.late_extra, 1);
+  assert.equal(extra.batch_count, 2);
+});
+
+test("adicionais são precificados por unidade, validados e preservados no histórico", async (t) => {
+  const { request, db } = await fixture(t);
+  const group = (
+    await request("/admin/modifier-groups", {
+      auth: true,
+      method: "POST",
+      body: {
+        name: "Adicionais do lanche",
+        min: 1,
+        max: 3,
+        options: [
+          {
+            id: "bacon-extra",
+            name: "Bacon extra",
+            price: 400,
+            maxQuantity: 2,
+          },
+          {
+            id: "queijo-extra",
+            name: "Queijo extra",
+            price: 300,
+            maxQuantity: 2,
+          },
+        ],
+      },
+    })
+  ).body.group;
+  assert.ok(group.id);
+  const p = (
+    await request("/admin/catalog", { auth: true })
+  ).body.products.find((p) => p.id === "brasa-classico");
+  assert.equal(
+    (
+      await request("/admin/products/" + p.id, {
+        auth: true,
+        method: "PATCH",
+        body: { ...p, modifierGroupIds: [group.id] },
+      })
+    ).status,
+    200,
+  );
+  assert.equal((await create(request)).status, 400);
+  const selections = [
+    { groupId: group.id, optionId: "bacon-extra", quantity: 2, price: 1 },
+    { groupId: group.id, optionId: "queijo-extra", quantity: 1 },
+  ];
+  const body = orderBody({
+    expectedTotal: 7180,
+    items: [{ productId: p.id, quantity: 2, modifiers: selections }],
+  });
+  const created = await create(request, body);
+  assert.equal(created.status, 201);
+  assert.equal(created.body.order.items[0].price, 3590);
+  assert.equal(created.body.order.total, 7180);
+  assert.equal(created.body.order.items[0].modifiers[0].price, 400);
+  const over = structuredClone(body);
+  over.items[0].modifiers[1].quantity = 2;
+  assert.equal((await create(request, over)).status, 400);
+  const repeated = structuredClone(body);
+  repeated.items[0].modifiers.push(repeated.items[0].modifiers[0]);
+  assert.equal((await create(request, repeated)).status, 400);
+  assert.equal(
+    (
+      await request("/admin/modifier-groups/" + group.id, {
+        auth: true,
+        method: "DELETE",
+      })
+    ).status,
+    409,
+  );
+  await request("/admin/modifier-groups/" + group.id, {
+    auth: true,
+    method: "PUT",
+    body: {
+      ...group,
+      name: "Adicionais editados",
+      options: group.options.map((o) => ({ ...o, price: 999 })),
+    },
+  });
+  const saved = (
+    await request("/admin/orders", { auth: true })
+  ).body.orders.find((o) => o.id === created.body.order.id);
+  assert.equal(saved.items[0].modifiers[0].groupName, "Adicionais do lanche");
+  assert.equal(saved.items[0].modifiers[0].price, 400);
+  assert.equal((await create(request, body)).status, 409); // Total mudou, sem aceitar silenciosamente.
+  assert.ok(
+    db
+      .prepare("SELECT modifiers FROM order_items WHERE order_id=?")
+      .get(created.body.order.id)
+      .modifiers.includes("Bacon extra"),
+  );
+});
+
+test("salvar espaçamento aplica também a trabalhos pendentes sem mudar os filtros do lote", async (t) => {
+  const { request } = await fixture(t);
+  const created = await request("/admin/orders", {
+    auth: true,
+    method: "POST",
+    headers: { "Idempotency-Key": randomUUID() },
+    body: orderBody(),
+  });
+  const targets = (
+    await request("/admin/printing", { auth: true })
+  ).body.targets.map((t) => ({
+    ...t,
+    deviceName: "Elgin i8",
+    options: { ...t.options, lineGapMm: 2.5, fontSize: 18 },
+  }));
+  assert.equal(
+    (
+      await request("/admin/printing/targets", {
+        auth: true,
+        method: "PUT",
+        body: { targets },
+      })
+    ).status,
+    200,
+  );
+  const claim = (
+    await request("/admin/printing/claim", {
+      auth: true,
+      method: "POST",
+      body: { agentId: "pc" },
+    })
+  ).body.job;
+  assert.equal(claim.order.id, created.body.order.id);
+  assert.equal(claim.target.options.lineGapMm, 2.5);
+  assert.equal(claim.target.options.fontSize, 18);
+  assert.equal(claim.receipt.count, 1);
+  const preview = await request("/admin/printing/preview", {
+    auth: true,
+    method: "POST",
+    body: { target: { ...targets[0], options: { preset: "minimal" } } },
+  });
+  assert.equal(preview.body.options.preset, "minimal");
+  assert.equal(preview.body.options.showPrices, false);
+});

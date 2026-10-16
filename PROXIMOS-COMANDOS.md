@@ -20,9 +20,11 @@ Aceite: cliente em outra rede faz pedido, gestor recebe e Elgin imprime; dados s
 
 Aceite: revogação impede acesso do dispositivo e restauração recupera pedidos sem imprimir novamente.
 
-## 4. Adicionais, variantes e combos
+## 4. Variantes e combos
 
-> Adicione grupos de complementos com mínimos/máximos, tamanhos, variantes, combos e regras de preço. Faça o servidor validar as escolhas e distribua os componentes de combos para os setores corretos de impressão.
+A versão 0.3.0 já inclui grupos de complementos/adicionais com limites, preços e destaques.
+
+> Acrescente tamanhos, variantes e combos com regras de preço e distribuição de componentes para os setores corretos de impressão, preservando os grupos e snapshots existentes.
 
 Aceite: total correto no cardápio, gestor e comanda; opção inválida não cria pedido.
 

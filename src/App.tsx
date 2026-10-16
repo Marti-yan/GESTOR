@@ -53,8 +53,11 @@ import { QRCodeSVG } from "qrcode.react";
 import { api, money, time, parseMoney, navigate, createId } from "./api";
 import { FoodArt } from "./art";
 import { OrderEntry, StaffApp, StaffSettings } from "./Staff";
-import { ReceiptDesigner } from "./ReceiptDesigner";
+import { Printing } from "./Printing";
 import { CategoryManager } from "./Categories";
+import { ModifierManager } from "./ModifierManager";
+import { ItemOptionsForm, unitPrice, selectionNames } from "./ItemOptions";
+import { Updates } from "./Updates";
 import type {
   CartItem,
   Category,
@@ -66,6 +69,8 @@ import type {
   PrintTarget,
   Product,
   Store,
+  ModifierGroup,
+  ModifierSelection,
 } from "./types";
 
 const statusLabels: Record<OrderStatus, string> = {
@@ -320,12 +325,19 @@ function Menu({ notify }: { notify: (s: string) => void }) {
       .toLocaleLowerCase("pt-BR")
       .includes(search.toLocaleLowerCase("pt-BR")),
   );
-  const total = cart.reduce((sum, i) => sum + i.product.price * i.quantity, 0),
+  const total = cart.reduce(
+      (sum, i) => sum + unitPrice(i.product, i.modifiers) * i.quantity,
+      0,
+    ),
     count = cart.reduce((sum, i) => sum + i.quantity, 0);
   const closeProduct = useCallback(() => setSelected(null), []);
-  function add() {
+  function add(
+    quantity: number,
+    notes: string,
+    modifiers: ModifierSelection[],
+  ) {
     if (!selected) return;
-    const key = `${selected.id}:${notes.trim()}`;
+    const key = `${selected.id}:${notes.trim()}:${JSON.stringify([...modifiers].sort((a, b) => (a.groupId + a.optionId).localeCompare(b.groupId + b.optionId)))}`;
     setCart((old) => {
       const found = old.find((i) => i.key === key);
       if (found && found.quantity + quantity > 20) {
@@ -336,7 +348,16 @@ function Menu({ notify }: { notify: (s: string) => void }) {
         ? old.map((i) =>
             i.key === key ? { ...i, quantity: i.quantity + quantity } : i,
           )
-        : [...old, { product: selected, quantity, notes: notes.trim(), key }];
+        : [
+            ...old,
+            {
+              product: selected,
+              quantity,
+              notes: notes.trim(),
+              key,
+              modifiers,
+            },
+          ];
     });
     notify(`${selected.name} adicionado ao pedido`);
     setSelected(null);
@@ -371,6 +392,9 @@ function Menu({ notify }: { notify: (s: string) => void }) {
                 </div>
                 <div className="cart-item-body">
                   <strong>{i.product.name}</strong>
+                  {i.modifiers?.length ? (
+                    <small>{selectionNames(i.product, i.modifiers)}</small>
+                  ) : null}
                   {i.notes && <small>{i.notes}</small>}
                   <div className="cart-item-bottom">
                     <div className="stepper small">
@@ -388,7 +412,9 @@ function Menu({ notify }: { notify: (s: string) => void }) {
                         <Plus size={12} />
                       </button>
                     </div>
-                    <b>{money(i.product.price * i.quantity)}</b>
+                    <b>
+                      {money(unitPrice(i.product, i.modifiers) * i.quantity)}
+                    </b>
                   </div>
                 </div>
               </div>
@@ -657,42 +683,11 @@ function Menu({ notify }: { notify: (s: string) => void }) {
             <FoodArt kind={selected.art} />
           </div>
           <div className="modal-body">
-            <h2 className="product-modal-name">{selected.name}</h2>
-            <p className="muted-text">{selected.description}</p>
-            <strong className="product-modal-price">
-              {money(selected.price)}
-            </strong>
-            <label className="field">
-              Alguma observação?
-              <textarea
-                placeholder="Ex.: sem cebola, molho à parte…"
-                maxLength={250}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </label>
-            <div className="add-product-row">
-              <div className="stepper">
-                <button
-                  aria-label="Diminuir quantidade"
-                  disabled={quantity <= 1}
-                  onClick={() => setQuantity((q) => q - 1)}
-                >
-                  <Minus size={17} />
-                </button>
-                <strong>{quantity}</strong>
-                <button
-                  aria-label="Aumentar quantidade"
-                  disabled={quantity >= 20}
-                  onClick={() => setQuantity((q) => q + 1)}
-                >
-                  <Plus size={17} />
-                </button>
-              </div>
-              <button className="button primary" onClick={add}>
-                Adicionar <span>{money(selected.price * quantity)}</span>
-              </button>
-            </div>
+            <ItemOptionsForm
+              key={selected.id}
+              product={selected}
+              onConfirm={add}
+            />
           </div>
         </Modal>
       )}
@@ -737,7 +732,7 @@ function Checkout({
   const idempotency = useRef(createId()),
     lastBody = useRef("");
   const subtotal = cart.reduce(
-      (sum, i) => sum + i.product.price * i.quantity,
+      (sum, i) => sum + unitPrice(i.product, i.modifiers) * i.quantity,
       0,
     ),
     total = subtotal + (fulfillment === "delivery" ? store.deliveryFee : 0);
@@ -761,6 +756,7 @@ function Checkout({
           productId: i.product.id,
           quantity: i.quantity,
           notes: i.notes,
+          modifiers: i.modifiers || [],
         })),
       };
       const serialized = JSON.stringify(body);
@@ -1153,7 +1149,7 @@ function Manager({
               <Printer />
             </div>
           </div>
-          <small>PRONTO GESTOR • MVP 0.2</small>
+          <small>PRONTO GESTOR • MVP 0.3</small>
         </div>
         <main className="login-form-wrap">
           <form onSubmit={login} className="login-form">
@@ -1294,7 +1290,7 @@ function Manager({
             <LogOut size={17} /> Sair do gestor
           </button>
           <span className="sidebar-version">
-            PRONTO GESTOR <b>v{desktop?.version || "0.2.0"}</b>
+            PRONTO GESTOR <b>v{desktop?.version || "0.3.0"}</b>
           </span>
         </div>
       </aside>
@@ -1371,7 +1367,7 @@ function Manager({
           </span>
           <span>
             {desktop ? "Aplicativo Windows" : "Gestor web"} • Pronto{" "}
-            {desktop?.version || "0.2.0"}
+            {desktop?.version || "0.3.0"}
           </span>
         </footer>
       </div>
@@ -2003,12 +1999,76 @@ function Orders({
                   <div>
                     <strong>{i.name}</strong>
                     <small>{i.station}</small>
+                    {i.modifiers?.length ? (
+                      <p className="detail-item-modifiers">
+                        {i.modifiers
+                          .map(
+                            (m) => `${m.quantity}× ${m.name} (${m.groupName})`,
+                          )
+                          .join(" · ")}
+                      </p>
+                    ) : null}
                     {i.notes && <p className="detail-item-note">{i.notes}</p>}
                   </div>
                   <b>{money(i.price * i.quantity)}</b>
                 </div>
               ))}
             </div>
+            {selected.status !== "cancelled" && (
+              <div className="detail-counter">
+                {selected.status === "new" ? (
+                  <label className="counter-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(selected.printAtCounter)}
+                      onChange={async (e) => {
+                        try {
+                          const r = await api<{ order: Order }>(
+                            `/admin/orders/${selected.id}/counter`,
+                            "POST",
+                            { enabled: e.target.checked },
+                          );
+                          setSelected(r.order);
+                          await refresh();
+                        } catch (error) {
+                          notify(errorText(error));
+                        }
+                      }}
+                    />
+                    <span>
+                      Imprimir também no balcão
+                      <small>
+                        A via extra entra na fila quando você aceitar o pedido.
+                      </small>
+                    </span>
+                  </label>
+                ) : (
+                  <button
+                    className="button secondary"
+                    disabled={Boolean(selected.printAtCounter)}
+                    onClick={async () => {
+                      try {
+                        const r = await api<{ order: Order }>(
+                          `/admin/orders/${selected.id}/counter`,
+                          "POST",
+                          { enabled: true },
+                        );
+                        setSelected(r.order);
+                        await refresh();
+                        notify("Via do balcão colocada na fila.");
+                      } catch (error) {
+                        notify(errorText(error));
+                      }
+                    }}
+                  >
+                    <Printer size={16} />
+                    {selected.printAtCounter
+                      ? "Via do balcão já solicitada"
+                      : "Imprimir no balcão"}
+                  </button>
+                )}
+              </div>
+            )}
             {selected.notes && (
               <div className="note-box">
                 <strong>Observação do pedido</strong>
@@ -2034,6 +2094,12 @@ function Orders({
                 <span key={j.id}>
                   <Printer size={13} />
                   {printLabels[j.state]}
+                  {(j.receiptCount || 1) > 1 && (
+                    <b className="receipt-count-badge">
+                      {j.receiptCount} comandas · via {j.receiptIndex}/
+                      {j.receiptCount}
+                    </b>
+                  )}
                 </span>
               ))}
             </div>
@@ -2090,16 +2156,22 @@ function Orders({
 function CatalogManager({ notify }: { notify: (s: string) => void }) {
   const [products, setProducts] = useState<Product[]>([]),
     [categories, setCategories] = useState<Category[]>([]),
+    [modifierGroups, setModifierGroups] = useState<ModifierGroup[]>([]),
     [categoryFilter, setCategoryFilter] = useState(""),
     [error, setError] = useState(""),
     [editing, setEditing] = useState<Product | null>(null),
     [search, setSearch] = useState("");
   const load = useCallback(
     () =>
-      api<{ products: Product[]; categories: Category[] }>("/admin/catalog")
+      api<{
+        products: Product[];
+        categories: Category[];
+        modifierGroups: ModifierGroup[];
+      }>("/admin/catalog")
         .then((r) => {
           setProducts(r.products);
           setCategories(r.categories);
+          setModifierGroups(r.modifierGroups || []);
           setCategoryFilter((current) =>
             r.categories.some((c) => c.name === current) ? current : "",
           );
@@ -2168,6 +2240,11 @@ function CatalogManager({ notify }: { notify: (s: string) => void }) {
             featured: false,
           })
         }
+      />
+      <ModifierManager
+        groups={modifierGroups}
+        onChanged={load}
+        notify={notify}
       />
       <div className="entry-categories">
         {["", ...categories.map((c) => c.name)].map((c) => (
@@ -2249,6 +2326,7 @@ function CatalogManager({ notify }: { notify: (s: string) => void }) {
         <ProductForm
           product={editing}
           categories={categories}
+          modifierGroups={modifierGroups}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
@@ -2263,11 +2341,13 @@ function CatalogManager({ notify }: { notify: (s: string) => void }) {
 function ProductForm({
   product,
   categories,
+  modifierGroups,
   onClose,
   onSaved,
 }: {
   product: Product;
   categories: Category[];
+  modifierGroups: ModifierGroup[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -2379,359 +2459,42 @@ function ProductForm({
             ))}
           </select>
         </label>
+        <fieldset className="product-modifier-links">
+          <legend>Complementos e adicionais deste produto</legend>
+          {!modifierGroups.length ? (
+            <p>Crie os grupos em Cardápio → Complementos e adicionais.</p>
+          ) : (
+            modifierGroups.map((group) => (
+              <label key={group.id}>
+                <input
+                  type="checkbox"
+                  checked={Boolean(draft.modifierGroupIds?.includes(group.id))}
+                  onChange={(e) =>
+                    setDraft({
+                      ...draft,
+                      modifierGroupIds: e.target.checked
+                        ? [...(draft.modifierGroupIds || []), group.id]
+                        : (draft.modifierGroupIds || []).filter(
+                            (id) => id !== group.id,
+                          ),
+                    })
+                  }
+                />
+                <span>
+                  <strong>{group.name}</strong>
+                  <small>
+                    {group.min} a {group.max} escolhas por unidade
+                  </small>
+                </span>
+              </label>
+            ))
+          )}
+        </fieldset>
         <button className="button primary full" disabled={busy}>
           {busy ? <Spinner /> : <Check size={17} />} Salvar produto
         </button>
       </form>
     </Modal>
-  );
-}
-
-function Printing({
-  notify,
-  desktop,
-}: {
-  notify: (s: string) => void;
-  desktop: DesktopInfo | null;
-}) {
-  const [targets, setTargets] = useState<PrintTarget[]>([]),
-    [jobs, setJobs] = useState<PrintJob[]>([]),
-    [printers, setPrinters] = useState<{ name: string; displayName: string }[]>(
-      [],
-    ),
-    [error, setError] = useState(""),
-    [busy, setBusy] = useState(false),
-    [testing, setTesting] = useState(""),
-    [dirty, setDirty] = useState(false);
-  const load = useCallback(async () => {
-    try {
-      const r = await api<{ targets: PrintTarget[]; jobs: PrintJob[] }>(
-        "/admin/printing",
-      );
-      setJobs(r.jobs);
-      if (!dirty) setTargets(r.targets);
-      setError("");
-    } catch (e) {
-      setError(errorText(e));
-    }
-  }, [dirty]);
-  const loadPrinters = useCallback(() => {
-    window.prontoDesktop
-      ?.printers()
-      .then(setPrinters)
-      .catch((e) => notify(errorText(e)));
-  }, [notify]);
-  useEffect(() => {
-    load();
-    const timer = setInterval(load, 3000);
-    return () => clearInterval(timer);
-  }, [load]);
-  useEffect(() => {
-    loadPrinters();
-  }, [loadPrinters]);
-  function edit(id: string, patch: Partial<PrintTarget>) {
-    setDirty(true);
-    setTargets((old) => old.map((t) => (t.id === id ? { ...t, ...patch } : t)));
-  }
-  async function save() {
-    setBusy(true);
-    try {
-      await api("/admin/printing/targets", "PUT", { targets });
-      setDirty(false);
-      notify("Saídas de impressão salvas");
-    } catch (e) {
-      notify(errorText(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function test(target: PrintTarget) {
-    setTesting(target.id);
-    try {
-      await window.prontoDesktop?.testPrint(target);
-      notify("Teste enviado à impressora. Confira o papel.");
-    } catch (e) {
-      notify(errorText(e));
-    } finally {
-      setTesting("");
-    }
-  }
-  async function retry(job: PrintJob) {
-    if (
-      !window.confirm(
-        `Conferiu se a comanda #${job.number} já saiu? Reenviar pode gerar uma segunda via.`,
-      )
-    )
-      return;
-    try {
-      await api(`/admin/printing/jobs/${job.id}/retry`, "POST", {
-        confirmed: true,
-      });
-      notify("Comanda colocada novamente na fila");
-      load();
-    } catch (e) {
-      notify(errorText(e));
-    }
-  }
-  return (
-    <>
-      <div className="page-title-row">
-        <div>
-          <span className="eyebrow muted">DA TELA PARA O PAPEL</span>
-          <h1>
-            Impressão<span className="orange">.</span>
-          </h1>
-          <p>Elgin i8 • USB • papel de 80 mm</p>
-        </div>
-        <button
-          className="button secondary"
-          onClick={() => {
-            loadPrinters();
-            load();
-          }}
-        >
-          <RefreshCw size={16} /> Atualizar
-        </button>
-      </div>
-      {error && <Banner message={error} />}
-      <div className={`printing-state ${desktop?.autoPrint ? "enabled" : ""}`}>
-        <span className="printing-state-icon">
-          <Printer size={27} />
-        </span>
-        <div>
-          <h2>
-            {desktop
-              ? desktop.autoPrint
-                ? "Impressão automática ligada"
-                : "Impressão automática pausada"
-              : "Configure no aplicativo Windows"}
-          </h2>
-          <p>
-            {desktop
-              ? "Cardápio: imprime após o aceite. Garçom e gestor: entram aceitos e na fila automaticamente."
-              : "O navegador permite visualizar comandas. A impressão silenciosa é feita pelo gestor instalado."}
-          </p>
-        </div>
-        {desktop && (
-          <button
-            className={`switch ${desktop.autoPrint ? "on" : ""}`}
-            role="switch"
-            aria-checked={desktop.autoPrint}
-            aria-label="Impressão automática"
-            onClick={() =>
-              window
-                .prontoDesktop!.configure({ autoPrint: !desktop.autoPrint })
-                .then(() =>
-                  notify(
-                    desktop.autoPrint
-                      ? "Impressão pausada"
-                      : "Impressão automática ligada",
-                  ),
-                )
-                .catch((e) => notify(errorText(e)))
-            }
-          >
-            <span />
-          </button>
-        )}
-      </div>
-      {desktop?.printerError && <Banner message={desktop.printerError} />}
-      <div className="section-card">
-        <div className="section-card-header">
-          <div>
-            <h2>Saídas de impressão</h2>
-            <p>
-              Uma geral para a expedição. Outras, se a sua cozinha precisar.
-            </p>
-          </div>
-          <button
-            className="button secondary small"
-            disabled={!desktop || targets.length >= 8}
-            onClick={() => {
-              setDirty(true);
-              setTargets([
-                ...targets,
-                {
-                  id: createId(),
-                  label: "Comanda da cozinha",
-                  deviceName: "",
-                  width: 80,
-                  station: "Cozinha",
-                  enabled: true,
-                },
-              ]);
-            }}
-          >
-            <Plus size={16} /> Nova saída
-          </button>
-        </div>
-        <div className="print-targets">
-          {targets.map((t) => (
-            <div className="print-target" key={t.id}>
-              <div className="print-target-top">
-                <span className="printer-square">
-                  <Printer size={20} />
-                </span>
-                <input
-                  aria-label="Nome da saída"
-                  value={t.label}
-                  disabled={!desktop}
-                  maxLength={80}
-                  onChange={(e) => edit(t.id, { label: e.target.value })}
-                />
-                <button
-                  className={`switch ${t.enabled ? "on" : ""}`}
-                  disabled={!desktop}
-                  role="switch"
-                  aria-checked={t.enabled}
-                  aria-label={`Habilitar ${t.label}`}
-                  onClick={() => edit(t.id, { enabled: !t.enabled })}
-                >
-                  <span />
-                </button>
-              </div>
-              <div className="print-target-fields">
-                <label className="field">
-                  Impressora do Windows
-                  <select
-                    value={t.deviceName}
-                    disabled={!desktop}
-                    onChange={(e) => edit(t.id, { deviceName: e.target.value })}
-                  >
-                    <option value="">Selecione a Elgin i8 instalada</option>
-                    {t.deviceName &&
-                      !printers.some((p) => p.name === t.deviceName) && (
-                        <option value={t.deviceName}>
-                          {t.deviceName} (não detectada)
-                        </option>
-                      )}
-                    {printers.map((p) => (
-                      <option key={p.name} value={p.name}>
-                        {p.displayName || p.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="field">
-                  Papel
-                  <select
-                    value={t.width}
-                    disabled={!desktop}
-                    onChange={(e) =>
-                      edit(t.id, { width: Number(e.target.value) as 58 | 80 })
-                    }
-                  >
-                    <option value={80}>80 mm — Elgin i8</option>
-                    <option value={58}>58 mm</option>
-                  </select>
-                </label>
-                <label className="field">
-                  Itens da comanda
-                  <input
-                    value={t.station === "*" ? "Todos os setores" : t.station}
-                    disabled={!desktop || t.id === "geral"}
-                    placeholder="Ex.: Cozinha ou Bar"
-                    onChange={(e) =>
-                      edit(t.id, {
-                        station:
-                          e.target.value === "Todos os setores"
-                            ? "*"
-                            : e.target.value,
-                      })
-                    }
-                  />
-                </label>
-                <button
-                  className="button secondary test-print"
-                  disabled={!desktop || !t.deviceName || Boolean(testing)}
-                  onClick={() => test(t)}
-                >
-                  {testing === t.id ? <Spinner /> : <Printer size={15} />}{" "}
-                  Testar
-                </button>
-              </div>
-              <ReceiptDesigner
-                target={t}
-                onChange={(options) => edit(t.id, { options })}
-              />
-            </div>
-          ))}
-        </div>
-        {desktop && (
-          <div className="section-card-bottom">
-            <span className="small-text">
-              Instale o driver da Elgin i8 no Windows antes de selecionar a
-              impressora.
-            </span>
-            <button
-              className="button primary"
-              onClick={save}
-              disabled={!dirty || busy}
-            >
-              {busy ? <Spinner /> : <Check size={17} />} Salvar saídas
-            </button>
-          </div>
-        )}
-      </div>
-      <div className="section-card">
-        <div className="section-card-header">
-          <div>
-            <h2>
-              Fila de comandas{" "}
-              <span className="count-badge">
-                {
-                  jobs.filter((j) =>
-                    ["pending", "claimed", "printing"].includes(j.state),
-                  ).length
-                }
-              </span>
-            </h2>
-            <p>
-              “Enviada” confirma o aceite pelo sistema de impressão. Confira a
-              saída física.
-            </p>
-          </div>
-        </div>
-        {!jobs.length ? (
-          <Empty
-            icon={<Printer size={27} />}
-            heading="Nenhuma comanda por aqui"
-          >
-            As comandas aparecem após aceitar o cardápio ou lançar pelo garçom e
-            gestor.
-          </Empty>
-        ) : (
-          <div className="print-jobs">
-            {jobs.map((j) => (
-              <div className="print-job" key={j.id}>
-                <span className="job-number">
-                  #{String(j.number).padStart(3, "0")}
-                </span>
-                <div>
-                  <strong>{j.label}</strong>
-                  <small>
-                    {time(j.createdAt)} • {j.attempt} tentativa(s)
-                    {j.lastError && ` • ${j.lastError}`}
-                  </small>
-                </div>
-                <span className={`job-state state-${j.state}`}>
-                  {printLabels[j.state]}
-                </span>
-                {["failed", "uncertain", "spooled"].includes(j.state) && (
-                  <button
-                    className="button small secondary"
-                    onClick={() => retry(j)}
-                  >
-                    <RefreshCw size={13} />
-                    {j.state === "spooled" ? "2ª via" : "Reenviar"}
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </>
   );
 }
 
@@ -2899,6 +2662,7 @@ function StoreSettings({
           </button>
         </div>
       </form>
+      <Updates desktop={desktop} />
       {desktop && (
         <div className="section-card">
           <div className="section-card-header">

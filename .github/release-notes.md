@@ -1,16 +1,16 @@
-Pronto Gestor 0.2.0: pedidos por cardápio, garçom e gestor, com impressão térmica configurável.
+Pronto Gestor 0.3.0: edição de comanda mais simples, adicionais e atualização pelo aplicativo.
 
-- Cardápio imprime após aceitar; garçom/gestor entram aceitos e na fila.
-- Garçom com PIN, mesa, senha, quantidades, observações, troco e próprios pedidos.
-- Categorias e itens com preferências independentes de lista/cards no lançamento interno.
-- Categorias cadastráveis, renomeáveis e ordenáveis; cardápio público em listas agrupadas.
-- Envio ESC/POS RAW à Elgin i8, conteúdo completo e um corte no final; alternativa HTML.
-- Modelos Expedição, Cozinha e Compacta por saída, com prévia e destaques configuráveis.
-- Botões do quadro avançam sem abrir o resumo.
-- Atualizador preserva dados e substitui aplicativo, API e interface com verificação de hashes.
+- Editor em três passos com prévia, ajustes técnicos recolhidos e indicação clara de alterações pendentes.
+- Espaço extra entre linhas em milímetros, aplicado também em fonte grande e em trabalhos ainda na fila.
+- Modelos prontos: geral, batata (só número e itens escolhidos) e balcão opcional.
+- Total de comandas bem grande e posição da via em cada impressão, sem opção de ocultar o aviso.
+- Destaques independentes por categoria e grupo de complementos/adicionais: negrito, caixa e fundo preto.
+- Grupos com preços, mínimos, máximos e limites por opção, disponíveis no cardápio, gestor e garçom. Preços recalculados pelo servidor e histórico preservado.
+- Cozinha como destino padrão; via extra do balcão pela caixa pequena no lançamento ou pelo resumo do pedido.
+- Atualizações em Minha loja: consulta a main/master do GitHub, download com SHA-256 e abertura do instalador após fechar o gestor.
 
-Para atualizar uma instalação existente, feche o aplicativo pela bandeja e execute `Reparar-Pronto-0.2.0.exe`. Para instalar do zero, use o instalador completo. Ao abrir, confira a versão 0.2.0 na barra de título.
+Para a primeira atualização à 0.3.0, feche pela bandeja e execute `Reparar-Pronto-0.3.0.exe`. As próximas versões poderão ser buscadas no aplicativo. O instalador preserva os dados em APPDATA. Ao instalar pelo aplicativo, a impressão automática é pausada: confira e reative após abrir.
 
-O teste inicial continua local, sem VPS. Celular e gestor precisam estar na mesma rede. No celular por HTTP, use o navegador; instalação como PWA exige HTTPS. Pagamentos são registrados para recebimento presencial, sem confirmação online.
+O teste permanece local, sem VPS. O celular usa o navegador por HTTP na LAN; instalar como PWA exige HTTPS. A geração, a fila e os fluxos foram validados em Linux; o instalador nativo e a impressão física precisam de conferência no Windows com a Elgin i8. O executável não possui certificado comercial.
 
-Consulte `COMECAR-AQUI.md` e `IMPRESSAO.md`. A Elgin física e o envio nativo Windows precisam de validação no equipamento. O aplicativo não possui certificado comercial de assinatura.
+Guias: COMECAR-AQUI.md, IMPRESSAO.md e ATUALIZACOES.md.

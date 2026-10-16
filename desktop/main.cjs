@@ -8,6 +8,7 @@ const {
   nativeImage,
   dialog,
   shell,
+  net: electronNet,
 } = require("electron");
 const { spawn } = require("node:child_process");
 const {
@@ -25,6 +26,7 @@ const { randomBytes, randomUUID, createHash } = require("node:crypto");
 const { networkInterfaces } = require("node:os");
 const net = require("node:net");
 const { PrintAgent } = require("./print-agent.cjs");
+const { matchingTargets } = require("../shared/printing.cjs");
 // O build inclui a comanda e o agente no mesmo arquivo do processo principal.
 const {
   renderReceipt,
@@ -33,6 +35,7 @@ const {
   testOrder,
 } = require("../shared/receipt.cjs");
 const { printRaw } = require("./raw-print.cjs");
+const { LocalUpdater } = require("./updater.cjs");
 
 let mainWindow,
   tray,
@@ -46,6 +49,8 @@ let mainWindow,
   lastSync = null,
   quitting = false,
   timer;
+let updater,
+  updating = false;
 const agentId = randomUUID();
 function atomicJson(file, value) {
   mkdirSync(require("node:path").dirname(file), { recursive: true });
@@ -175,7 +180,10 @@ function createAgent() {
   printAgent = new PrintAgent({
     api: (path, method, body) => requestApi(path, method, { ...body, agentId }),
     print: (job) =>
-      printReceipt(job.order, job.store, job.target, { reprint: job.reprint }),
+      printReceipt(job.order, job.store, job.target, {
+        reprint: job.reprint,
+        receipt: job.receipt,
+      }),
     loadJournal: () => readJson(journalFile, {}),
     saveJournal: (journal) => atomicJson(journalFile, journal),
     onError: (message) => {
@@ -310,6 +318,7 @@ function info() {
     printerError,
     lastSync,
     hasToken: Boolean(sessionToken),
+    update: updater?.snapshot(),
   };
 }
 function assertSender(event) {
@@ -317,6 +326,52 @@ function assertSender(event) {
   if (url.origin !== localServerUrl) throw new Error("Origem não autorizada.");
 }
 function registerIpc() {
+  ipcMain.handle("pronto:check-update", async (event) => {
+    assertSender(event);
+    return updater.check();
+  });
+  ipcMain.handle("pronto:download-update", async (event) => {
+    assertSender(event);
+    return updater.startDownload();
+  });
+  ipcMain.handle("pronto:install-update", async (event) => {
+    assertSender(event);
+    if (process.platform !== "win32" || !app.isPackaged)
+      throw new Error(
+        "A instalação da atualização funciona no gestor Windows instalado.",
+      );
+    if (!sessionToken) throw new Error("Entre no gestor antes de atualizar.");
+    if (printAgent.busy)
+      throw new Error("Aguarde a comanda atual terminar antes de atualizar.");
+    updating = true;
+    let file;
+    try {
+      file = await updater.verify();
+    } catch (error) {
+      updating = false;
+      throw error;
+    }
+    config.autoPrint = false;
+    saveConfig();
+    const child = spawn(file, ["/WAITFORPRONTO"], {
+      detached: true,
+      stdio: "ignore",
+      windowsHide: false,
+    });
+    try {
+      await new Promise((resolve, reject) => {
+        child.once("spawn", resolve);
+        child.once("error", reject);
+      });
+    } catch (error) {
+      updating = false;
+      throw error;
+    }
+    child.unref();
+    quitting = true;
+    setTimeout(() => app.quit(), 150);
+    return { ok: true };
+  });
   ipcMain.handle(
     "pronto:api",
     async (event, { path, method = "GET", body, headers = {} }) => {
@@ -362,12 +417,31 @@ function registerIpc() {
     saveConfig();
     return info();
   });
-  ipcMain.handle("pronto:test-print", async (event, target) => {
+  ipcMain.handle("pronto:test-print", async (event, payload) => {
+    const target = payload?.target || payload;
     assertSender(event);
     if (!sessionToken) throw new Error("Entre no gestor primeiro.");
     if (printAgent.busy) throw new Error("Aguarde a comanda atual terminar.");
+    if (updating) throw new Error("Aguarde a atualização do aplicativo.");
     const { store } = await requestApi("/catalog");
-    await printReceipt(testOrder(), store, target, { test: true });
+    const order = testOrder(),
+      all = Array.isArray(payload?.targets)
+        ? payload.targets
+        : (await requestApi("/admin/printing")).targets;
+    let planned = matchingTargets(
+      all,
+      order.items,
+      target.location === "counter",
+    );
+    if (!planned.some((t) => t.id === target.id))
+      planned = [...planned, target];
+    await printReceipt(order, store, target, {
+      test: true,
+      receipt: {
+        count: planned.length,
+        index: Math.max(1, planned.findIndex((t) => t.id === target.id) + 1),
+      },
+    });
     return { ok: true };
   });
   ipcMain.handle("pronto:open-menu", async (event) => {
@@ -382,7 +456,9 @@ function registerIpc() {
     const order = orders.find((o) => o.id === id);
     if (!order) throw new Error("Pedido não encontrado.");
     const { targets } = await requestApi("/admin/printing");
-    const general = targets.find((t) => t.enabled && t.station === "*");
+    const general = targets.find(
+      (t) => t.enabled && t.location !== "counter" && t.filter?.mode === "all",
+    );
     const preview = new BrowserWindow({
       width: 420,
       height: 800,
@@ -398,12 +474,22 @@ function registerIpc() {
     await preview.loadURL(
       "data:text/html;charset=utf-8," +
         encodeURIComponent(
-          renderReceipt(order, store, {
-            ...general,
-            width: general?.width || 80,
-            label: general?.label || "Visualização — comanda geral",
-            station: "*",
-          }),
+          renderReceipt(
+            order,
+            store,
+            {
+              ...general,
+              width: general?.width || 80,
+              label: general?.label || "Visualização — comanda geral",
+              station: "*",
+            },
+            {
+              receipt: {
+                count: order.printJobs?.[0]?.receiptCount || 1,
+                index: order.printJobs?.[0]?.receiptIndex || 1,
+              },
+            },
+          ),
         ),
     );
   });
@@ -540,6 +626,11 @@ else {
   app
     .whenReady()
     .then(async () => {
+      updater = new LocalUpdater({
+        currentVersion: app.getVersion(),
+        directory: join(app.getPath("userData"), "updates"),
+        fetchImpl: (url, options) => electronNet.fetch(url, options),
+      });
       readConfig();
       await startLocalServer();
       if (!config.serverUrl) config.serverUrl = localServerUrl;
@@ -551,7 +642,7 @@ else {
       createAgent();
       createWindow();
       timer = setInterval(async () => {
-        if (sessionToken && config.autoPrint) {
+        if (sessionToken && config.autoPrint && !updating) {
           await printAgent.tick();
         } else {
           try {
