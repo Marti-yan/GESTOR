@@ -1,0 +1,14 @@
+{
+  "version": "0.3.0",
+  "minVersion": "0.2.0",
+  "url": "https://raw.githubusercontent.com/Marti-yan/GESTOR/36041a459579c7cc9356ba6efd6a6420df3d1f16/Reparar-Pronto-0.3.0.exe",
+  "size": 1991567,
+  "sha256": "90024ff08c9e4232a4d67d2bd5693fa897121e20eb8ec302dc0af51d8fee813f",
+  "sourceCommit": "d1cc249287f395b517004b35110ecfcbe7dc9d4c",
+  "notes": [
+    "Editor de comandas simplificado e espaço extra entre linhas em milímetros.",
+    "Modelos geral, batata e balcão; número de comandas bem grande em cada via.",
+    "Complementos e adicionais, com preços e destaques configuráveis.",
+    "Via opcional do balcão e atualização pelo próprio gestor."
+  ]
+}
