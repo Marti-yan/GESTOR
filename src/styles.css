@@ -5774,3 +5774,229 @@ svg {
     grid-template-columns: 1fr;
   }
 }
+
+/* Espaço consistente para lançamento e formulários em janelas menores. */
+.modal {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.modal-header {
+  flex-shrink: 0;
+}
+.modal > .modal-body {
+  overflow-y: auto;
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+.modal > .order-entry {
+  overflow-y: auto;
+  min-height: 0;
+  padding: 24px;
+}
+.modal.wide:has(.order-entry) {
+  width: min(1440px, calc(100vw - 32px));
+  max-width: 1440px;
+  height: calc(100dvh - 32px);
+  max-height: calc(100dvh - 32px);
+}
+.modal .order-entry {
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 400px);
+}
+.entry-fields {
+  grid-template-columns: 1fr;
+}
+.entry-checkout {
+  position: sticky;
+  top: 0;
+  max-height: calc(100dvh - 140px);
+  overflow-y: auto;
+}
+.entry-checkout .address-fields {
+  display: block;
+  padding: 14px;
+  border: 1px solid var(--line);
+}
+.entry-checkout .address-fields .field {
+  margin: 12px 0;
+}
+.entry-checkout .address-fields .field-grid {
+  grid-template-columns: 1fr;
+}
+.entry-mode {
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.entry-mode button {
+  min-width: 90px;
+  font-size: 12px;
+  min-height: 44px;
+}
+.field input,
+.field textarea,
+.field select {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+.reorder-buttons {
+  display: inline-flex;
+  gap: 2px;
+  flex-shrink: 0;
+  align-items: center;
+}
+.catalog-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.catalog-table-head,
+.catalog-table-row {
+  grid-template-columns:
+    minmax(180px, 2fr) minmax(110px, 1fr)
+    95px 100px minmax(135px, 1fr);
+}
+.catalog-table {
+  overflow-x: auto;
+}
+.catalog-table-head,
+.catalog-table-row {
+  min-width: 760px;
+}
+.modifier-option-editor {
+  flex-wrap: wrap;
+  grid-template-columns:
+    minmax(140px, 2fr) minmax(90px, 1fr) minmax(90px, 1fr)
+    auto auto auto;
+}
+.modifier-group-list > div {
+  flex-wrap: wrap;
+}
+@media (max-width: 1000px) {
+  .modal .order-entry {
+    grid-template-columns: 1fr;
+  }
+  .entry-checkout {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+}
+@media (max-width: 650px) {
+  .modal-backdrop {
+    padding: 8px;
+  }
+  .modal {
+    max-height: calc(100dvh - 16px);
+  }
+  .modal > .order-entry {
+    padding: 16px;
+  }
+  .modal.wide:has(.order-entry) {
+    width: 100%;
+    height: calc(100dvh - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+  .modifier-option-editor {
+    grid-template-columns: 1fr 1fr;
+  }
+  .modifier-option-editor .field:first-child {
+    grid-column: 1/-1;
+  }
+}
+.receipt-category-order > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  padding: 5px 0;
+  gap: 12px;
+}
+.receipt-highlight-list > label {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) 125px 150px;
+  gap: 10px;
+  align-items: center;
+}
+.receipt-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+@media (max-width: 650px) {
+  .receipt-highlight-list > label {
+    grid-template-columns: 1fr 1fr;
+  }
+  .receipt-highlight-list > label > span {
+    grid-column: 1/-1;
+  }
+}
+/* Outros modais mantêm rolagem única, incluindo o carrinho no celular. */
+.modal {
+  display: block;
+  overflow: auto;
+}
+.modal:has(> .order-entry) {
+  display: flex;
+  overflow: hidden;
+}
+.modal > .modal-body {
+  overflow: visible;
+}
+.manager-main,
+.manager-content,
+.print-model-card,
+.field {
+  min-width: 0;
+}
+.printing-models {
+  grid-template-columns: minmax(0, 1fr);
+}
+.print-model-basics {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.receipt-highlight-list > label {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.receipt-highlight-list > label > span {
+  grid-column: 1/-1;
+}
+.receipt-highlight-list select {
+  width: 100%;
+  min-width: 0;
+}
+@media (max-width: 650px) {
+  .print-model-basics {
+    grid-template-columns: 1fr;
+  }
+}
+.receipt-key-toggles {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  margin: 18px 0;
+}
+.receipt-key-toggles > label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.receipt-key-toggles input {
+  flex-shrink: 0;
+  margin-top: 2px;
+  accent-color: var(--orange);
+}
+.receipt-category-order span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.print-model-card {
+  overflow: clip;
+}

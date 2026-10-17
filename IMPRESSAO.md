@@ -1,4 +1,4 @@
-# Comandas e impressoras — 0.3.0
+# Comandas e impressoras — 0.5.0
 
 ## Configurar sem complicar
 
@@ -26,17 +26,23 @@ As saídas novas começam com a impressora da geral quando já houver uma config
 
 ## Total de comandas: aviso obrigatório
 
-O total planejado aparece bem grande no início de **cada via**, seguido de sua posição, por exemplo **3 COMANDAS — VIA 2/3**. O total é repetido no final. Esse aviso não pode ser desativado nem pelo modelo enxuto.
+O total de **comandas de cozinha** aparece bem grande em cada via de produção, com a posição: **2 COMANDAS — VIA 1/2**. A via do balcão é independente: não aumenta o total e não recebe posição de produção. Pode informar quantas vias de cozinha precisam ser conferidas.
 
-A contagem considera as saídas ativas cujos filtros correspondem aos itens do pedido:
+Exemplos:
 
-- Lanche sem batata: 1 via geral.
-- Lanche com batata: 2 vias, geral e batata.
-- Os mesmos itens com “Imprimir também no balcão”: 3 vias.
+- Só um lanche: uma comanda geral; sem aviso de múltiplas vias.
+- Lanche e batata: duas comandas de cozinha (geral e batata), numeradas 1/2 e 2/2.
+- Os mesmos itens com balcão: continuam duas comandas de cozinha, mais a via do balcão separada.
 
-Um erro de equipamento pode impedir uma das vias de sair; o número informa o total planejado, não uma confirmação física. Confira a fila. Reimpressão mantém a identificação original e acrescenta “REIMPRESSÃO”.
+Pedir o balcão depois da impressão não altera essa contagem. A via extra recebe a identificação do balcão e o aviso de solicitação posterior. A atualização recalcula a numeração persistida, preservando os estados; não reimprime papéis antigos.
 
-Se o balcão for solicitado **depois de começar a impressão**, os papéis já enviados não podem ser alterados. A nova via recebe o total atualizado e o aviso **VIA EXTRA SOLICITADA DEPOIS**. Para numeração uniforme desde o começo, marque o balcão antes de aceitar/enviar o pedido.
+## Agrupar e destacar
+
+Ative **Agrupar itens por categoria** e use as setas para definir a ordem nesta impressora. Se o pedido tiver hambúrguer 2, batata e hambúrguer 1, os dois hambúrgueres ficam juntos; a batata vem depois conforme a ordem escolhida. Ao desativar o agrupamento, a separação antiga de bebidas continua disponível. Um destaque de categoria inteira também reúne a categoria para formar um bloco único.
+
+Em cada categoria, escolha o estilo e **Item por item** ou **Categoria inteira**. Esta última envolve o título, itens, adicionais e observações na mesma caixinha/fundo. Em **Nome dos itens em negrito**, ative também **Aumentar nome em negrito, mesmo com 1 unidade**. O painel de exceções permite escolher tamanho/negrito por produto. A quantidade continua correta (1x); o destaque não altera o pedido.
+
+Em ESC/POS o tamanho usa escalas discretas da impressora. A opção de aumentar cresce em relação à fonte base, inclusive quando o modelo já usa letra grande. Confira o teste na Elgin antes da operação.
 
 ## Espaçamento que funciona com letra grande
 

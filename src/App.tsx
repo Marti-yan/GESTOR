@@ -1,3 +1,6 @@
+import { CatalogTransfer } from "./CatalogTransfer";
+import { selectionLimit } from "./stockLimits";
+import { Reorder, moved } from "./Reorder";
 import { Reports } from "./Reports";
 import { Stock } from "./Stock";
 import { AddressFields, DeliverySettings, blankAddress } from "./Delivery";
@@ -390,12 +393,25 @@ function Menu({ notify }: { notify: (s: string) => void }) {
     notify(`${selected.name} adicionado ao pedido`);
     setSelected(null);
   }
+  const cartLimit = (line: CartItem, list = cart) =>
+    selectionLimit(
+      products.find((p) => p.id === line.product.id)?.stockQuantity,
+      list
+        .filter((i) => i.product.id === line.product.id && i.key !== line.key)
+        .reduce((n, i) => n + i.quantity, 0),
+    );
   function change(key: string, delta: number) {
     setCart((old) =>
       old
         .map((i) =>
           i.key === key
-            ? { ...i, quantity: Math.min(20, i.quantity + delta) }
+            ? {
+                ...i,
+                quantity:
+                  delta > 0
+                    ? Math.min(cartLimit(i, old), i.quantity + delta)
+                    : i.quantity + delta,
+              }
             : i,
         )
         .filter((i) => i.quantity > 0),
@@ -435,6 +451,7 @@ function Menu({ notify }: { notify: (s: string) => void }) {
                       <span>{i.quantity}</span>
                       <button
                         aria-label={`Aumentar ${i.product.name}`}
+                        disabled={i.quantity >= cartLimit(i)}
                         onClick={() => change(i.key, 1)}
                       >
                         <Plus size={12} />
@@ -646,7 +663,15 @@ function Menu({ notify }: { notify: (s: string) => void }) {
                               setQuantity(1);
                               setNotes("");
                             }}
-                            disabled={!store.open || p.stockQuantity === 0}
+                            disabled={
+                              !store.open ||
+                              selectionLimit(
+                                p.stockQuantity,
+                                cart
+                                  .filter((i) => i.product.id === p.id)
+                                  .reduce((n, i) => n + i.quantity, 0),
+                              ) === 0
+                            }
                             style={{ animationDelay: `${i * 40}ms` }}
                           >
                             <div className={`product-image art-${p.art}`}>
@@ -720,7 +745,17 @@ function Menu({ notify }: { notify: (s: string) => void }) {
           <div className="modal-body">
             <ItemOptionsForm
               key={selected.id}
-              product={selected}
+              product={{
+                ...selected,
+                stockQuantity: products.find((p) => p.id === selected.id)
+                  ?.stockQuantity,
+              }}
+              maxQuantity={selectionLimit(
+                products.find((p) => p.id === selected.id)?.stockQuantity,
+                cart
+                  .filter((i) => i.product.id === selected.id)
+                  .reduce((n, i) => n + i.quantity, 0),
+              )}
               onConfirm={add}
             />
           </div>
@@ -1175,7 +1210,7 @@ function Manager({
               <Printer />
             </div>
           </div>
-          <small>PRONTO GESTOR • MVP 0.3</small>
+          <small>PRONTO GESTOR • OPERAÇÃO LOCAL</small>
         </div>
         <main className="login-form-wrap">
           <form onSubmit={login} className="login-form">
@@ -1327,7 +1362,7 @@ function Manager({
             <LogOut size={17} /> Sair do gestor
           </button>
           <span className="sidebar-version">
-            PRONTO GESTOR <b>v{desktop?.version || "0.4.0"}</b>
+            PRONTO GESTOR <b>v{desktop?.version || "0.5.0"}</b>
           </span>
         </div>
       </aside>
@@ -1396,7 +1431,6 @@ function Manager({
               setStore={setStore}
               notify={notify}
               desktop={desktop}
-              onConnection={() => setConnection(true)}
             />
           ) : (
             <Orders
@@ -1413,7 +1447,7 @@ function Manager({
           </span>
           <span>
             {desktop ? "Aplicativo Windows" : "Gestor web"} • Pronto{" "}
-            {desktop?.version || "0.4.0"}
+            {desktop?.version || "0.5.0"}
           </span>
         </footer>
       </div>
@@ -2239,6 +2273,19 @@ function CatalogManager({ notify }: { notify: (s: string) => void }) {
       notify(errorText(e));
     }
   }
+  async function moveProduct(p: Product, delta: number) {
+    const list = products.filter((x) => x.category === p.category),
+      index = list.findIndex((x) => x.id === p.id);
+    try {
+      await api("/admin/products/order", "PUT", {
+        category: p.category,
+        ids: moved(list, index, delta).map((x) => x.id),
+      });
+      await load();
+    } catch (e) {
+      notify(errorText(e));
+    }
+  }
   return (
     <>
       <div className="page-title-row">
@@ -2269,6 +2316,7 @@ function CatalogManager({ notify }: { notify: (s: string) => void }) {
         </button>
       </div>
       {error && <Banner message={error} />}
+      <CatalogTransfer onChanged={load} />
       <CategoryManager
         categories={categories}
         onChanged={load}
@@ -2358,12 +2406,24 @@ function CatalogManager({ notify }: { notify: (s: string) => void }) {
                 >
                   <span />
                 </button>
-                <button
-                  className="button small secondary"
-                  onClick={() => setEditing(p)}
-                >
-                  Editar
-                </button>
+                <div className="catalog-row-actions">
+                  <Reorder
+                    index={products
+                      .filter((x) => x.category === p.category)
+                      .findIndex((x) => x.id === p.id)}
+                    count={
+                      products.filter((x) => x.category === p.category).length
+                    }
+                    label={p.name}
+                    onMove={(delta) => moveProduct(p, delta)}
+                  />
+                  <button
+                    className="button small secondary"
+                    onClick={() => setEditing(p)}
+                  >
+                    Editar
+                  </button>
+                </div>
               </div>
             ))}
         </div>
@@ -2510,7 +2570,14 @@ function ProductForm({
           {!modifierGroups.length ? (
             <p>Crie os grupos em Cardápio → Complementos e adicionais.</p>
           ) : (
-            modifierGroups.map((group) => (
+            [
+              ...(draft.modifierGroupIds || [])
+                .map((id) => modifierGroups.find((g) => g.id === id))
+                .filter((g): g is ModifierGroup => Boolean(g)),
+              ...modifierGroups.filter(
+                (g) => !draft.modifierGroupIds?.includes(g.id),
+              ),
+            ].map((group) => (
               <label key={group.id}>
                 <input
                   type="checkbox"
@@ -2526,6 +2593,23 @@ function ProductForm({
                     })
                   }
                 />
+                {draft.modifierGroupIds?.includes(group.id) && (
+                  <Reorder
+                    index={draft.modifierGroupIds.indexOf(group.id)}
+                    count={draft.modifierGroupIds.length}
+                    label={`grupo ${group.name} neste produto`}
+                    onMove={(delta) =>
+                      setDraft({
+                        ...draft,
+                        modifierGroupIds: moved(
+                          draft.modifierGroupIds!,
+                          draft.modifierGroupIds!.indexOf(group.id),
+                          delta,
+                        ),
+                      })
+                    }
+                  />
+                )}
                 <span>
                   <strong>{group.name}</strong>
                   <small>
@@ -2549,13 +2633,11 @@ function StoreSettings({
   setStore,
   notify,
   desktop,
-  onConnection,
 }: {
   store: Store;
   setStore: (s: Store) => void;
   notify: (s: string) => void;
   desktop: DesktopInfo | null;
-  onConnection: () => void;
 }) {
   const [draft, setDraft] = useState(store),
     [fee, setFee] = useState(
@@ -2709,19 +2791,6 @@ function StoreSettings({
         </div>
       </form>
       <Updates desktop={desktop} />
-      {desktop && (
-        <div className="section-card">
-          <div className="section-card-header">
-            <div>
-              <h2>Conexão do aplicativo</h2>
-              <p>{desktop.serverUrl}</p>
-            </div>
-            <button className="button secondary" onClick={onConnection}>
-              <Settings2 size={16} /> Configurar
-            </button>
-          </div>
-        </div>
-      )}
     </>
   );
 }

@@ -380,6 +380,7 @@ export function Printing({
                   )}
                 </div>
                 <ReceiptDesigner
+                  products={products}
                   target={t}
                   targets={targets}
                   categories={categories}

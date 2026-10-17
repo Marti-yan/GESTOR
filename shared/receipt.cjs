@@ -40,6 +40,11 @@ const defaults = {
   showPhone: true,
   showPrices: true,
   footer: "Obrigado pela preferência!",
+  groupByCategory: true,
+  categoryOrder: [],
+  boldItemNames: true,
+  largeItemNames: false,
+  itemHighlights: [],
   categoryHighlights: [],
   addonGroupHighlights: [],
 };
@@ -85,6 +90,9 @@ function normalizeReceiptOptions(input = {}, width = 80) {
     "highlightTicket",
     "highlightChange",
     "groupBeverages",
+    "groupByCategory",
+    "boldItemNames",
+    "largeItemNames",
     "showStore",
     "showPhone",
     "showPrices",
@@ -118,7 +126,30 @@ function normalizeReceiptOptions(input = {}, width = 80) {
           ["box", "inverted", "bold"].includes(r.style),
       )
       .slice(0, 60)
-      .map((r) => ({ [idKey]: cleanText(r[idKey]), style: r.style }));
+      .map((r) => ({
+        [idKey]: cleanText(r[idKey]),
+        style: r.style,
+        ...(key === "categoryHighlights"
+          ? { scope: r.scope === "category" ? "category" : "item" }
+          : {}),
+      }));
+  o.categoryOrder = [
+    ...new Set(
+      (Array.isArray(input.categoryOrder) ? input.categoryOrder : [])
+        .filter((v) => typeof v === "string")
+        .map((v) => cleanText(v).slice(0, 100)),
+    ),
+  ].slice(0, 100);
+  o.itemHighlights = (
+    Array.isArray(input.itemHighlights) ? input.itemHighlights : []
+  )
+    .filter((r) => r && typeof r.productId === "string")
+    .slice(0, 500)
+    .map((r) => ({
+      productId: cleanText(r.productId).slice(0, 100),
+      bold: typeof r.bold === "boolean" ? r.bold : o.boldItemNames,
+      large: typeof r.large === "boolean" ? r.large : o.largeItemNames,
+    }));
   return o;
 }
 function receiptBlocks(order, store, target = {}, flags = {}) {
@@ -146,10 +177,15 @@ function receiptBlocks(order, store, target = {}, flags = {}) {
       size: 3,
       kind: "multi",
     });
-    add(`VIA ${index}/${total} - CONFERIR TODAS`, {
-      align: "center",
-      bold: true,
-    });
+    add(
+      target.location === "counter"
+        ? "CONFERIR AS VIAS DA COZINHA"
+        : `VIA ${index}/${total} - CONFERIR TODAS`,
+      {
+        align: "center",
+        bold: true,
+      },
+    );
   }
   if (target.location === "counter")
     add("VIA DO BALCÃO", { align: "center", bold: true, kind: "box" });
@@ -205,25 +241,65 @@ function receiptBlocks(order, store, target = {}, flags = {}) {
   const isDrink = (i) =>
     /bebida/i.test(i.category || "") ||
     /^(bar|bebidas)$/i.test(i.station || "");
-  const groups = o.groupBeverages
-    ? [items.filter((i) => !isDrink(i)), items.filter(isDrink)]
-    : [items];
+  const byCategory =
+    o.groupByCategory ||
+    o.categoryHighlights.some((r) => r.scope === "category");
+  const categoryNames = [...new Set(items.map((i) => i.category || "Outros"))];
+  const categoryRanks = new Map(categoryNames.map((c, i) => [c, i]));
+  categoryNames.sort((a, b) => {
+    const rank = (v) =>
+      o.categoryOrder.includes(v)
+        ? o.categoryOrder.indexOf(v)
+        : o.categoryOrder.length + categoryRanks.get(v);
+    return rank(a) - rank(b);
+  });
+  const groups = byCategory
+    ? categoryNames.map((c) =>
+        items.filter((i) => (i.category || "Outros") === c),
+      )
+    : o.groupBeverages
+      ? [items.filter((i) => !isDrink(i)), items.filter(isDrink)]
+      : [items];
   groups.forEach((group, index) => {
     if (!group.length) return;
-    if (o.groupBeverages && !minimal)
+    const category = group[0].category || "Outros";
+    const whole = byCategory
+      ? o.categoryHighlights.find(
+          (r) => r.category === category && r.scope === "category",
+        )
+      : null;
+    if (whole)
+      add(category.toUpperCase(), {
+        kind: "group-start",
+        style: whole.style,
+        bold: true,
+      });
+    else if (byCategory && !minimal)
+      add(category.toUpperCase(), { kind: "section", bold: true });
+    else if (o.groupBeverages && !minimal)
       add(index === 1 ? "BEBIDAS" : "LANCHES E ITENS", {
         kind: "section",
         bold: true,
       });
     for (const i of group) {
       const categoryStyle = o.categoryHighlights.find(
-        (r) => r.category === i.category,
+        (r) => r.category === i.category && r.scope !== "category",
       )?.style;
+      const itemStyle = o.itemHighlights.find(
+        (r) => r.productId === i.productId,
+      );
+      const bold = itemStyle?.bold ?? o.boldItemNames,
+        large = itemStyle?.large ?? o.largeItemNames;
       add(`${i.quantity}x ${i.name}`, {
         kind: categoryStyle || "item",
         item: true,
         ...emphasis(i.quantity > 1 && o.highlightQuantities),
-        bold: true,
+        bold:
+          bold ||
+          (i.quantity > 1 && o.highlightQuantities) ||
+          categoryStyle === "bold",
+        size:
+          (bold && large) || (i.quantity > 1 && o.highlightQuantities) ? 2 : 1,
       });
       const modifiers = i.modifiers || [],
         groupIds = [...new Set(modifiers.map((m) => m.groupId))];
@@ -253,6 +329,7 @@ function receiptBlocks(order, store, target = {}, flags = {}) {
           bold: o.highlightNotes,
         });
     }
+    if (whole) add("", { kind: "group-end", style: whole.style });
   });
   if (order.notes && !minimal) {
     line();
@@ -285,10 +362,15 @@ function receiptBlocks(order, store, target = {}, flags = {}) {
     }
   }
   if (total > 1)
-    add(`CONFERIR ${total} COMANDAS - VIA ${index}/${total}`, {
-      bold: true,
-      align: "center",
-    });
+    add(
+      target.location === "counter"
+        ? `CONFERIR ${total} COMANDAS DA COZINHA`
+        : `CONFERIR ${total} COMANDAS - VIA ${index}/${total}`,
+      {
+        bold: true,
+        align: "center",
+      },
+    );
   if (!minimal) line();
   if (o.footer) add(o.footer, { align: "center", small: true });
   add(`*** FIM DA COMANDA #${number} ***`, { align: "center", bold: true });
@@ -299,8 +381,8 @@ function renderReceipt(order, store, target = {}, flags = {}) {
     { blocks, options: o } = receiptBlocks(order, store, target, flags);
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Pedido ${escapeHtml(order.number)}</title><style>
   @page{margin:0}*{box-sizing:border-box}html,body{margin:0;padding:0;color:#000;background:#fff}body{width:${width}mm;font:${o.fontSize}px 'Courier New',monospace;line-height:${o.lineSpacing / 24};overflow-wrap:anywhere}
-  #receipt{width:${width}mm;padding:${o.topFeed * 3}mm 3mm ${o.bottomFeed}mm ${3 + o.leftPadding * 1.5}mm}.block{white-space:pre-wrap;margin:0;line-height:calc(1.15em + ${o.lineGapMm}mm);break-inside:avoid}.center{text-align:center}.bold{font-weight:900}.large{font-size:1.5em}.huge{font-size:2.4em}.small{font-size:.85em}.block.item{margin-top:${o.itemGapMm}mm}.line{border-top:1px dashed #000;margin:${o.itemGapMm}mm 0}.section{border-bottom:2px solid #000;letter-spacing:1px;padding:3px 0;margin:${o.itemGapMm}mm 0}.box{border:2px solid #000;padding:3px;margin:2px 0}.inverted{background:#000!important;color:#fff!important;padding:3px;print-color-adjust:exact;-webkit-print-color-adjust:exact}.note{padding:0}
-  </style></head><body><main id="receipt">${blocks.map((b) => (b.kind === "line" ? '<div class="line"></div>' : `<div class="block ${b.kind || ""} ${b.item ? "item" : ""} ${b.bold ? "bold" : ""} ${b.size === 3 ? "huge" : b.size === 2 ? "large" : ""} ${b.small ? "small" : ""} ${b.align === "center" ? "center" : ""}">${escapeHtml(b.text)}</div>`)).join("")}</main></body></html>`;
+  #receipt{width:${width}mm;padding:${o.topFeed * 3}mm 3mm ${o.bottomFeed}mm ${3 + o.leftPadding * 1.5}mm}.block{white-space:pre-wrap;margin:0;line-height:calc(1.15em + ${o.lineGapMm}mm);break-inside:avoid}.center{text-align:center}.bold{font-weight:900}.large{font-size:1.5em}.huge{font-size:2.4em}.small{font-size:.85em}.block.item{margin-top:${o.itemGapMm}mm}.line{border-top:1px dashed #000;margin:${o.itemGapMm}mm 0}.section{border-bottom:2px solid #000;letter-spacing:1px;padding:3px 0;margin:${o.itemGapMm}mm 0}.box{border:2px solid #000;padding:3px;margin:2px 0}.inverted{background:#000!important;color:#fff!important;padding:3px;print-color-adjust:exact;-webkit-print-color-adjust:exact}.note{padding:0}.category-group{margin:5px 0;padding:4px;break-inside:auto}.category-group.bold .block{font-weight:900}
+  </style></head><body><main id="receipt">${blocks.map((b) => (b.kind === "group-start" ? `<section class="category-group ${b.style}"><div class="block bold">${escapeHtml(b.text)}</div>` : b.kind === "group-end" ? "</section>" : b.kind === "line" ? '<div class="line"></div>' : `<div class="block ${b.kind || ""} ${b.item ? "item" : ""} ${b.bold ? "bold" : ""} ${b.size === 3 ? "huge" : b.size === 2 ? "large" : ""} ${b.small ? "small" : ""} ${b.align === "center" ? "center" : ""}">${escapeHtml(b.text)}</div>`)).join("")}</main></body></html>`;
 }
 function wrapText(text, width) {
   const result = [];
@@ -348,38 +430,63 @@ function renderEscPos(order, store, target = {}, flags = {}) {
   cmd(27, 51, 24);
   if (o.topFeed) cmd(27, 100, o.topFeed);
   const columns = o.columns - o.leftPadding;
+  let groupStyle = null;
+  const emitLine = (value) => {
+    text(value + "\n");
+    if (o.lineGapMm) cmd(27, 74, Math.round(o.lineGapMm * 8));
+  };
+  const border = () => {
+    cmd(27, 97, 0);
+    cmd(29, 33, 0);
+    cmd(29, 66, 0);
+    emitLine(" ".repeat(o.leftPadding) + "+" + "-".repeat(columns - 2) + "+");
+  };
   for (const b of blocks) {
+    if (b.kind === "group-start") {
+      groupStyle = b.style;
+      if (groupStyle === "box") border();
+    }
+    if (b.kind === "group-end") {
+      if (groupStyle === "box") border();
+      groupStyle = null;
+      continue;
+    }
+    const outer = groupStyle === "box",
+      innerColumns = columns - (outer ? 4 : 0),
+      box = b.kind === "box";
     if (b.item && o.itemGapMm) cmd(27, 74, Math.round(o.itemGapMm * 8));
-    cmd(27, 97, b.align === "center" ? 1 : 0);
-    cmd(27, 69, b.bold ? 1 : 0);
-    cmd(29, 33, b.size === 3 ? 0x22 : b.size === 2 || o.fontSize >= 16 ? 1 : 0);
-    cmd(29, 66, b.kind === "inverted" ? 1 : 0);
-    const box = b.kind === "box",
-      lines =
-        b.kind === "line"
-          ? ["-".repeat(columns)]
-          : wrapText(
-              b.text,
-              Math.floor(columns / (b.size === 3 ? 3 : 1)) - (box ? 4 : 0),
-            );
-    const printLine = (value) => {
-      text(value + "\n");
-      if (o.lineGapMm) cmd(27, 74, Math.round(o.lineGapMm * 8));
-    };
-    if (box)
-      printLine(
-        " ".repeat(o.leftPadding) + "+" + "-".repeat(columns - 2) + "+",
-      );
-    for (const line of lines)
-      printLine(
+    cmd(27, 97, outer ? 0 : b.align === "center" ? 1 : 0);
+    cmd(27, 69, b.bold || groupStyle === "bold" ? 1 : 0);
+    cmd(
+      29,
+      33,
+      b.size === 3
+        ? 0x22
+        : b.size === 2
+          ? o.fontSize >= 16
+            ? 2
+            : 1
+          : o.fontSize >= 16
+            ? 1
+            : 0,
+    );
+    cmd(29, 66, b.kind === "inverted" || groupStyle === "inverted" ? 1 : 0);
+    const output = (value) =>
+      emitLine(
         " ".repeat(o.leftPadding) +
-          (box ? "| " + line.padEnd(columns - 4) + " |" : line) +
-          "",
+          (outer ? "| " + value.padEnd(innerColumns) + " |" : value),
       );
-    if (box)
-      printLine(
-        " ".repeat(o.leftPadding) + "+" + "-".repeat(columns - 2) + "+",
-      );
+    const lines =
+      b.kind === "line"
+        ? ["-".repeat(innerColumns)]
+        : wrapText(
+            b.text,
+            Math.floor(innerColumns / (b.size === 3 ? 3 : 1)) - (box ? 4 : 0),
+          );
+    if (box) output("+" + "-".repeat(innerColumns - 2) + "+");
+    for (const value of lines)
+      output(box ? "| " + value.padEnd(innerColumns - 4) + " |" : value);
+    if (box) output("+" + "-".repeat(innerColumns - 2) + "+");
     cmd(29, 66, 0);
     cmd(29, 33, 0);
     cmd(27, 69, 0);

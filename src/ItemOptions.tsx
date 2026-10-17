@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { selectionLimit } from "./stockLimits";
+import { useEffect, useState } from "react";
 import { Plus, Minus, Check } from "lucide-react";
 import { money } from "./api";
 import type { Product, ModifierSelection } from "./types";
@@ -37,6 +38,7 @@ export function ItemOptionsForm({
   onConfirm,
   onCancel,
   initial,
+  maxQuantity,
 }: {
   product: Product;
   onConfirm: (
@@ -45,6 +47,7 @@ export function ItemOptionsForm({
     modifiers: ModifierSelection[],
   ) => void;
   onCancel?: () => void;
+  maxQuantity?: number;
   initial?: {
     quantity: number;
     notes: string;
@@ -57,6 +60,13 @@ export function ItemOptionsForm({
       initial?.modifiers || [],
     ),
     [error, setError] = useState("");
+  const limit = Math.min(
+    selectionLimit(product.stockQuantity),
+    maxQuantity ?? 20,
+  );
+  useEffect(() => {
+    setQuantity((q) => Math.min(q, limit));
+  }, [limit]);
   const groups = product.modifierGroups || [];
   function change(groupId: string, optionId: string, delta: number) {
     setSelections((current) => {
@@ -87,6 +97,10 @@ export function ItemOptionsForm({
     setError("");
   }
   function confirm() {
+    if (quantity < 1 || quantity > limit) {
+      setError("A quantidade disponível mudou. Confira o item.");
+      return;
+    }
     const invalid = groups.find((g) => {
       const n = selections
         .filter((s) => s.groupId === g.id)
@@ -201,6 +215,13 @@ export function ItemOptionsForm({
           {error}
         </p>
       )}
+      {limit < 20 && (
+        <p role="status">
+          {limit
+            ? `Você pode selecionar até ${limit} nesta linha.`
+            : "Todas as unidades já estão selecionadas ou o produto esgotou."}
+        </p>
+      )}
       <div className="add-product-row">
         <div className="stepper">
           <button
@@ -215,13 +236,18 @@ export function ItemOptionsForm({
           <button
             type="button"
             aria-label="Aumentar quantidade"
-            disabled={quantity >= 20}
+            disabled={quantity >= limit}
             onClick={() => setQuantity((q) => q + 1)}
           >
             <Plus size={17} />
           </button>
         </div>
-        <button type="button" className="button primary" onClick={confirm}>
+        <button
+          type="button"
+          className="button primary"
+          disabled={limit < 1}
+          onClick={confirm}
+        >
           <Check size={17} />
           Adicionar {money(unitPrice(product, selections) * quantity)}
         </button>

@@ -797,7 +797,7 @@ test("modelos de cozinha geram duas vias apenas se houver batata; balcão é opc
         "SELECT batch_count FROM print_jobs WHERE order_id=? AND purpose='counter'",
       )
       .get(direct.body.order.id).batch_count,
-    3,
+    2,
   );
   const forged = await create(request, { ...body, printAtCounter: true });
   assert.equal(forged.body.order.printAtCounter, false);
@@ -849,7 +849,8 @@ test("balcão pode ser solicitado no resumo e não duplica comandas", async (t) 
     .prepare("SELECT * FROM print_jobs WHERE order_id=? AND purpose='counter'")
     .get(oid);
   assert.equal(extra.late_extra, 1);
-  assert.equal(extra.batch_count, 2);
+  assert.equal(extra.batch_count, 1);
+  assert.equal(extra.batch_index, 0);
 });
 
 test("adicionais são precificados por unidade, validados e preservados no histórico", async (t) => {

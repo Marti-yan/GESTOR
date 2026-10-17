@@ -378,3 +378,135 @@ test("categoria e grupo de adicionais recebem destaques independentes", () => {
   assert.match(html, /class="block inverted\s+bold[^>]*>Molhos escolhidos/);
   assert.ok(html.includes("Barbecue"));
 });
+
+test("comanda agrupa hambúrgueres antes da batata e respeita a ordem de categorias configurada", () => {
+  const o = testOrder();
+  o.items = [
+    {
+      name: "Hambúrguer 2",
+      productId: "h2",
+      category: "Lanches",
+      quantity: 1,
+      price: 100,
+      notes: "",
+    },
+    {
+      name: "Batata",
+      productId: "b",
+      category: "Batatas",
+      quantity: 1,
+      price: 100,
+      notes: "",
+    },
+    {
+      name: "Hambúrguer 1",
+      productId: "h1",
+      category: "Lanches",
+      quantity: 1,
+      price: 100,
+      notes: "",
+    },
+  ];
+  const plain = renderEscPos(
+    o,
+    { name: "Loja" },
+    {
+      options: {
+        groupByCategory: true,
+        categoryOrder: ["Lanches", "Batatas"],
+        codepage: "ascii",
+      },
+    },
+  ).toString("ascii");
+  assert.ok(plain.indexOf("Hamburguer 2") < plain.indexOf("Hamburguer 1"));
+  assert.ok(plain.indexOf("Hamburguer 1") < plain.indexOf("Batata"));
+  const reverse = renderReceipt(
+    o,
+    { name: "Loja" },
+    { options: { categoryOrder: ["Batatas", "Lanches"] } },
+  );
+  assert.ok(reverse.indexOf("1x Batata") < reverse.indexOf("1x Hambúrguer 2"));
+});
+test("caixa de categoria contém todos os itens e notas; negrito grande pode enfatizar uma unidade", () => {
+  const order = testOrder();
+  const target = {
+    width: 80,
+    options: {
+      categoryHighlights: [
+        { category: "Bebidas", scope: "category", style: "box" },
+      ],
+      boldItemNames: true,
+      largeItemNames: true,
+    },
+  };
+  const html = renderReceipt(order, { name: "Loja" }, target);
+  assert.match(html, /<section class="category-group box">/);
+  const group = html
+    .split('<section class="category-group box">')[1]
+    .split("</section>")[0];
+  assert.match(group, /Água Mineral/);
+  assert.match(group, /Refrigerante/);
+  assert.match(group, /class="block item item bold large/);
+  const raw = renderEscPos(
+    order,
+    { name: "Loja" },
+    { ...target, options: { ...target.options, codepage: "ascii" } },
+  ).toString("ascii");
+  assert.match(raw, /\|.*Agua Mineral.*\|/);
+  const { receiptBlocks } = require("../shared/receipt.cjs");
+  const blocks = receiptBlocks(order, { name: "Loja" }, target).blocks;
+  assert.equal(blocks.find((b) => b.text === "1x Água Mineral").size, 2);
+  const small = receiptBlocks(
+    order,
+    { name: "Loja" },
+    {
+      options: {
+        boldItemNames: false,
+        itemHighlights: [{ productId: "agua", bold: true, large: true }],
+      },
+    },
+  ).blocks;
+  assert.equal(small.find((b) => b.text === "1x Água Mineral").size, 2);
+});
+test("via balcão mostra contagem da cozinha sem se numerar como comanda de produção", () => {
+  const html = renderReceipt(
+    testOrder(),
+    { name: "Loja" },
+    { location: "counter" },
+    { receipt: { count: 2, index: 0 } },
+  );
+  assert.match(html, /2 COMANDAS/);
+  assert.match(html, /VIA DO BALCÃO/);
+  assert.doesNotMatch(html, /VIA [0-9]+\/2/);
+});
+
+test("fonte de item destacado cresce fisicamente mesmo no modelo de cozinha com fonte grande", () => {
+  const order = testOrder(),
+    store = { name: "Loja" };
+  const regular = renderEscPos(order, store, {
+    options: {
+      fontSize: 16,
+      boldItemNames: true,
+      largeItemNames: false,
+      highlightQuantities: false,
+    },
+  });
+  const large = renderEscPos(order, store, {
+    options: {
+      fontSize: 16,
+      boldItemNames: true,
+      largeItemNames: true,
+      highlightQuantities: false,
+    },
+  });
+  const occurrences = (buffer) => {
+    let n = 0,
+      p = 0;
+    while ((p = buffer.indexOf(Buffer.from([29, 33, 2]), p)) >= 0) {
+      n++;
+      p += 3;
+    }
+    return n;
+  };
+  assert.ok(occurrences(large) > occurrences(regular));
+});

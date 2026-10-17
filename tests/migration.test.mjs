@@ -138,3 +138,49 @@ test("migração da 0.2 preserva a fila existente e numera as vias sem reimprimi
   assert.equal(db.prepare("SELECT COUNT(*) AS n FROM print_jobs").get().n, 2);
   db.close();
 });
+
+test("migração recalcula somente vias de cozinha sem reimprimir e preserva configurações", (t) => {
+  const directory = mkdtempSync(join(tmpdir(), "pronto-v4-"));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  let db = openDatabase(directory);
+  const now = new Date().toISOString();
+  db.prepare(
+    "INSERT INTO orders(id,idempotency_key,request_hash,tracking_token,customer_name,phone,fulfillment,address,payment,notes,subtotal,delivery_fee,total,status,created_at,updated_at) VALUES ('v4','v4','v4','v4','Cliente','','pickup','','card','',100,0,100,'preparing',?,?)",
+  ).run(now, now);
+  for (const [index, target, purpose, state] of [
+    [1, "geral", "production", "spooled"],
+    [2, "batata", "production", "pending"],
+    [3, "balcao", "counter", "pending"],
+  ])
+    db.prepare(
+      "INSERT INTO print_jobs(id,order_id,target_id,state,created_at,updated_at,batch_count,batch_index,purpose) VALUES (?,'v4',?,?,?,?,3,?,?)",
+    ).run("j" + index, target, state, now, now, index, purpose);
+  db.prepare("UPDATE print_targets SET options=? WHERE id='geral'").run(
+    JSON.stringify({
+      lineGapMm: 2,
+      categoryHighlights: [{ category: "Bebidas", style: "box" }],
+    }),
+  );
+  db.prepare("DELETE FROM settings WHERE key='print-count-kitchen-v5'").run();
+  db.close();
+  db = openDatabase(directory);
+  const jobs = readOrder(db, "v4").printJobs;
+  assert.deepEqual(
+    jobs.map((j) => [j.receiptIndex, j.receiptCount]),
+    [
+      [1, 2],
+      [2, 2],
+      [0, 2],
+    ],
+  );
+  assert.equal(jobs[0].state, "spooled");
+  assert.equal(jobs.length, 3);
+  assert.equal(
+    JSON.parse(
+      db.prepare("SELECT options FROM print_targets WHERE id='geral'").get()
+        .options,
+    ).lineGapMm,
+    2,
+  );
+  db.close();
+});

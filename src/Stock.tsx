@@ -136,11 +136,10 @@ export function Stock() {
             </label>
           )}
           <label className="field">
-            Motivo do ajuste
+            Motivo do ajuste (opcional)
             <input
               maxLength={160}
               value={reason}
-              required
               onChange={(e) => setReason(e.target.value)}
             />
           </label>

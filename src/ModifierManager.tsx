@@ -1,3 +1,4 @@
+import { Reorder, moved } from "./Reorder";
 import { useState } from "react";
 import { Plus, Pencil, Trash2, Check } from "lucide-react";
 import { api, createId, money, parseMoney } from "./api";
@@ -102,7 +103,7 @@ export function ModifierManager({
         </div>
       )}
       <div className="modifier-group-list">
-        {groups.map((group) => (
+        {groups.map((group, groupIndex) => (
           <div key={group.id}>
             <span>
               <strong>{group.name}</strong>
@@ -114,6 +115,27 @@ export function ModifierManager({
                   .join(" / ")}
               </small>
             </span>
+            <Reorder
+              index={groupIndex}
+              count={groups.length}
+              label={group.name}
+              disabled={busy}
+              onMove={async (delta) => {
+                setBusy(true);
+                try {
+                  await api("/admin/modifier-groups/order", "PUT", {
+                    ids: moved(groups, groupIndex, delta).map((g) => g.id),
+                  });
+                  onChanged();
+                } catch (e) {
+                  setError(
+                    e instanceof Error ? e.message : "Não foi possível ordenar",
+                  );
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            />
             <button
               className="icon-button"
               aria-label={`Editar grupo ${group.name}`}
@@ -293,6 +315,17 @@ export function ModifierManager({
                 />
                 Disponível
               </label>
+              <Reorder
+                index={index}
+                count={draft.options.length}
+                label={option.name || `opção ${index + 1}`}
+                onMove={(delta) =>
+                  setDraft({
+                    ...draft,
+                    options: moved(draft.options, index, delta),
+                  })
+                }
+              />
               <button
                 type="button"
                 className="icon-button"

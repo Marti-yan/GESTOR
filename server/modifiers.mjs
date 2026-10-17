@@ -7,7 +7,7 @@ const fail = (message) => {
 const text = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 export function readModifierGroups(db) {
   return db
-    .prepare("SELECT definition FROM modifier_groups ORDER BY rowid")
+    .prepare("SELECT definition FROM modifier_groups ORDER BY sort,rowid")
     .all()
     .map((r) => JSON.parse(r.definition));
 }
@@ -92,7 +92,10 @@ export function priceModifiers(db, product, selections = []) {
   if (!Array.isArray(selections) || selections.length > 100)
     fail("Adicionais inválidos.");
   const ids = JSON.parse(product.modifier_group_ids || "[]"),
-    groups = readModifierGroups(db).filter((g) => ids.includes(g.id)),
+    allGroups = readModifierGroups(db),
+    groups = ids
+      .map((id) => allGroups.find((g) => g.id === id))
+      .filter(Boolean),
     seen = new Set();
   const result = selections.map((s) => {
     const group = groups.find((g) => g.id === s?.groupId),
@@ -130,7 +133,15 @@ export function priceModifiers(db, product, selections = []) {
       );
   }
   return {
-    modifiers: result,
+    modifiers: result.sort((a, b) => {
+      const ga = groups.findIndex((g) => g.id === a.groupId),
+        gb = groups.findIndex((g) => g.id === b.groupId);
+      return (
+        ga - gb ||
+        groups[ga].options.findIndex((o) => o.id === a.optionId) -
+          groups[gb].options.findIndex((o) => o.id === b.optionId)
+      );
+    }),
     price:
       product.price + result.reduce((sum, s) => sum + s.price * s.quantity, 0),
   };

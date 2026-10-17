@@ -147,6 +147,11 @@ export type ReceiptOptions = {
   highlightTicket?: boolean;
   highlightChange?: boolean;
   groupBeverages?: boolean;
+  groupByCategory?: boolean;
+  categoryOrder?: string[];
+  boldItemNames?: boolean;
+  largeItemNames?: boolean;
+  itemHighlights?: { productId: string; bold: boolean; large: boolean }[];
   noteStyle?: "box" | "inverted" | "bold";
   showStore?: boolean;
   showPhone?: boolean;
@@ -154,6 +159,7 @@ export type ReceiptOptions = {
   footer?: string;
   categoryHighlights?: {
     category: string;
+    scope?: "item" | "category";
     style: "box" | "inverted" | "bold";
   }[];
   addonGroupHighlights?: {

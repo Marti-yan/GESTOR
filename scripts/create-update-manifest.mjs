@@ -22,10 +22,11 @@ const manifest = {
     encoding: "utf8",
   }).trim(),
   notes: [
-    "Relatórios com filtros, indicadores, tempos e exportação CSV de pedidos e itens.",
-    "Estoque por produto com reserva transacional, histórico e proteção contra ajustes desatualizados.",
-    "Endereço estruturado com CEP opcional via ViaCEP, cidades e bairros cadastrados pela loja.",
-    "Entrega também nos lançamentos do gestor e garçom, mantendo o fluxo de impressão.",
+    "Endereços corrigidos no executável, formulários mais largos e remoção do bloco de conexão.",
+    "Seleção limitada ao estoque, somando as variações do mesmo produto; motivo do ajuste opcional.",
+    "Ordenação de produtos, grupos e opções; importação e exportação do catálogo em JSON.",
+    "Comandas por categoria, caixa para categoria inteira e nomes em negrito com tamanho maior.",
+    "Via do balcão separada da numeração das comandas de cozinha.",
   ],
 };
 mkdirSync(dirname(resolve(output)), { recursive: true });

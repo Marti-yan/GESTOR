@@ -95,6 +95,7 @@ export function openDatabase(directory) {
   db.exec(
     "CREATE TABLE IF NOT EXISTS modifier_groups(id TEXT PRIMARY KEY,definition TEXT NOT NULL)",
   );
+  addColumn("modifier_groups", "sort", "INTEGER NOT NULL DEFAULT 0");
   addColumn("sessions", "role", "TEXT NOT NULL DEFAULT 'admin'");
   addColumn("sessions", "actor_name", "TEXT NOT NULL DEFAULT ''");
   db.exec(
@@ -303,6 +304,19 @@ export function openDatabase(directory) {
         .run(order_id, index + 1, jobs.length, j.id),
     );
   }
+  if (
+    !db
+      .prepare("SELECT 1 FROM settings WHERE key='print-count-kitchen-v5'")
+      .get()
+  ) {
+    for (const row of db
+      .prepare("SELECT DISTINCT order_id FROM print_jobs")
+      .all())
+      recountKitchenBatch(db, row.order_id);
+    db.prepare(
+      "INSERT INTO settings VALUES ('print-count-kitchen-v5','1')",
+    ).run();
+  }
   return db;
 }
 
@@ -451,4 +465,29 @@ export function enqueuePrintJobs(
         late ? 1 : 0,
       ),
   );
+  recountKitchenBatch(db, orderId);
+}
+
+export function recountKitchenBatch(db, orderId) {
+  const jobs = db
+    .prepare(
+      "SELECT j.*,t.location FROM print_jobs j LEFT JOIN print_targets t ON t.id=j.target_id WHERE j.order_id=? AND j.state<>'cancelled' ORDER BY j.rowid",
+    )
+    .all(orderId);
+  const isCounter = (j) =>
+    j.purpose === "counter" ||
+    (j.target_snapshot
+      ? JSON.parse(j.target_snapshot).location === "counter"
+      : j.location === "counter");
+  const count = jobs.filter((j) => !isCounter(j)).length;
+  let index = 0;
+  for (const j of jobs)
+    db.prepare(
+      "UPDATE print_jobs SET batch_count=?,batch_index=?,purpose=? WHERE id=?",
+    ).run(
+      count,
+      isCounter(j) ? 0 : ++index,
+      isCounter(j) ? "counter" : "production",
+      j.id,
+    );
 }

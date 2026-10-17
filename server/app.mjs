@@ -1,3 +1,4 @@
+import { installCatalogTools } from "./catalog-tools.mjs";
 import {
   installOperations,
   normalizeDeliveryAddress,
@@ -126,6 +127,7 @@ export function createApplication({
     }
     next();
   });
+  app.use("/api/admin/catalog/import", express.json({ limit: "2mb" }));
   app.use(express.json({ limit: "64kb" }));
   const admin = (req, res, next) =>
     authenticate(db, req)
@@ -161,9 +163,9 @@ export function createApplication({
         stockQuantity: p.stock_quantity,
         stockVersion: p.stock_version,
         modifierGroupIds: JSON.parse(p.modifier_group_ids || "[]"),
-        modifierGroups: groups.filter((g) =>
-          JSON.parse(p.modifier_group_ids || "[]").includes(g.id),
-        ),
+        modifierGroups: JSON.parse(p.modifier_group_ids || "[]")
+          .map((id) => groups.find((g) => g.id === id))
+          .filter(Boolean),
       }));
   };
   const categories = () =>
@@ -188,6 +190,7 @@ export function createApplication({
   app.get("/api/health", (_req, res) =>
     res.json({ ok: true, version: packageInfo.version }),
   );
+  installCatalogTools({ app, db, admin, wrap, fail });
   installOperations({ app, db, admin, wrap, fail, rateLimit, addressFetch });
   app.get("/api/catalog", (_req, res) =>
     res.json({
@@ -708,7 +711,15 @@ export function createApplication({
             label: general?.label || "Comanda geral",
             station: "*",
           },
-          { reprint: true },
+          {
+            reprint: true,
+            receipt: {
+              count:
+                order.printJobs?.find((j) => j.purpose !== "counter")
+                  ?.receiptCount || 1,
+              index: 1,
+            },
+          },
         ),
       );
     }),
@@ -731,10 +742,9 @@ export function createApplication({
       if (readModifierGroups(db).length >= 60)
         fail(400, "São permitidos até 60 grupos.");
       const group = validateModifierGroup(req.body);
-      db.prepare("INSERT INTO modifier_groups(id,definition) VALUES (?,?)").run(
-        group.id,
-        JSON.stringify(group),
-      );
+      db.prepare(
+        "INSERT INTO modifier_groups(id,definition,sort) VALUES (?,?,(SELECT COALESCE(MAX(sort),-1)+1 FROM modifier_groups))",
+      ).run(group.id, JSON.stringify(group));
       res.status(201).json({ group });
     }),
   );
@@ -1035,15 +1045,14 @@ export function createApplication({
       res.json({
         html: receipt.renderReceipt(order, readStore(db), target, {
           test: !req.body?.orderId,
-          receipt: {
-            count:
-              order.printJobs?.find((j) => j.targetId === target.id)
-                ?.receiptCount || planned.length,
-            index:
-              order.printJobs?.find((j) => j.targetId === target.id)
-                ?.receiptIndex ||
-              Math.max(1, planned.findIndex((p) => p.id === target.id) + 1),
-          },
+          receipt: order.printJobs?.some((j) => j.targetId === target.id)
+            ? {
+                count: order.printJobs.find((j) => j.targetId === target.id)
+                  .receiptCount,
+                index: order.printJobs.find((j) => j.targetId === target.id)
+                  .receiptIndex,
+              }
+            : printing.receiptContext(planned, target.id),
         }),
         options: target.options,
       });

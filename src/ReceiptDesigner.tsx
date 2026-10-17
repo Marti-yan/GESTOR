@@ -1,3 +1,4 @@
+import { Reorder, moved } from "./Reorder";
 import { useEffect, useState } from "react";
 import { Eye, Check } from "lucide-react";
 import { api } from "./api";
@@ -6,6 +7,7 @@ import type {
   ReceiptOptions,
   Category,
   ModifierGroup,
+  Product,
 } from "./types";
 type Style = "box" | "inverted" | "bold";
 export function ReceiptDesigner({
@@ -13,12 +15,14 @@ export function ReceiptDesigner({
   targets,
   categories,
   modifierGroups,
+  products,
   onChange,
 }: {
   target: PrintTarget;
   targets: PrintTarget[];
   categories: Category[];
   modifierGroups: ModifierGroup[];
+  products: Product[];
   onChange: (o: ReceiptOptions) => void;
 }) {
   const [html, setHtml] = useState(""),
@@ -42,6 +46,9 @@ export function ReceiptDesigner({
     highlightTicket: true,
     highlightChange: true,
     groupBeverages: true,
+    groupByCategory: true,
+    boldItemNames: true,
+    largeItemNames: false,
     showStore: true,
     showPhone: true,
     showPrices: true,
@@ -50,6 +57,25 @@ export function ReceiptDesigner({
     addonGroupHighlights: [],
     ...target.options,
   };
+  const categoryOrder = [
+    ...new Set([...(o.categoryOrder || []), ...categories.map((c) => c.name)]),
+  ].filter((name) => categories.some((c) => c.name === name));
+  function categoryRule(
+    category: string,
+    patch: Partial<NonNullable<ReceiptOptions["categoryHighlights"]>[number]>,
+  ) {
+    const old = o.categoryHighlights?.find((r) => r.category === category) || {
+      category,
+      style: "box" as Style,
+      scope: "item" as const,
+    };
+    edit({
+      categoryHighlights: [
+        ...(o.categoryHighlights || []).filter((r) => r.category !== category),
+        { ...old, ...patch },
+      ],
+    });
+  }
   const signature = JSON.stringify({ target, targets });
   useEffect(() => {
     let active = true;
@@ -108,7 +134,17 @@ export function ReceiptDesigner({
     edit({
       categoryHighlights: [
         ...(o.categoryHighlights || []).filter((r) => r.category !== category),
-        ...(value ? [{ category, style: value as Style }] : []),
+        ...(value
+          ? [
+              {
+                category,
+                style: value as Style,
+                scope:
+                  o.categoryHighlights?.find((r) => r.category === category)
+                    ?.scope || ("item" as const),
+              },
+            ]
+          : []),
       ],
     });
   }
@@ -269,9 +305,60 @@ export function ReceiptDesigner({
         <div className="multi-receipt-notice">
           <b>2, 3, 4… COMANDAS</b>
           <p>
-            Quando houver mais de uma, o total e a posição desta via aparecem
-            bem grandes. Esse aviso é obrigatório e não pode ser ocultado.
+            Quando houver mais de uma comanda de cozinha, o total e a posição
+            desta via aparecem bem grandes. A via do balcão não aumenta essa
+            contagem.
           </p>
+        </div>
+        <h3>Organização dos itens na comanda</h3>
+        <label className="receipt-check">
+          <input
+            type="checkbox"
+            checked={o.groupByCategory !== false}
+            onChange={(e) =>
+              edit({ groupByCategory: e.target.checked, categoryOrder })
+            }
+          />
+          Agrupar itens por categoria
+        </label>
+        <p className="small-text">
+          Os itens de uma categoria saem juntos. Use as setas para definir a
+          ordem desta impressora. Uma caixinha da categoria inteira também reúne
+          seus itens.
+        </p>
+        <div className="receipt-category-order">
+          {categoryOrder.map((name, index) => (
+            <div key={name}>
+              <span>{name}</span>
+              <Reorder
+                index={index}
+                count={categoryOrder.length}
+                label={`categoria ${name} na comanda`}
+                onMove={(delta) =>
+                  edit({ categoryOrder: moved(categoryOrder, index, delta) })
+                }
+              />
+            </div>
+          ))}
+        </div>
+        <div className="receipt-key-toggles">
+          <label>
+            <input
+              type="checkbox"
+              checked={o.boldItemNames !== false}
+              onChange={(e) => edit({ boldItemNames: e.target.checked })}
+            />
+            Nome dos itens em negrito
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={Boolean(o.largeItemNames)}
+              disabled={o.boldItemNames === false}
+              onChange={(e) => edit({ largeItemNames: e.target.checked })}
+            />
+            Aumentar nome em negrito, mesmo com 1 unidade
+          </label>
         </div>
         <h3>3. Destaque o que sua equipe precisa</h3>
         <p className="small-text">
@@ -291,6 +378,21 @@ export function ReceiptDesigner({
                 onChange={(e) => categoryStyle(c.name, e.target.value)}
               >
                 {styles}
+              </select>
+              <select
+                aria-label={`Aplicar destaque de ${c.name}`}
+                value={
+                  o.categoryHighlights?.find((r) => r.category === c.name)
+                    ?.scope || "item"
+                }
+                onChange={(e) =>
+                  categoryRule(c.name, {
+                    scope: e.target.value as "item" | "category",
+                  })
+                }
+              >
+                <option value="item">Item por item</option>
+                <option value="category">Categoria inteira</option>
               </select>
             </label>
           ))}
@@ -320,6 +422,53 @@ export function ReceiptDesigner({
             ))}
           </div>
         )}
+        <details className="receipt-advanced">
+          <summary>Negrito e tamanho por produto</summary>
+          <p>Escolha uma exceção ou mantenha o padrão dos nomes acima.</p>
+          {products.map((p) => {
+            const rule = o.itemHighlights?.find((r) => r.productId === p.id);
+            return (
+              <label className="field" key={p.id}>
+                {p.name}
+                <select
+                  aria-label={`Fonte do item ${p.name}`}
+                  value={
+                    !rule
+                      ? "default"
+                      : rule.large && rule.bold
+                        ? "large"
+                        : rule.bold
+                          ? "bold"
+                          : "normal"
+                  }
+                  onChange={(e) =>
+                    edit({
+                      itemHighlights: [
+                        ...(o.itemHighlights || []).filter(
+                          (r) => r.productId !== p.id,
+                        ),
+                        ...(e.target.value === "default"
+                          ? []
+                          : [
+                              {
+                                productId: p.id,
+                                bold: e.target.value !== "normal",
+                                large: e.target.value === "large",
+                              },
+                            ]),
+                      ],
+                    })
+                  }
+                >
+                  <option value="default">Usar padrão</option>
+                  <option value="normal">Normal</option>
+                  <option value="bold">Negrito</option>
+                  <option value="large">Negrito e maior</option>
+                </select>
+              </label>
+            );
+          })}
+        </details>
         <details className="receipt-advanced">
           <summary>Ajustes de papel, guilhotina e informações</summary>
           <div className="receipt-control-grid">

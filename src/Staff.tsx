@@ -1,3 +1,4 @@
+import { selectionLimit } from "./stockLimits";
 import { AddressFields, blankAddress, type DeliveryAddress } from "./Delivery";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -175,6 +176,7 @@ export function OrderEntry({
     modifiers: ModifierSelection[] = [],
   ) {
     if (locked.current) return;
+    p = products.find((item) => item.id === p.id) || p;
     if (
       p.stockQuantity != null &&
       draft.lines
@@ -208,12 +210,37 @@ export function OrderEntry({
       };
     });
   }
+  const lineLimit = (productId: string, key?: string, list = draft.lines) =>
+    selectionLimit(
+      products.find((p) => p.id === productId)?.stockQuantity,
+      list
+        .filter((l) => l.productId === productId && l.key !== key)
+        .reduce((n, l) => n + l.quantity, 0),
+    );
   function line(key: string, p: Partial<Line>) {
     if (locked.current) return;
     setDraft((d) => ({
       ...d,
       lines: d.lines
-        .map((l) => (l.key === key ? { ...l, ...p } : l))
+        .map((l) =>
+          l.key === key
+            ? {
+                ...l,
+                ...p,
+                ...(p.quantity != null
+                  ? {
+                      quantity: Math.max(
+                        0,
+                        Math.min(
+                          p.quantity,
+                          lineLimit(l.productId, key, d.lines),
+                        ),
+                      ),
+                    }
+                  : {}),
+              }
+            : l,
+        )
         .filter((l) => l.quantity > 0),
     }));
   }
@@ -294,7 +321,16 @@ export function OrderEntry({
           <div className="entry-customizer">
             <ItemOptionsForm
               key={customizing.lineKey || customizing.product.id}
-              product={customizing.product}
+              product={{
+                ...customizing.product,
+                stockQuantity: products.find(
+                  (p) => p.id === customizing.product.id,
+                )?.stockQuantity,
+              }}
+              maxQuantity={lineLimit(
+                customizing.product.id,
+                customizing.lineKey,
+              )}
               initial={
                 customizing.lineKey
                   ? draft.lines.find((l) => l.key === customizing.lineKey)
@@ -424,7 +460,7 @@ export function OrderEntry({
                   key={p.id}
                   type="button"
                   className="entry-product"
-                  disabled={busy || p.stockQuantity === 0}
+                  disabled={busy || lineLimit(p.id) === 0}
                   onClick={() =>
                     p.modifierGroups?.length
                       ? setCustomizing({ product: p })
@@ -591,7 +627,7 @@ export function OrderEntry({
                       <button
                         type="button"
                         aria-label="Aumentar quantidade"
-                        disabled={l.quantity >= 20}
+                        disabled={l.quantity >= lineLimit(l.productId, l.key)}
                         onClick={() =>
                           line(l.key, { quantity: l.quantity + 1 })
                         }

@@ -44,4 +44,16 @@ function matchingTargets(targets, items, counter = false) {
       filterItems(items, t).length > 0,
   );
 }
-module.exports = { normalizeFilter, filterItems, matchingTargets };
+function receiptContext(targets, targetId) {
+  const kitchens = targets.filter((t) => t.location !== "counter");
+  return {
+    count: kitchens.length,
+    index: Math.max(0, kitchens.findIndex((t) => t.id === targetId) + 1),
+  };
+}
+module.exports = {
+  normalizeFilter,
+  filterItems,
+  matchingTargets,
+  receiptContext,
+};

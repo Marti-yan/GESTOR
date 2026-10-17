@@ -425,3 +425,195 @@ test("pedido anterior à ativação do limite precisa reservar antes de entrar n
     1,
   );
 });
+
+test("ordenação de produtos, grupos e opções persiste no catálogo e no snapshot do pedido", async (t) => {
+  const { request, db } = await fixture(t);
+  const burgers = db
+    .prepare(
+      "SELECT id FROM products WHERE category='Burgers' ORDER BY sort,name",
+    )
+    .all()
+    .map((p) => p.id)
+    .reverse();
+  assert.equal(
+    (
+      await request("/admin/products/order", {
+        auth: true,
+        method: "PUT",
+        body: { category: "Burgers", ids: burgers },
+      })
+    ).status,
+    200,
+  );
+  assert.deepEqual(
+    (await request("/catalog")).body.products
+      .filter((p) => p.category === "Burgers")
+      .map((p) => p.id),
+    burgers,
+  );
+  assert.equal(
+    (
+      await request("/admin/products/order", {
+        auth: true,
+        method: "PUT",
+        body: { category: "Burgers", ids: [burgers[0]] },
+      })
+    ).status,
+    409,
+  );
+  const group = (name) => ({
+    name,
+    min: 0,
+    max: 2,
+    options: [
+      { id: "a", name: "Primeira", price: 100, maxQuantity: 1 },
+      { id: "b", name: "Segunda", price: 200, maxQuantity: 1 },
+    ],
+  });
+  const ga = (
+    await request("/admin/modifier-groups", {
+      auth: true,
+      method: "POST",
+      body: group("Grupo A"),
+    })
+  ).body.group;
+  const gb = (
+    await request("/admin/modifier-groups", {
+      auth: true,
+      method: "POST",
+      body: group("Grupo B"),
+    })
+  ).body.group;
+  await request("/admin/modifier-groups/order", {
+    auth: true,
+    method: "PUT",
+    body: { ids: [gb.id, ga.id] },
+  });
+  assert.deepEqual(
+    (await request("/admin/modifier-groups", { auth: true })).body.groups.map(
+      (g) => g.id,
+    ),
+    [gb.id, ga.id],
+  );
+  await request("/admin/modifier-groups/" + ga.id, {
+    auth: true,
+    method: "PUT",
+    body: { ...ga, options: [ga.options[1], ga.options[0]] },
+  });
+  const p = db
+    .prepare("SELECT * FROM products WHERE id='brasa-classico'")
+    .get();
+  await request("/admin/products/" + p.id, {
+    auth: true,
+    method: "PATCH",
+    body: { ...p, available: true, modifierGroupIds: [ga.id, gb.id] },
+  });
+  const catalog = (await request("/catalog")).body.products.find(
+    (x) => x.id === p.id,
+  );
+  assert.deepEqual(
+    catalog.modifierGroups.map((g) => g.id),
+    [ga.id, gb.id],
+  );
+  assert.equal(catalog.modifierGroups[0].options[0].id, "b");
+  const result = await send(
+    request,
+    orderBody([
+      {
+        productId: p.id,
+        quantity: 1,
+        modifiers: [
+          { groupId: gb.id, optionId: "a", quantity: 1 },
+          { groupId: ga.id, optionId: "a", quantity: 1 },
+          { groupId: ga.id, optionId: "b", quantity: 1 },
+        ],
+      },
+    ]),
+  );
+  assert.equal(result.status, 201);
+  assert.deepEqual(
+    result.body.order.items[0].modifiers.map((m) => [m.groupId, m.optionId]),
+    [
+      [ga.id, "b"],
+      [ga.id, "a"],
+      [gb.id, "a"],
+    ],
+  );
+});
+
+test("exportar/importar catálogo transporta ordem e adicionais sem dados privados nem resetar estoque", async (t) => {
+  const { request, db } = await fixture(t);
+  await adjust(request, "brasa-classico", 3);
+  await send(request);
+  const catalog = (await request("/admin/catalog/export", { auth: true })).body;
+  assert.equal(catalog.format, "pronto-catalog/v1");
+  assert.equal(catalog.orders, undefined);
+  assert.equal(catalog.products[0].stockQuantity, undefined);
+  assert.equal(catalog.products[0].stock_quantity, undefined);
+  const first = catalog.products.find((p) => p.id === "brasa-classico");
+  first.name = "Clássico importado";
+  const before = db
+    .prepare("SELECT stock_quantity,stock_version FROM products WHERE id=?")
+    .get(first.id);
+  const preview = await request("/admin/catalog/import", {
+    auth: true,
+    method: "POST",
+    body: { catalog, dryRun: true },
+  });
+  assert.equal(preview.status, 200);
+  assert.equal(preview.body.summary.updated, catalog.products.length);
+  assert.notEqual(
+    db.prepare("SELECT name FROM products WHERE id=?").get(first.id).name,
+    first.name,
+  );
+  const invalid = structuredClone(catalog);
+  invalid.products.push({ ...first, id: "novo-invalido", price: -5 });
+  assert.equal(
+    (
+      await request("/admin/catalog/import", {
+        auth: true,
+        method: "POST",
+        body: { catalog: invalid },
+      })
+    ).status,
+    400,
+  );
+  assert.equal(
+    db.prepare("SELECT COUNT(*) AS n FROM products").get().n,
+    catalog.products.length,
+  );
+  assert.equal(
+    (
+      await request("/admin/catalog/import", {
+        auth: true,
+        method: "POST",
+        body: { catalog },
+      })
+    ).status,
+    200,
+  );
+  assert.deepEqual(
+    db
+      .prepare("SELECT stock_quantity,stock_version FROM products WHERE id=?")
+      .get(first.id),
+    before,
+  );
+  assert.equal(
+    db.prepare("SELECT name FROM products WHERE id=?").get(first.id).name,
+    first.name,
+  );
+  assert.equal(db.prepare("SELECT COUNT(*) AS n FROM orders").get().n, 1);
+  assert.equal((await request("/admin/catalog/export")).status, 401);
+  // Payload larger than old 64 KB parser still succeeds on the authenticated import route.
+  const padded = { ...catalog, ignored: "x".repeat(70000) };
+  assert.equal(
+    (
+      await request("/admin/catalog/import", {
+        auth: true,
+        method: "POST",
+        body: { catalog: padded, dryRun: true },
+      })
+    ).status,
+    200,
+  );
+});

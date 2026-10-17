@@ -1,3 +1,4 @@
+const { isAllowedApiRequest } = require("../shared/api-policy.cjs");
 const {
   app,
   BrowserWindow,
@@ -26,7 +27,7 @@ const { randomBytes, randomUUID, createHash } = require("node:crypto");
 const { networkInterfaces } = require("node:os");
 const net = require("node:net");
 const { PrintAgent } = require("./print-agent.cjs");
-const { matchingTargets } = require("../shared/printing.cjs");
+const { matchingTargets, receiptContext } = require("../shared/printing.cjs");
 // O build inclui a comanda e o agente no mesmo arquivo do processo principal.
 const {
   renderReceipt,
@@ -123,13 +124,7 @@ function validateServer(value) {
   return url.origin;
 }
 async function requestApi(path, method = "GET", body, extraHeaders = {}) {
-  if (
-    typeof path !== "string" ||
-    !/^\/(?:auth|catalog|admin|orders|track|health)(?:\/|$)/.test(path) ||
-    path.includes("..") ||
-    path.includes("://") ||
-    !["GET", "POST", "PUT", "PATCH", "DELETE"].includes(method)
-  )
+  if (!isAllowedApiRequest(path, method))
     throw new Error("Operação não permitida.");
   const headers = {
     "Content-Type": "application/json",
@@ -437,10 +432,7 @@ function registerIpc() {
       planned = [...planned, target];
     await printReceipt(order, store, target, {
       test: true,
-      receipt: {
-        count: planned.length,
-        index: Math.max(1, planned.findIndex((t) => t.id === target.id) + 1),
-      },
+      receipt: receiptContext(planned, target.id),
     });
     return { ok: true };
   });
@@ -485,8 +477,12 @@ function registerIpc() {
             },
             {
               receipt: {
-                count: order.printJobs?.[0]?.receiptCount || 1,
-                index: order.printJobs?.[0]?.receiptIndex || 1,
+                count:
+                  order.printJobs?.find((j) => j.purpose !== "counter")
+                    ?.receiptCount || 1,
+                index:
+                  order.printJobs?.find((j) => j.purpose !== "counter")
+                    ?.receiptIndex || 1,
               },
             },
           ),
