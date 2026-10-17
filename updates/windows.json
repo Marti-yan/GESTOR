@@ -1,14 +1,14 @@
 {
-  "version": "0.3.0",
+  "version": "0.4.0",
   "minVersion": "0.2.0",
-  "url": "https://raw.githubusercontent.com/Marti-yan/GESTOR/36041a459579c7cc9356ba6efd6a6420df3d1f16/Reparar-Pronto-0.3.0.exe",
-  "size": 1991567,
-  "sha256": "90024ff08c9e4232a4d67d2bd5693fa897121e20eb8ec302dc0af51d8fee813f",
-  "sourceCommit": "d1cc249287f395b517004b35110ecfcbe7dc9d4c",
+  "url": "https://raw.githubusercontent.com/Marti-yan/GESTOR/98a71b2e047f82033203d2c93c870432be26927a/Reparar-Pronto-0.4.0.exe",
+  "size": 2000116,
+  "sha256": "8b4aee7304b1d224c6852bdb40eb638e07281443bf5f9f9f2a9b157d36690c24",
+  "sourceCommit": "9649d6074e74e5132c1703dcb877be2ef92e4044",
   "notes": [
-    "Editor de comandas simplificado e espaço extra entre linhas em milímetros.",
-    "Modelos geral, batata e balcão; número de comandas bem grande em cada via.",
-    "Complementos e adicionais, com preços e destaques configuráveis.",
-    "Via opcional do balcão e atualização pelo próprio gestor."
+    "Relatórios com filtros, indicadores, tempos e exportação CSV de pedidos e itens.",
+    "Estoque por produto com reserva transacional, histórico e proteção contra ajustes desatualizados.",
+    "Endereço estruturado com CEP opcional via ViaCEP, cidades e bairros cadastrados pela loja.",
+    "Entrega também nos lançamentos do gestor e garçom, mantendo o fluxo de impressão."
   ]
 }
