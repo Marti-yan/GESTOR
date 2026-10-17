@@ -1,0 +1,35 @@
+{
+  "version": "0.8.0",
+  "sourceCommit": "f1c7a5dde9a3156d3935771321eb9d1c8681a6d0",
+  "installer": {
+    "name": "Pronto-Gestor-0.8.0-Windows-x64.exe",
+    "size": 134882373,
+    "sha256": "9e9295ee2d8f204d594179b6bddeb90eca8803a591bd3435d9d37f97ea5504d8"
+  },
+  "files": {
+    "instalador.parte1.bin": {
+      "size": 50331648,
+      "sha256": "a0a331e84c7c6908374763040b53252bd46ec32e56ce4d7fa63978024b25800a"
+    },
+    "instalador.parte2.bin": {
+      "size": 50331648,
+      "sha256": "6ded75ae71b3f2ab9535057e9eb19c7724dd3bdd9e92666888709cddb43f1e93"
+    },
+    "instalador.parte3.bin": {
+      "size": 34219077,
+      "sha256": "cd4f6ac6431e23b9c744bf5f92cb5ea3b39a8d760a2c953e1a017c56f67dbb16"
+    },
+    "Reparar-Pronto-0.8.0.exe": {
+      "size": 2945238,
+      "sha256": "5dc9ac4d4bcc7d01fbf6c4f6618d01e5459b881edd794a30b50cbec484e5ea7e"
+    },
+    "Pronto-Gestor-Codigo-Fonte.zip": {
+      "size": 721387,
+      "sha256": "85c8a508bfba2db6d46749fb4f094d58747ac85497763199496742908f6f0f8b"
+    },
+    "catalogos/loja-dos-sonhos/cardapio.json": {
+      "size": 41508,
+      "sha256": "0082a31078288a72a029c9ec7acea6b885fea0a349880c446c837e17b720e2c5"
+    }
+  }
+}

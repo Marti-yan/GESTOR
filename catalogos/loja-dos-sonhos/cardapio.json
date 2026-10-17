@@ -1,0 +1,1572 @@
+{
+  "format": "pronto-catalog/v1",
+  "source": {
+    "name": "Loja Dos Sonhos",
+    "url": "https://ecta.com.br/LojaDosSonhos/#/restaurante2",
+    "method": "Texto fornecido pelo usuário",
+    "date": "2026-10-17",
+    "status": "Fechado",
+    "estimatedMinutes": {
+      "min": 60,
+      "max": 90
+    },
+    "subtitle": "Lanches, pastéis, porções, açaí e bebidas."
+  },
+  "notices": [
+    "79 produtos com preço, em 15 categorias. Fonte: texto enviado pelo proprietário nesta conversa, em 17/10/2026; nenhuma leitura autenticada do Ecta.",
+    "SALGADOS: trecho “175G / Sabor único / Pizza inteira com um sabor” não contém produto e preço identificáveis. Categoria preservada; nenhum item vendável inventado.",
+    "Adicionais, fotos, sabores obrigatórios e limites de escolha não constavam no texto: não foram inventados.",
+    "Acompanhamentos sem porção exata (batata maluca, batata P, nuggets dos hot-dogs) ficam como itens de preparo, com a dúvida no nome. Não foram equiparados a porções avulsas de gramatura diferente.",
+    "Refrigerante Flexa 2L dos combos não foi vinculado ao estoque do “REFRIGERANTE FLEXA” avulso porque o volume desse produto não foi informado.",
+    "TRIO DOS SONHOS: linha do lanche e sabor do refrigerante não informados; mantidos como itens de preparo para revisar.",
+    "Itens de preparo imprimem na cozinha indicada, mas não consomem estoque de outro produto. Vincule a produtos reais depois de confirmar porções/sabores.",
+    "O site constava fechado e prazo 60–90 min. O importador permite aplicar nome/prazo e desativar outros produtos após conferência. O estado de abertura, telefone e taxas da loja não são alterados."
+  ],
+  "categories": [
+    {
+      "id": "lds-cat-01",
+      "name": "PROMOÇÃO",
+      "sort": 0
+    },
+    {
+      "id": "lds-cat-02",
+      "name": "AÇAÍ DE GARRAFA",
+      "sort": 1
+    },
+    {
+      "id": "lds-cat-03",
+      "name": "HAMBURGUERES TIPO PODRÃO",
+      "sort": 2
+    },
+    {
+      "id": "lds-cat-04",
+      "name": "HAMBURGUERES SIMPLES",
+      "sort": 3
+    },
+    {
+      "id": "lds-cat-05",
+      "name": "CACHORRO QUENTE",
+      "sort": 4
+    },
+    {
+      "id": "lds-cat-06",
+      "name": "PASTEIS",
+      "sort": 5
+    },
+    {
+      "id": "lds-cat-07",
+      "name": "BATATA DOS SONHOS",
+      "sort": 6
+    },
+    {
+      "id": "lds-cat-08",
+      "name": "BATATA FRITA",
+      "sort": 7
+    },
+    {
+      "id": "lds-cat-09",
+      "name": "COMBOS INDIVIDUAIS",
+      "sort": 8
+    },
+    {
+      "id": "lds-cat-10",
+      "name": "CALDOS",
+      "sort": 9
+    },
+    {
+      "id": "lds-cat-11",
+      "name": "BEBIDAS",
+      "sort": 10
+    },
+    {
+      "id": "lds-cat-12",
+      "name": "BOXS DE LANCHES",
+      "sort": 11
+    },
+    {
+      "id": "lds-cat-13",
+      "name": "PORÇÕES",
+      "sort": 12
+    },
+    {
+      "id": "lds-cat-14",
+      "name": "SALGADOS",
+      "sort": 13
+    },
+    {
+      "id": "lds-cat-15",
+      "name": "TRIO",
+      "sort": 14
+    }
+  ],
+  "modifierGroups": [],
+  "products": [
+    {
+      "id": "lds-item-001",
+      "name": "PROMOÇÃO 100 SALGADINHOS",
+      "description": "100 salgadinhos\n20 mini churros\n1 refrigerante flexa 2 litros",
+      "category": "PROMOÇÃO",
+      "price": 8000,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [
+        {
+          "productId": "prep-lds-001",
+          "preparation": true,
+          "quantity": 100,
+          "name": "Salgadinhos",
+          "station": "Cozinha Batata",
+          "category": "PORÇÕES"
+        },
+        {
+          "productId": "prep-lds-002",
+          "preparation": true,
+          "quantity": 20,
+          "name": "Mini churros",
+          "station": "Cozinha Batata",
+          "category": "PORÇÕES"
+        },
+        {
+          "productId": "prep-lds-003",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Refrigerante Flexa 2 litros",
+          "station": "Cozinha",
+          "category": "BEBIDAS"
+        }
+      ],
+      "sort": 0
+    },
+    {
+      "id": "lds-item-002",
+      "name": "COMBO CASAL",
+      "description": "2 X-Tudo Simples + 1 Batata Frita Maluca + Guaraná Antartica 1,5L",
+      "category": "PROMOÇÃO",
+      "price": 5999,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [
+        {
+          "productId": "lds-item-026",
+          "quantity": 2
+        },
+        {
+          "productId": "prep-lds-004",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Batata maluca — tamanho não informado",
+          "station": "Cozinha Batata",
+          "category": "BATATA DOS SONHOS"
+        },
+        {
+          "productId": "lds-item-047",
+          "quantity": 1
+        }
+      ],
+      "sort": 1
+    },
+    {
+      "id": "lds-item-003",
+      "name": "COMBO EXPLOSÃO DE BACON - 2 GUARAVITAS",
+      "description": "2 x-bacon + 1 batata maluca p + 10 salgadinhos + 2 guaravita",
+      "category": "PROMOÇÃO",
+      "price": 3999,
+      "station": "Cozinha",
+      "art": "bacon",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [
+        {
+          "productId": "lds-item-025",
+          "quantity": 2
+        },
+        {
+          "productId": "prep-lds-005",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Batata maluca P",
+          "station": "Cozinha Batata",
+          "category": "BATATA DOS SONHOS"
+        },
+        {
+          "productId": "prep-lds-006",
+          "preparation": true,
+          "quantity": 10,
+          "name": "Salgadinhos",
+          "station": "Cozinha Batata",
+          "category": "PORÇÕES"
+        },
+        {
+          "productId": "lds-item-048",
+          "quantity": 2
+        }
+      ],
+      "sort": 2
+    },
+    {
+      "id": "lds-item-004",
+      "name": "TRIO DOS SONHOS",
+      "description": "1 x-dos sonhos + batata maluca + 1 refri lata",
+      "category": "PROMOÇÃO",
+      "price": 3499,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [
+        {
+          "productId": "prep-lds-007",
+          "preparation": true,
+          "quantity": 1,
+          "name": "X-dos Sonhos — linha não informada",
+          "station": "Cozinha",
+          "category": "HAMBURGUERES SIMPLES"
+        },
+        {
+          "productId": "prep-lds-008",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Batata maluca — tamanho não informado",
+          "station": "Cozinha Batata",
+          "category": "BATATA DOS SONHOS"
+        },
+        {
+          "productId": "prep-lds-009",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Refrigerante lata — sabor não informado",
+          "station": "Cozinha",
+          "category": "BEBIDAS"
+        }
+      ],
+      "sort": 3
+    },
+    {
+      "id": "lds-item-005",
+      "name": "PROMOÇÃO 50 SALGADINHOS",
+      "description": "50 salgadinhos\n10 mini churros\n1 guarana antartica 1L",
+      "category": "PROMOÇÃO",
+      "price": 4299,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [
+        {
+          "productId": "prep-lds-010",
+          "preparation": true,
+          "quantity": 50,
+          "name": "Salgadinhos",
+          "station": "Cozinha Batata",
+          "category": "PORÇÕES"
+        },
+        {
+          "productId": "prep-lds-011",
+          "preparation": true,
+          "quantity": 10,
+          "name": "Mini churros",
+          "station": "Cozinha Batata",
+          "category": "PORÇÕES"
+        },
+        {
+          "productId": "lds-item-052",
+          "quantity": 1
+        }
+      ],
+      "sort": 4
+    },
+    {
+      "id": "lds-item-006",
+      "name": "100 SALGADINHOS FRITOS",
+      "description": "",
+      "category": "PROMOÇÃO",
+      "price": 7000,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [
+        {
+          "productId": "prep-lds-012",
+          "preparation": true,
+          "quantity": 100,
+          "name": "Salgadinhos",
+          "station": "Cozinha Batata",
+          "category": "PORÇÕES"
+        }
+      ],
+      "sort": 5
+    },
+    {
+      "id": "lds-item-007",
+      "name": "50 SALGADINHOS + 2 GUARAVITAS",
+      "description": "",
+      "category": "PROMOÇÃO",
+      "price": 2999,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [
+        {
+          "productId": "prep-lds-013",
+          "preparation": true,
+          "quantity": 50,
+          "name": "Salgadinhos",
+          "station": "Cozinha Batata",
+          "category": "PORÇÕES"
+        },
+        {
+          "productId": "lds-item-048",
+          "quantity": 2
+        }
+      ],
+      "sort": 6
+    },
+    {
+      "id": "lds-item-008",
+      "name": "GARRAFA DE 500ML COM LEITE CONDENSADO",
+      "description": "Açaí Premium Na Garrafa De 500 Ml Com Leite Condensado",
+      "category": "AÇAÍ DE GARRAFA",
+      "price": 1600,
+      "station": "Cozinha",
+      "art": "water",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 7
+    },
+    {
+      "id": "lds-item-009",
+      "name": "GARRAFA DE 500ML COM CREME DE AVELÃ",
+      "description": "Açaí Premium Na Garrafa De 500 Ml Com Creme De Avelã",
+      "category": "AÇAÍ DE GARRAFA",
+      "price": 1600,
+      "station": "Cozinha",
+      "art": "water",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 8
+    },
+    {
+      "id": "lds-item-010",
+      "name": "GARRAFA DE 500ML NATURAL",
+      "description": "Açaí Premium Na Garrafa De 500 Ml Natural",
+      "category": "AÇAÍ DE GARRAFA",
+      "price": 1600,
+      "station": "Cozinha",
+      "art": "water",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 9
+    },
+    {
+      "id": "lds-item-011",
+      "name": "GARRAFA DE 300ML COM LEITE CONDENSADO",
+      "description": "Açaí Premium Na Garrafa De 300 Ml Com Leite Condensado",
+      "category": "AÇAÍ DE GARRAFA",
+      "price": 1100,
+      "station": "Cozinha",
+      "art": "water",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 10
+    },
+    {
+      "id": "lds-item-012",
+      "name": "GARRAFA DE 300ML COM CREME DE AVELÃ",
+      "description": "Açaí Premium Na Garrafa De 300 Ml Com Creme De Avelã",
+      "category": "AÇAÍ DE GARRAFA",
+      "price": 1100,
+      "station": "Cozinha",
+      "art": "water",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 11
+    },
+    {
+      "id": "lds-item-013",
+      "name": "GARRAFA DE 300ML NATURAL",
+      "description": "Açaí Premium Na Garrafa De 300 Ml Natural",
+      "category": "AÇAÍ DE GARRAFA",
+      "price": 1100,
+      "station": "Cozinha",
+      "art": "water",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 12
+    },
+    {
+      "id": "lds-item-014",
+      "name": "HAMBURGUER PODRÃO",
+      "description": "Pão Carne Salada",
+      "category": "HAMBURGUERES TIPO PODRÃO",
+      "price": 1000,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 13
+    },
+    {
+      "id": "lds-item-015",
+      "name": "X - BURGUER PODRÃO",
+      "description": "Pão Carne Queijo Presunto Salada",
+      "category": "HAMBURGUERES TIPO PODRÃO",
+      "price": 1400,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 14
+    },
+    {
+      "id": "lds-item-016",
+      "name": "X - EGG PODRÃO",
+      "description": "Pão Carne Ovo Queijo Presunto Salada",
+      "category": "HAMBURGUERES TIPO PODRÃO",
+      "price": 1500,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 15
+    },
+    {
+      "id": "lds-item-017",
+      "name": "X - BACON PODRÃO",
+      "description": "Pão Carne Ovo Queijo Presunto Bacon Salada",
+      "category": "HAMBURGUERES TIPO PODRÃO",
+      "price": 1600,
+      "station": "Cozinha",
+      "art": "bacon",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 16
+    },
+    {
+      "id": "lds-item-018",
+      "name": "X - TUDO PODRÃO",
+      "description": "Pão Carne Ovo Queijo Presunto Bacon Calabresa Salada",
+      "category": "HAMBURGUERES TIPO PODRÃO",
+      "price": 1800,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 17
+    },
+    {
+      "id": "lds-item-019",
+      "name": "X - DUPLO PODRÃO",
+      "description": "Pão 2 Carnes 2 Ovos 2 Queijos 2 Presuntos Bacon Calabresa Salada",
+      "category": "HAMBURGUERES TIPO PODRÃO",
+      "price": 2000,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 18
+    },
+    {
+      "id": "lds-item-020",
+      "name": "X - BURGUER DOS SONHOS PODRÃO",
+      "description": "Pão 3 Carnes 2 Ovos 3 Queijos 3 Presuntos Bacon Calabresa Salada",
+      "category": "HAMBURGUERES TIPO PODRÃO",
+      "price": 2500,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 19
+    },
+    {
+      "id": "lds-item-021",
+      "name": "X - FRANGO",
+      "description": "Pão , frango desfiado, ovo, queijo, presunto e salada",
+      "category": "HAMBURGUERES TIPO PODRÃO",
+      "price": 1800,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 20
+    },
+    {
+      "id": "lds-item-022",
+      "name": "X-BURGUER",
+      "description": "Pão + Carne + Queijo Cheddar + Salada (Alface E Tomate)",
+      "category": "HAMBURGUERES SIMPLES",
+      "price": 1200,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 21
+    },
+    {
+      "id": "lds-item-023",
+      "name": "X-EGG",
+      "description": "Pão + Carne + Queijo Cheddar + Ovo + Salada (Alface E Tomate)",
+      "category": "HAMBURGUERES SIMPLES",
+      "price": 1300,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 22
+    },
+    {
+      "id": "lds-item-024",
+      "name": "X-FRANGO",
+      "description": "Pão + Frango Desfiado Cremoso + Ovo + Queijo Cheddar + Salada (Alface E Tomate)",
+      "category": "HAMBURGUERES SIMPLES",
+      "price": 1400,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 23
+    },
+    {
+      "id": "lds-item-025",
+      "name": "X-BACON",
+      "description": "Pão + Carne + Queijo Cheddar + Ovo + Bacon + Salada (Alface E Tomate)",
+      "category": "HAMBURGUERES SIMPLES",
+      "price": 1400,
+      "station": "Cozinha",
+      "art": "bacon",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 24
+    },
+    {
+      "id": "lds-item-026",
+      "name": "X-TUDO",
+      "description": "Pão + Carne + Queijo Cheddar + Ovo + Bacon + Calabresa + Salada (Alface E Tomate)",
+      "category": "HAMBURGUERES SIMPLES",
+      "price": 1500,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 25
+    },
+    {
+      "id": "lds-item-027",
+      "name": "X-DUPLO",
+      "description": "Pão + 2 Carnes + 2 Queijos Cheddar + 2 Ovos + Bacon + Calabresa + Salada (Alface E Tomate)",
+      "category": "HAMBURGUERES SIMPLES",
+      "price": 1700,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 26
+    },
+    {
+      "id": "lds-item-028",
+      "name": "X-CHICKEN",
+      "description": "Pão, Carne, queijo cheddar, ovo, nuggets, bacon e salada",
+      "category": "HAMBURGUERES SIMPLES",
+      "price": 2000,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 27
+    },
+    {
+      "id": "lds-item-029",
+      "name": "SALSICHA 18CM",
+      "description": "Cachorro Quente 18Cm!",
+      "category": "CACHORRO QUENTE",
+      "price": 1200,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 28
+    },
+    {
+      "id": "lds-item-030",
+      "name": "LINGUIÇA 18CM",
+      "description": "Cachorro Quente 18Cm!",
+      "category": "CACHORRO QUENTE",
+      "price": 1400,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 29
+    },
+    {
+      "id": "lds-item-031",
+      "name": "PASTEL CARNE MOIDA 25CM",
+      "description": "Pastel 25Cm!",
+      "category": "PASTEIS",
+      "price": 1600,
+      "station": "Cozinha Batata",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 30
+    },
+    {
+      "id": "lds-item-032",
+      "name": "PASTEL PIZZA 25CM",
+      "description": "Queijo & Presunto & Orégano. Pastel 25Cm!",
+      "category": "PASTEIS",
+      "price": 1600,
+      "station": "Cozinha Batata",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 31
+    },
+    {
+      "id": "lds-item-033",
+      "name": "PASTEL MUSSARELA 25CM",
+      "description": "Pastel 25Cm!",
+      "category": "PASTEIS",
+      "price": 1600,
+      "station": "Cozinha Batata",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 32
+    },
+    {
+      "id": "lds-item-034",
+      "name": "PASTEL DE PERNIL 25CM",
+      "description": "Pastel Com Recheio De Pernil Desfiado",
+      "category": "PASTEIS",
+      "price": 1600,
+      "station": "Cozinha Batata",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 33
+    },
+    {
+      "id": "lds-item-035",
+      "name": "PASTEL QUEIJO MINAS 25CM",
+      "description": "",
+      "category": "PASTEIS",
+      "price": 1600,
+      "station": "Cozinha Batata",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 34
+    },
+    {
+      "id": "lds-item-036",
+      "name": "BATATA DOS SONHOS M",
+      "description": "300g de batata (pesada congelada)\nAcompanha:\nCalabresa & Bacon & Mussarela Ralada\nAproximadamente 500g total",
+      "category": "BATATA DOS SONHOS",
+      "price": 2500,
+      "station": "Cozinha Batata",
+      "art": "loaded-fries",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 35
+    },
+    {
+      "id": "lds-item-037",
+      "name": "BATATA DOS SONHOS G",
+      "description": "600g De batata (pesada congelada)\nAcompanha:\nCalabresa & bacon & Mussarela Ralada\nAproximadamente 900g total",
+      "category": "BATATA DOS SONHOS",
+      "price": 4000,
+      "station": "Cozinha Batata",
+      "art": "loaded-fries",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 36
+    },
+    {
+      "id": "lds-item-038",
+      "name": "BATATA PEQUENA 100G",
+      "description": "100 Gramas",
+      "category": "BATATA FRITA",
+      "price": 1000,
+      "station": "Cozinha Batata",
+      "art": "loaded-fries",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 37
+    },
+    {
+      "id": "lds-item-039",
+      "name": "BATATA MEDIA 150G",
+      "description": "150 Gramas",
+      "category": "BATATA FRITA",
+      "price": 1200,
+      "station": "Cozinha Batata",
+      "art": "loaded-fries",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 38
+    },
+    {
+      "id": "lds-item-040",
+      "name": "BATATA GRANDE 300G",
+      "description": "300 Gramas",
+      "category": "BATATA FRITA",
+      "price": 1500,
+      "station": "Cozinha Batata",
+      "art": "loaded-fries",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 39
+    },
+    {
+      "id": "lds-item-041",
+      "name": "COMBO HOT-DOG SALSICHA",
+      "description": "Cachorro Quente De Salsicha + Batata + Nuggets + Guaravita",
+      "category": "COMBOS INDIVIDUAIS",
+      "price": 2300,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [
+        {
+          "productId": "lds-item-029",
+          "quantity": 1
+        },
+        {
+          "productId": "prep-lds-014",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Batata frita — tamanho não informado",
+          "station": "Cozinha Batata",
+          "category": "BATATA FRITA"
+        },
+        {
+          "productId": "prep-lds-015",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Nuggets — quantidade não informada",
+          "station": "Cozinha Batata",
+          "category": "PORÇÕES"
+        },
+        {
+          "productId": "lds-item-048",
+          "quantity": 1
+        }
+      ],
+      "sort": 40
+    },
+    {
+      "id": "lds-item-042",
+      "name": "COMBO HOT-DOG LINGUIÇA",
+      "description": "Cachorro Quente De Linguiça + Batata Frita + Nuggets + Guaravita",
+      "category": "COMBOS INDIVIDUAIS",
+      "price": 2500,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [
+        {
+          "productId": "lds-item-030",
+          "quantity": 1
+        },
+        {
+          "productId": "prep-lds-016",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Batata frita — tamanho não informado",
+          "station": "Cozinha Batata",
+          "category": "BATATA FRITA"
+        },
+        {
+          "productId": "prep-lds-017",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Nuggets — quantidade não informada",
+          "station": "Cozinha Batata",
+          "category": "PORÇÕES"
+        },
+        {
+          "productId": "lds-item-048",
+          "quantity": 1
+        }
+      ],
+      "sort": 41
+    },
+    {
+      "id": "lds-item-043",
+      "name": "CALDO VERDE",
+      "description": "Tradicional Caldo Verde Com Batata Couve Bacon Calabresa Pimenta Biquinho E Azeite\nsem torrada",
+      "category": "CALDOS",
+      "price": 2300,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 42
+    },
+    {
+      "id": "lds-item-044",
+      "name": "ERVILHA",
+      "description": "Caldo De Ervilha",
+      "category": "CALDOS",
+      "price": 2300,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 43
+    },
+    {
+      "id": "lds-item-045",
+      "name": "COCA-COLA 2L",
+      "description": "Refrigerante Gelado",
+      "category": "BEBIDAS",
+      "price": 1500,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 44
+    },
+    {
+      "id": "lds-item-046",
+      "name": "COCA-COLA LATA 350ML",
+      "description": "",
+      "category": "BEBIDAS",
+      "price": 600,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 45
+    },
+    {
+      "id": "lds-item-047",
+      "name": "GUARANÁ ANTÁRTICA 1,5L",
+      "description": "Refrigerante Gelado",
+      "category": "BEBIDAS",
+      "price": 1000,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 46
+    },
+    {
+      "id": "lds-item-048",
+      "name": "GUARAVITA",
+      "description": "Bebida Gelada",
+      "category": "BEBIDAS",
+      "price": 250,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 47
+    },
+    {
+      "id": "lds-item-049",
+      "name": "H2O 500ML",
+      "description": "",
+      "category": "BEBIDAS",
+      "price": 800,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 48
+    },
+    {
+      "id": "lds-item-050",
+      "name": "COCA-COLA ZERO LATA 350ML",
+      "description": "",
+      "category": "BEBIDAS",
+      "price": 600,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 49
+    },
+    {
+      "id": "lds-item-051",
+      "name": "GUARANA ANTARTICA LATA 350ML",
+      "description": "",
+      "category": "BEBIDAS",
+      "price": 600,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 50
+    },
+    {
+      "id": "lds-item-052",
+      "name": "GUARANÁ ANTÁRTICA 1L",
+      "description": "Refrigerante Gelado",
+      "category": "BEBIDAS",
+      "price": 800,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 51
+    },
+    {
+      "id": "lds-item-053",
+      "name": "COCA-COLA ZERO 2L",
+      "description": "Refrigerante Gelado",
+      "category": "BEBIDAS",
+      "price": 1500,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 52
+    },
+    {
+      "id": "lds-item-054",
+      "name": "GUARAVITON",
+      "description": "Bebida Gelado",
+      "category": "BEBIDAS",
+      "price": 600,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 53
+    },
+    {
+      "id": "lds-item-055",
+      "name": "MINEIRINHO 2L",
+      "description": "Refrigerante Gelado",
+      "category": "BEBIDAS",
+      "price": 1300,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 54
+    },
+    {
+      "id": "lds-item-056",
+      "name": "GUARANÁ ANTARCTICA 2L",
+      "description": "Refrigerante Gelado",
+      "category": "BEBIDAS",
+      "price": 1300,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 55
+    },
+    {
+      "id": "lds-item-057",
+      "name": "AGUA MINERAL 1,5L",
+      "description": "Bebida Gelada",
+      "category": "BEBIDAS",
+      "price": 600,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 56
+    },
+    {
+      "id": "lds-item-058",
+      "name": "AGUA 500ML",
+      "description": "Bebida Gelada",
+      "category": "BEBIDAS",
+      "price": 250,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 57
+    },
+    {
+      "id": "lds-item-059",
+      "name": "AGUA COM GAS 500ML",
+      "description": "",
+      "category": "BEBIDAS",
+      "price": 300,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 58
+    },
+    {
+      "id": "lds-item-060",
+      "name": "REFRIGERANTE FLEXA",
+      "description": "",
+      "category": "BEBIDAS",
+      "price": 800,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 59
+    },
+    {
+      "id": "lds-item-061",
+      "name": "ANTARTICA 600",
+      "description": "",
+      "category": "BEBIDAS",
+      "price": 700,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 60
+    },
+    {
+      "id": "lds-item-062",
+      "name": "H2O 15",
+      "description": "",
+      "category": "BEBIDAS",
+      "price": 1200,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 61
+    },
+    {
+      "id": "lds-item-063",
+      "name": "FANTA UVA LATA 350ML",
+      "description": "",
+      "category": "BEBIDAS",
+      "price": 600,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 62
+    },
+    {
+      "id": "lds-item-064",
+      "name": "FANTA LARANJA LATA 350ML",
+      "description": "",
+      "category": "BEBIDAS",
+      "price": 600,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 63
+    },
+    {
+      "id": "lds-item-065",
+      "name": "PEPSI LATA 350ML",
+      "description": "",
+      "category": "BEBIDAS",
+      "price": 600,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 64
+    },
+    {
+      "id": "lds-item-066",
+      "name": "COCA 600ML",
+      "description": "",
+      "category": "BEBIDAS",
+      "price": 800,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 65
+    },
+    {
+      "id": "lds-item-067",
+      "name": "COMBO 1 (2 X-EGG S.)",
+      "description": "2 X-Egg linha simples +\nBatata Maluca +\n10 Salgadinhos +\n2 Guaravitas;",
+      "category": "BOXS DE LANCHES",
+      "price": 5500,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [
+        {
+          "productId": "lds-item-023",
+          "quantity": 2
+        },
+        {
+          "productId": "prep-lds-018",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Batata maluca — tamanho não informado",
+          "station": "Cozinha Batata",
+          "category": "BATATA DOS SONHOS"
+        },
+        {
+          "productId": "prep-lds-019",
+          "preparation": true,
+          "quantity": 10,
+          "name": "Salgadinhos",
+          "station": "Cozinha Batata",
+          "category": "PORÇÕES"
+        },
+        {
+          "productId": "lds-item-048",
+          "quantity": 2
+        }
+      ],
+      "sort": 66
+    },
+    {
+      "id": "lds-item-068",
+      "name": "COMBO 2 (4 X-EGG S.)",
+      "description": "4 X-egg linha simples +\nBatata Maluca +\n15 Salgadinhos +\n1 Refrigerante Flexa 2L",
+      "category": "BOXS DE LANCHES",
+      "price": 7000,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [
+        {
+          "productId": "lds-item-023",
+          "quantity": 4
+        },
+        {
+          "productId": "prep-lds-020",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Batata maluca — tamanho não informado",
+          "station": "Cozinha Batata",
+          "category": "BATATA DOS SONHOS"
+        },
+        {
+          "productId": "prep-lds-021",
+          "preparation": true,
+          "quantity": 15,
+          "name": "Salgadinhos",
+          "station": "Cozinha Batata",
+          "category": "PORÇÕES"
+        },
+        {
+          "productId": "prep-lds-022",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Refrigerante Flexa 2 litros",
+          "station": "Cozinha",
+          "category": "BEBIDAS"
+        }
+      ],
+      "sort": 67
+    },
+    {
+      "id": "lds-item-069",
+      "name": "COMBO 3 (2 X-TUDO S.)",
+      "description": "2 X-Tudo linha simples +\nBatata Maluca +\n10 Salgadinhos +\n2 Guaravitas",
+      "category": "BOXS DE LANCHES",
+      "price": 6000,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [
+        {
+          "productId": "lds-item-026",
+          "quantity": 2
+        },
+        {
+          "productId": "prep-lds-023",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Batata maluca — tamanho não informado",
+          "station": "Cozinha Batata",
+          "category": "BATATA DOS SONHOS"
+        },
+        {
+          "productId": "prep-lds-024",
+          "preparation": true,
+          "quantity": 10,
+          "name": "Salgadinhos",
+          "station": "Cozinha Batata",
+          "category": "PORÇÕES"
+        },
+        {
+          "productId": "lds-item-048",
+          "quantity": 2
+        }
+      ],
+      "sort": 68
+    },
+    {
+      "id": "lds-item-070",
+      "name": "COMBO 4 (4 X-TUDO S.)",
+      "description": "4 X-Tudo linha simples +\nBatata Maluca +\n15 Salgadinhos +\n1 Refrigerante Flexa 2L",
+      "category": "BOXS DE LANCHES",
+      "price": 8000,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [
+        {
+          "productId": "lds-item-026",
+          "quantity": 4
+        },
+        {
+          "productId": "prep-lds-025",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Batata maluca — tamanho não informado",
+          "station": "Cozinha Batata",
+          "category": "BATATA DOS SONHOS"
+        },
+        {
+          "productId": "prep-lds-026",
+          "preparation": true,
+          "quantity": 15,
+          "name": "Salgadinhos",
+          "station": "Cozinha Batata",
+          "category": "PORÇÕES"
+        },
+        {
+          "productId": "prep-lds-027",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Refrigerante Flexa 2 litros",
+          "station": "Cozinha",
+          "category": "BEBIDAS"
+        }
+      ],
+      "sort": 69
+    },
+    {
+      "id": "lds-item-071",
+      "name": "NUGGETS 250G",
+      "description": "Aproximadamente 250G",
+      "category": "PORÇÕES",
+      "price": 1500,
+      "station": "Cozinha Batata",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 70
+    },
+    {
+      "id": "lds-item-072",
+      "name": "SALGADINHOS 20 UNIDADES",
+      "description": "20 Unidades",
+      "category": "PORÇÕES",
+      "price": 1500,
+      "station": "Cozinha Batata",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 71
+    },
+    {
+      "id": "lds-item-073",
+      "name": "SALGADINHOS CONGELADOS 25 UNIDADES",
+      "description": "Pacote Com 25 Unidades",
+      "category": "PORÇÕES",
+      "price": 1500,
+      "station": "Cozinha Batata",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 72
+    },
+    {
+      "id": "lds-item-074",
+      "name": "CHURROS 20 UNIDADES",
+      "description": "20 Unidades",
+      "category": "PORÇÕES",
+      "price": 1500,
+      "station": "Cozinha Batata",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 73
+    },
+    {
+      "id": "lds-item-075",
+      "name": "CHURROS CONGELADOS 25 UNIDADES",
+      "description": "Pacote Com 25 Unidades",
+      "category": "PORÇÕES",
+      "price": 1500,
+      "station": "Cozinha Batata",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [],
+      "sort": 74
+    },
+    {
+      "id": "lds-item-076",
+      "name": "TRIO X-BURGUER",
+      "description": "x-burguer simples + guaravita + batata p",
+      "category": "TRIO",
+      "price": 1499,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [
+        {
+          "productId": "lds-item-022",
+          "quantity": 1
+        },
+        {
+          "productId": "lds-item-048",
+          "quantity": 1
+        },
+        {
+          "productId": "prep-lds-028",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Batata P — peso não informado",
+          "station": "Cozinha Batata",
+          "category": "BATATA FRITA"
+        }
+      ],
+      "sort": 75
+    },
+    {
+      "id": "lds-item-077",
+      "name": "TRIO X-EGG",
+      "description": "x-egg simples + guaravita + batata p",
+      "category": "TRIO",
+      "price": 1599,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [
+        {
+          "productId": "lds-item-023",
+          "quantity": 1
+        },
+        {
+          "productId": "lds-item-048",
+          "quantity": 1
+        },
+        {
+          "productId": "prep-lds-029",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Batata P — peso não informado",
+          "station": "Cozinha Batata",
+          "category": "BATATA FRITA"
+        }
+      ],
+      "sort": 76
+    },
+    {
+      "id": "lds-item-078",
+      "name": "TRIO X-BACON",
+      "description": "x-bacon simples + guaravita + batata p",
+      "category": "TRIO",
+      "price": 1799,
+      "station": "Cozinha",
+      "art": "bacon",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [
+        {
+          "productId": "lds-item-025",
+          "quantity": 1
+        },
+        {
+          "productId": "lds-item-048",
+          "quantity": 1
+        },
+        {
+          "productId": "prep-lds-030",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Batata P — peso não informado",
+          "station": "Cozinha Batata",
+          "category": "BATATA FRITA"
+        }
+      ],
+      "sort": 77
+    },
+    {
+      "id": "lds-item-079",
+      "name": "TRIO X-TUDO",
+      "description": "x-tudo simples + guaravita + batata p",
+      "category": "TRIO",
+      "price": 1999,
+      "station": "Cozinha",
+      "art": "burger",
+      "available": true,
+      "featured": false,
+      "modifierGroupIds": [],
+      "components": [
+        {
+          "productId": "lds-item-026",
+          "quantity": 1
+        },
+        {
+          "productId": "lds-item-048",
+          "quantity": 1
+        },
+        {
+          "productId": "prep-lds-031",
+          "preparation": true,
+          "quantity": 1,
+          "name": "Batata P — peso não informado",
+          "station": "Cozinha Batata",
+          "category": "BATATA FRITA"
+        }
+      ],
+      "sort": 78
+    }
+  ]
+}
