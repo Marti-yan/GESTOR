@@ -208,6 +208,7 @@ export type UpdateState = {
   error?: string;
 };
 export type DesktopBridge = {
+  precific?: (request:{action:'show'|'hide'|'reload'|'open'|'status';bounds?:{x:number;y:number;width:number;height:number}})=>Promise<{url:string;loading:boolean;error:string;visible:boolean}>;
   api: (
     path: string,
     method?: string,

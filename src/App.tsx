@@ -3,6 +3,7 @@ import { selectionLimit } from "./stockLimits";
 import { Reorder, moved } from "./Reorder";
 import { Reports } from "./Reports";
 import { Stock } from "./Stock";
+import { Precific } from './Precific';
 import { AddressFields, DeliverySettings, blankAddress } from "./Delivery";
 import {
   lazy,
@@ -1364,6 +1365,7 @@ function Manager({
               icon: <LayoutDashboard size={19} />,
               label: "Relatórios",
             },
+            {id:'precific',icon:<ShoppingBag size={19}/>,label:'Precific'},
             {
               id: "estoque",
               icon: <ShoppingBag size={19} />,
@@ -1416,6 +1418,7 @@ function Manager({
                 estoque: "Estoque",
                 entrega: "Endereços",
                 pedidos: "Pedidos",
+                precific:'Precific',
                 cardapio: "Cardápio",
                 impressao: "Impressão",
                 garcom: "Garçons",
@@ -1453,7 +1456,7 @@ function Manager({
           </div>
         </header>
         <div className="manager-content">
-          {section === "atendimento" ? (
+          {section === 'precific'? <Precific hidden={share||connection}/> : section === "atendimento" ? (
             <Support />
           ) : section === "agente" ? (
             <Agent />

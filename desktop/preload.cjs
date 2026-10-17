@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld(
     api: (path, method = "GET", body, headers) =>
       ipcRenderer.invoke("pronto:api", { path, method, body, headers }),
     info: () => ipcRenderer.invoke("pronto:info"),
+    precific: (request) => ipcRenderer.invoke('pronto:precific',request),
     printers: () => ipcRenderer.invoke("pronto:printers"),
     configure: (config) => ipcRenderer.invoke("pronto:configure", config),
     testPrint: (target, targets) =>
