@@ -1,3 +1,13 @@
+import compression from "compression";
+import { installBackups } from "./backups.mjs";
+import { createRequire } from "node:module";
+import { installTables } from "./tables.mjs";
+import {
+  validateComponents,
+  snapshotComponents,
+  catalogAvailability,
+  stockRequirements,
+} from "./combos.mjs";
 import { installCommunications } from "./communications.mjs";
 import { serviceSchema } from "./service-schema.mjs";
 import { installCouriers } from "./couriers.mjs";
@@ -11,7 +21,7 @@ import {
 import express from "express";
 import packageInfo from "../package.json" with { type: "json" };
 import { randomUUID, randomBytes, createHash } from "node:crypto";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   openDatabase,
@@ -88,6 +98,7 @@ export function createApplication({
   serviceSchema(db);
   const app = express();
   app.disable("x-powered-by");
+  app.use(compression({ threshold: 1024 }));
   const limits = new Map();
   const rateLimit = (req, key, max, windowMs) => {
     const ip = req.socket.remoteAddress || "unknown";
@@ -164,6 +175,7 @@ export function createApplication({
       next(e);
     }
   };
+  const tables = installTables({ app, db, admin, staff, wrap, fail });
   const currentPassword = () =>
     db.prepare("SELECT value FROM settings WHERE key='password'").get()?.value;
   const publicProducts = () => {
@@ -173,9 +185,12 @@ export function createApplication({
       .all()
       .map((p) => ({
         ...p,
-        available: Boolean(p.available),
+        components: snapshotComponents(db, p, false),
+        stockRequirements: stockRequirements(db, p),
         featured: Boolean(p.featured),
-        stockQuantity: p.stock_quantity,
+        available: Boolean(p.available),
+        orderable: catalogAvailability(db, p).available,
+        stockQuantity: catalogAvailability(db, p).stockQuantity,
         stockVersion: p.stock_version,
         modifierGroupIds: JSON.parse(p.modifier_group_ids || "[]"),
         modifierGroups: JSON.parse(p.modifier_group_ids || "[]")
@@ -219,10 +234,18 @@ export function createApplication({
   installCouriers({ app, db, admin, wrap, fail, rateLimit, secureCookie });
   installCatalogTools({ app, db, admin, wrap, fail });
   installOperations({ app, db, admin, wrap, fail, rateLimit, addressFetch });
+  installBackups({
+    app,
+    db,
+    admin,
+    wrap,
+    fail,
+    dataDir: dataDir || resolve(".data"),
+  });
   app.get("/api/catalog", (_req, res) =>
     res.json({
       store: readStore(db),
-      products: publicProducts().filter((p) => p.available),
+      products: publicProducts().filter((p) => p.available && p.orderable),
       categories: categories(),
     }),
   );
@@ -495,6 +518,7 @@ export function createApplication({
         price: priced.price,
         basePrice: product.price,
         modifiers: priced.modifiers,
+        components: snapshotComponents(db, product, true, fail),
         quantity: i.quantity,
         notes: text(i.notes, 250),
         station: product.station,
@@ -558,10 +582,12 @@ export function createApplication({
         JSON.stringify(deliveryAddress),
         id,
       );
+      if (internal && fulfillment === "dinein")
+        tables.attachOrder(id, tableName, body.tableSessionId);
       if (internal && body.printAtCounter === true)
         db.prepare("UPDATE orders SET counter_requested=1 WHERE id=?").run(id);
       const insert = db.prepare(
-        "INSERT INTO order_items(id,order_id,product_id,name,price,quantity,notes,station,category,base_price,modifiers) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO order_items(id,order_id,product_id,name,price,quantity,notes,station,category,base_price,modifiers,components) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
       );
       for (const line of lines)
         insert.run(
@@ -576,6 +602,7 @@ export function createApplication({
           line.category,
           line.basePrice,
           JSON.stringify(line.modifiers),
+          JSON.stringify(line.components),
         );
       db.prepare(
         "INSERT INTO order_events(id,order_id,status,created_at) VALUES (?,?,?,?)",
@@ -932,6 +959,7 @@ export function createApplication({
         fail(400, "Cadastre a categoria antes de adicionar o produto.");
       const count = db.prepare("SELECT COUNT(*) AS n FROM products").get().n;
       const groupIds = productGroupIds(db, b.modifierGroupIds);
+      const components = validateComponents(db, b.components, id, fail);
       if (count >= 200) fail(400, "O MVP suporta até 200 produtos.");
       db.prepare(
         "INSERT INTO products(id,name,description,category,price,station,art,sort) VALUES (?,?,?,?,?,?,?,?)",
@@ -944,6 +972,10 @@ export function createApplication({
         station,
         text(b.art, 30) || "burger",
         count,
+      );
+      db.prepare("UPDATE products SET components=? WHERE id=?").run(
+        JSON.stringify(components),
+        id,
       );
       db.prepare("UPDATE products SET modifier_group_ids=? WHERE id=?").run(
         JSON.stringify(groupIds),
@@ -986,6 +1018,12 @@ export function createApplication({
           ? JSON.parse(old.modifier_group_ids)
           : b.modifierGroupIds,
       );
+      const components = validateComponents(
+        db,
+        b.components === undefined ? JSON.parse(old.components) : b.components,
+        old.id,
+        fail,
+      );
       db.prepare(
         "UPDATE products SET name=?,description=?,category=?,price=?,station=?,available=?,art=? WHERE id=?",
       ).run(
@@ -996,6 +1034,10 @@ export function createApplication({
         station,
         b.available ? 1 : 0,
         text(b.art, 30) || old.art,
+        old.id,
+      );
+      db.prepare("UPDATE products SET components=? WHERE id=?").run(
+        JSON.stringify(components),
         old.id,
       );
       db.prepare("UPDATE products SET modifier_group_ids=? WHERE id=?").run(
@@ -1350,7 +1392,47 @@ export function createApplication({
       icons: appIcons,
     }),
   );
-  if (existsSync(webDir)) {
+  if (existsSync(resolve(webDir, "index.html"))) {
+    const rendererPath = [
+      resolve(webDir, "../menu-ssr.cjs"),
+      resolve(webDir, "../.runtime/menu-ssr.cjs"),
+    ].find((p) => existsSync(p));
+    const renderMenu = rendererPath
+      ? createRequire(resolve(webDir, "index.html"))(rendererPath).renderMenu
+      : null;
+    const template = readFileSync(resolve(webDir, "index.html"), "utf8");
+    app.get(
+      "/",
+      wrap((_req, res) => {
+        res.setHeader("Cache-Control", "no-store");
+        if (!renderMenu) return res.send(template);
+        const catalog = {
+          store: readStore(db),
+          products: publicProducts().filter((p) => p.available && p.orderable),
+          categories: categories(),
+        };
+        const json = JSON.stringify(catalog)
+          .replaceAll("<", "\\u003c")
+          .replaceAll("\u2028", "\\u2028")
+          .replaceAll("\u2029", "\\u2029");
+        const html = renderMenu(catalog);
+        res.send(
+          template.replace(
+            '<div id="root"></div>',
+            () =>
+              `<div id="root">${html}</div><script id="pronto-catalog" type="application/json">${json}</script>`,
+          ),
+        );
+      }),
+    );
+
+    app.use(
+      "/assets",
+      express.static(resolve(webDir, "assets"), {
+        immutable: true,
+        maxAge: "1y",
+      }),
+    );
     app.use(express.static(webDir, { index: false }));
     app.get(/^(?!\/api\/).*/, (_req, res) =>
       res.sendFile("index.html", { root: resolve(webDir) }),

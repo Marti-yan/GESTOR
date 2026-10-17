@@ -1,4 +1,4 @@
-# Pronto Gestor — MVP 0.7.0
+# Pronto Gestor — MVP 0.8.0
 
 Cardápio digital → aceite no gestor → comanda térmica. Garçom e gestor também lançam pedidos diretamente.
 
@@ -6,16 +6,16 @@ Preparado para **Elgin i8 USB de 80 mm**, com envio ESC/POS pela fila do Windows
 
 ## Começar pelo instalador Windows
 
-A versão **0.7.0** acrescenta o adaptador Atende Chat por HTTP/Socket.IO, preservando a conexão WhatsApp existente, e a aba nativa Precific com site original e login persistente. Configuração e limites em [INTEGRACAO-ATENDECHAT-PRECIFIC.md](INTEGRACAO-ATENDECHAT-PRECIFIC.md).
+A versão **0.8.0** acrescenta mesas/contas, confirmação visual no + do garçom, combos com acompanhamento por cozinha e estoque compartilhado, portal do entregador com fila de ações e rotas, cardápio com HTML inicial, planilhas e backups. Veja o roteiro para apresentação em [OPERACAO-LOCAL-0.8.md](OPERACAO-LOCAL-0.8.md). As integrações Atende Chat e Precific permanecem disponíveis; detalhes em [INTEGRACAO-ATENDECHAT-PRECIFIC.md](INTEGRACAO-ATENDECHAT-PRECIFIC.md).
 
-**Já tem o gestor instalado?** Feche o programa pela bandeja e execute o **[atualizador 0.7.0](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.7.0/Reparar-Pronto-0.7.0.exe)**. Ele mantém `%APPDATA%\Pronto Gestor` e refaz os atalhos. Se o programa ainda for detectado em execução, reinicie o Windows antes de atualizar. Ao abrir, confira **Pronto Gestor — 0.7.0** na barra de título.
+**Já tem o gestor instalado?** Feche o programa pela bandeja e execute o **[atualizador 0.8.0](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.8.0/Reparar-Pronto-0.8.0.exe)**. Ele mantém `%APPDATA%\Pronto Gestor` e refaz os atalhos. Se o programa ainda for detectado em execução, reinicie o Windows antes de atualizar. Ao abrir, confira **Pronto Gestor — 0.8.0** na barra de título.
 
-Para instalar do zero, baixe o **[pacote Windows em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.7.0.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. O script monta o `.exe`, confere o SHA-256 e abre a instalação. O pacote está em uma branch de distribuição separada porque o instalador excede o limite de arquivo comum do Git.
+Para instalar do zero, baixe o **[pacote Windows em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.8.0.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. O script monta o `.exe`, confere o SHA-256 e abre a instalação. O pacote está em uma branch de distribuição separada porque o instalador excede o limite de arquivo comum do Git.
 
 É possível instalar em outro computador com Windows de 64 bits; o computador de desenvolvimento não precisa estar disponível. Cada instalação mantém seu próprio banco local. Para testar cardápio e pedidos sem a impressora, mantenha a impressão automática desligada e visualize a comanda no gestor.
 
 1. Instale o driver Windows da Elgin i8. Confira que a impressora aparece em **Configurações → Impressoras e scanners** e imprima a página de teste do Windows.
-2. Execute `Pronto-Gestor-0.7.0-Windows-x64.exe` e abra o Pronto Gestor.
+2. Execute `Pronto-Gestor-0.8.0-Windows-x64.exe` e abra o Pronto Gestor.
 3. Crie uma senha de pelo menos 12 caracteres. Em **Minha loja**, informe o nome, taxa de entrega e prazo; em **Cardápio**, edite os produtos de exemplo.
 4. Em **Impressão**, selecione a Elgin i8 em **Comanda geral**, mantenha **80 mm** e modo **ESC/POS**. Escolha o modelo, ajuste a leitura e os destaques, salve e clique em **Testar este modelo**. Confira mesa, três lanches, bebidas, troco e o marcador FIM antes do corte.
 5. Ligue **Impressão automática**.

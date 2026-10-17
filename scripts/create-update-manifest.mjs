@@ -22,11 +22,12 @@ const manifest = {
     encoding: "utf8",
   }).trim(),
   notes: [
-    "Aba Precific carrega o site original com a mesma conta e dados da hospedagem.",
-    "Login do Precific persistente; atualizações do site por recarga, sem novo instalador.",
-    "Adaptador Atende Chat por HTTP e Socket.IO, preservando a sessão WhatsApp existente.",
-    "Tickets, QR, texto e pausa do agente ao assumir ou trocar de atendente.",
-    "Fila vinculada à conexão para impedir envio de mensagens antigas por outro número.",
+    "Garçom: confirmação no +, mesas, conta acumulada e pedidos prontos para servir.",
+    "Combos reservam acompanhamentos e imprimem nas cozinhas corretas, com contagem de vias.",
+    "Entregador: filtros, ordem de paradas, rotas e ações pendentes sem duplicar confirmações.",
+    "Cardápio com HTML inicial no servidor local e módulos separados para abertura rápida.",
+    "Importação por planilha, exemplo fictício de combo e configuração de cozinha por categoria.",
+    "Backups locais verificados e restauração offline com filas antigas desativadas.",
   ],
 };
 mkdirSync(dirname(resolve(output)), { recursive: true });

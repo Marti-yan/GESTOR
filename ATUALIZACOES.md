@@ -39,3 +39,8 @@ As tabelas novas são acrescentadas ao banco existente. Inclua `database/provide
 ## Versão 0.7.0
 
 Aba Precific com site original e sessão persistente; atualizações do site por recarga, sem novo instalador. Adaptador Atende Chat por HTTP/Socket.IO, tickets, QR, texto e pausa/retomada do agente do gestor. Filas são vinculadas à conexão. Guia: INTEGRACAO-ATENDECHAT-PRECIFIC.md. Nenhuma VPS/Hostinger foi alterada.
+
+
+## Versão 0.8.0
+
+Mesas e contas, balão ao adicionar no garçom, combos com reserva de acompanhantes e impressão por cozinha, entregador com fila idempotente/filtros/rotas, SSR do cardápio público com divisão de módulos e compressão, importação por planilha e backups verificados. Veja [OPERACAO-LOCAL-0.8.md](OPERACAO-LOCAL-0.8.md). O atualizador inclui o módulo `menu-ssr.cjs` e verifica seu hash. Preserva dados e integrações existentes; nenhuma infraestrutura externa foi alterada.

@@ -1,4 +1,4 @@
-const { filterItems } = require("./printing.cjs");
+const { filterItems, normalizeFilter } = require("./printing.cjs");
 const escapeHtml = (v) =>
   String(v ?? "").replace(
     /[&<>"']/g,
@@ -290,17 +290,51 @@ function receiptBlocks(order, store, target = {}, flags = {}) {
       );
       const bold = itemStyle?.bold ?? o.boldItemNames,
         large = itemStyle?.large ?? o.largeItemNames;
-      add(`${i.quantity}x ${i.name}`, {
-        kind: categoryStyle || "item",
-        item: true,
-        ...emphasis(i.quantity > 1 && o.highlightQuantities),
-        bold:
-          bold ||
-          (i.quantity > 1 && o.highlightQuantities) ||
-          categoryStyle === "bold",
-        size:
-          (bold && large) || (i.quantity > 1 && o.highlightQuantities) ? 2 : 1,
-      });
+      add(
+        `${i.quantity}x ${i.name}${i.comboReferenceOnly ? " (REF. DO COMBO)" : ""}`,
+        {
+          kind: categoryStyle || "item",
+          item: true,
+          ...emphasis(i.quantity > 1 && o.highlightQuantities),
+          bold:
+            bold ||
+            (i.quantity > 1 && o.highlightQuantities) ||
+            categoryStyle === "bold",
+          size:
+            (bold && large) || (i.quantity > 1 && o.highlightQuantities)
+              ? 2
+              : 1,
+        },
+      );
+      if (i.components?.length) {
+        if (i.comboReferenceOnly)
+          add("ACOMPANHAMENTOS DESTE COMBO", { bold: true, kind: "box" });
+        for (const station of [
+          ...new Set(i.components.map((c) => c.station)),
+        ]) {
+          const components = i.components.filter((c) => c.station === station);
+          const here = components.some((c) => c.prepareHere);
+          add(
+            `ACOMPANHA [${station}]${normalizeFilter(target.filter, target.station).mode !== "all" ? (here ? " - PREPARAR AQUI" : " - OUTRA COZINHA") : ""}`,
+            { bold: true },
+          );
+          for (const category of [
+            ...new Set(components.map((c) => c.category || "Acompanhamentos")),
+          ]) {
+            add(category.toUpperCase(), { bold: true, kind: "section" });
+            for (const c of components.filter(
+              (c) => (c.category || "Acompanhamentos") === category,
+            ))
+              add(
+                `- ${c.quantity * i.quantity}x ${c.name}${i.quantity > 1 ? ` (${c.quantity} por combo)` : ""}`,
+                {
+                  bold: Boolean(c.prepareHere),
+                  kind: c.prepareHere && kitchen ? "box" : "note",
+                },
+              );
+          }
+        }
+      }
       const modifiers = i.modifiers || [],
         groupIds = [...new Set(modifiers.map((m) => m.groupId))];
       for (const groupId of groupIds) {

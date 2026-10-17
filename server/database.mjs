@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import printing from "../shared/printing.cjs";
 
 export function openDatabase(directory) {
-  mkdirSync(directory, { recursive: true });
+  mkdirSync(directory, { recursive: true, mode: 0o700 });
   const db = new DatabaseSync(join(directory, "pronto.sqlite"));
   db.exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;
     CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -67,6 +67,9 @@ export function openDatabase(directory) {
     ["accepted_at", "TEXT"],
   ])
     addColumn("orders", name, definition);
+  addColumn("products", "components", "TEXT NOT NULL DEFAULT '[]'");
+  addColumn("order_items", "components", "TEXT NOT NULL DEFAULT '[]'");
+  addColumn("orders", "table_session_id", "TEXT");
   addColumn("order_items", "category", "TEXT NOT NULL DEFAULT ''");
   addColumn("order_items", "modifiers", "TEXT NOT NULL DEFAULT '[]'");
   addColumn("order_items", "base_price", "INTEGER");
@@ -361,6 +364,7 @@ export function readOrder(db, id, { privateData = true } = {}) {
     status: row.status,
     source: row.source,
     tableName: row.table_name,
+    tableSessionId: row.table_session_id,
     pickupCode: row.pickup_code,
     actorName: row.actor_name,
     acceptedAt: row.accepted_at,
@@ -378,6 +382,7 @@ export function readOrder(db, id, { privateData = true } = {}) {
       category: i.category,
       basePrice: i.base_price ?? i.price,
       modifiers: JSON.parse(i.modifiers || "[]"),
+      components: JSON.parse(i.components || "[]"),
     })),
   };
   if (privateData)

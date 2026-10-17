@@ -1,4 +1,4 @@
-const CACHE = "pronto-shell-0.7.0";
+const CACHE = "pronto-shell-0.8.0";
 self.addEventListener("install", (event) =>
   event.waitUntil(
     (async () => {

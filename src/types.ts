@@ -1,3 +1,10 @@
+export type ComboComponent = {
+  productId: string;
+  quantity: number;
+  name?: string;
+  category?: string;
+  station?: string;
+};
 export type Category = { id: string; name: string; sort: number };
 export type ModifierGroup = {
   id: string;
@@ -36,6 +43,12 @@ export type Store = {
   allowPickup: boolean;
 };
 export type Product = {
+  stockRequirements?: {
+    productId: string;
+    quantity: number;
+    stockQuantity: number | null;
+  }[];
+  components?: ComboComponent[];
   stockQuantity?: number | null;
   stockVersion?: number;
   id: string;
@@ -58,7 +71,11 @@ export type CartItem = {
   modifiers?: ModifierSelection[];
 };
 export type OrderStatus =
-  "new" | "preparing" | "ready" | "completed" | "cancelled";
+  | "new"
+  | "preparing"
+  | "ready"
+  | "completed"
+  | "cancelled";
 export type PrintState =
   | "pending"
   | "claimed"
@@ -68,6 +85,7 @@ export type PrintState =
   | "uncertain"
   | "cancelled";
 export type OrderItem = {
+  components?: ComboComponent[];
   id: string;
   productId: string;
   name: string;
@@ -90,6 +108,7 @@ export type Order = {
   payment: "cash" | "card" | "pending";
   source: "menu" | "waiter" | "manager";
   tableName: string;
+  tableSessionId?: string | null;
   pickupCode: string;
   actorName: string;
   acceptedAt: string | null;

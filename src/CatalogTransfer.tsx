@@ -1,3 +1,5 @@
+import { catalogFromCsv } from "../shared/catalog-csv.cjs";
+import demoCatalog from "../examples/cardapio-demonstracao.json";
 import { useState } from "react";
 import { api } from "./api";
 type Summary = {
@@ -8,6 +10,7 @@ type Summary = {
   updated: number;
 };
 export function CatalogTransfer({ onChanged }: { onChanged: () => void }) {
+  const [csv, setCsv] = useState("");
   const [catalog, setCatalog] = useState<unknown>(null),
     [summary, setSummary] = useState<Summary | null>(null),
     [message, setMessage] = useState(""),
@@ -58,6 +61,25 @@ export function CatalogTransfer({ onChanged }: { onChanged: () => void }) {
       setBusy(false);
     }
   }
+  async function preview(data: unknown) {
+    setBusy(true);
+    setSummary(null);
+    setCatalog(null);
+    setMessage("");
+    try {
+      const r = await api<{ summary: Summary }>(
+        "/admin/catalog/import",
+        "POST",
+        { catalog: data, dryRun: true },
+      );
+      setCatalog(data);
+      setSummary(r.summary);
+    } catch (e) {
+      setMessage((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function save() {
     setBusy(true);
     try {
@@ -99,6 +121,51 @@ export function CatalogTransfer({ onChanged }: { onChanged: () => void }) {
           />
         </label>
       </div>
+      <details className="catalog-paste">
+        <summary>Importar planilha / preparar uma demonstração</summary>
+        <p>
+          Cole uma planilha com cabeçalho:
+          categoria;nome;descricao;preco;cozinha. Aceita ponto e vírgula ou
+          tabulação. Pastéis, batatas e porções vão para Cozinha Batata quando a
+          coluna cozinha estiver vazia; os demais vão para Cozinha.
+        </p>
+        <textarea
+          rows={6}
+          value={csv}
+          onChange={(e) => setCsv(e.target.value)}
+          placeholder={
+            "categoria;nome;descricao;preco;cozinha\nBatatas;Batata exemplo;Descrição;19,90;"
+          }
+          aria-label="Planilha do cardápio"
+        />
+        <div className="operation-actions">
+          <button
+            className="button secondary"
+            disabled={busy || !csv.trim()}
+            onClick={() => {
+              try {
+                preview(catalogFromCsv(csv));
+              } catch (e) {
+                setMessage((e as Error).message);
+              }
+            }}
+          >
+            Conferir planilha
+          </button>
+          <button
+            className="button secondary"
+            disabled={busy}
+            onClick={() => preview(demoCatalog)}
+          >
+            Conferir exemplo fictício de combo
+          </button>
+        </div>
+        <small>
+          O exemplo é uma demonstração com preços ilustrativos, não é uma cópia
+          do cardápio Ecta. Nenhum dado entra na loja até confirmar a
+          importação.
+        </small>
+      </details>
       {summary && (
         <div className="operation-panel">
           <p>

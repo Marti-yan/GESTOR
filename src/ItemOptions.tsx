@@ -1,3 +1,4 @@
+import { ComboSummary } from "./Combos";
 import { selectionLimit } from "./stockLimits";
 import { useEffect, useState } from "react";
 import { Plus, Minus, Check } from "lucide-react";
@@ -119,6 +120,7 @@ export function ItemOptionsForm({
     <div className="item-options">
       <h2>{product.name}</h2>
       <p className="muted-text">{product.description}</p>
+      <ComboSummary product={product} />
       <strong className="product-modal-price">
         {money(product.price)} <small>por unidade, antes dos adicionais</small>
       </strong>

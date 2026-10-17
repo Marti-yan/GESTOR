@@ -1,5 +1,7 @@
 export function serviceSchema(db) {
   db.exec(`
+CREATE TABLE IF NOT EXISTS courier_commands(request_id TEXT PRIMARY KEY,courier_id TEXT NOT NULL,order_id TEXT NOT NULL,payload_hash TEXT NOT NULL,created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS delivery_receipts(order_id TEXT PRIMARY KEY,courier_id TEXT NOT NULL,received INTEGER NOT NULL DEFAULT 0,recipient TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS couriers(id TEXT PRIMARY KEY,name TEXT NOT NULL,phone TEXT NOT NULL DEFAULT '',pin_hash TEXT NOT NULL,active INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS delivery_assignments(order_id TEXT PRIMARY KEY REFERENCES orders(id),courier_id TEXT NOT NULL REFERENCES couriers(id),status TEXT NOT NULL DEFAULT 'assigned',version INTEGER NOT NULL DEFAULT 1,notes TEXT NOT NULL DEFAULT '',updated_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS delivery_events(id TEXT PRIMARY KEY,order_id TEXT NOT NULL,courier_id TEXT NOT NULL,status TEXT NOT NULL,created_at TEXT NOT NULL);

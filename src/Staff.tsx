@@ -1,4 +1,5 @@
-import { selectionLimit } from "./stockLimits";
+import { Tables } from "./Tables";
+import { selectionLimit, productSelectionLimit } from "./stockLimits";
 import { AddressFields, blankAddress, type DeliveryAddress } from "./Delivery";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -54,6 +55,7 @@ type Draft = {
   requestKey: string;
   signature: string;
   printAtCounter: boolean;
+  tableSessionId?: string;
 };
 const emptyDraft = (): Draft => ({
   lines: [],
@@ -72,9 +74,13 @@ const emptyDraft = (): Draft => ({
 export function OrderEntry({
   mode,
   onCreated,
+  tableContext,
+  onTableContextApplied,
 }: {
   mode: "manager" | "waiter";
   onCreated: (o: Order) => void;
+  tableContext?: { tableName: string; tableSessionId: string };
+  onTableContextApplied?: () => void;
 }) {
   const storageKey = "pronto-entry-" + mode;
   const [draft, setDraft] = useState<Draft>(() => {
@@ -87,6 +93,23 @@ export function OrderEntry({
       return emptyDraft();
     }
   });
+  useEffect(() => {
+    if (tableContext) {
+      setDraft((d) => ({ ...d, ...tableContext, fulfillment: "dinein" }));
+      onTableContextApplied?.();
+    }
+  }, [tableContext]);
+  const [added, setAdded] = useState<{
+    id: string;
+    quantity: number;
+    tick: number;
+  } | null>(null);
+  useEffect(() => {
+    if (added) {
+      const timer = setTimeout(() => setAdded(null), 1600);
+      return () => clearTimeout(timer);
+    }
+  }, [added]);
   const [products, setProducts] = useState<Product[]>([]),
     [categories, setCategories] = useState<Category[]>([]),
     [store, setStore] = useState<Store | null>(null),
@@ -160,10 +183,7 @@ export function OrderEntry({
       (sum, l) =>
         sum +
         (products.find((p) => p.id === l.productId)
-          ? unitPrice(
-              products.find((p) => p.id === l.productId)!,
-              l.modifiers,
-            )
+          ? unitPrice(products.find((p) => p.id === l.productId)!, l.modifiers)
           : 0) *
           l.quantity,
       0,
@@ -188,6 +208,23 @@ export function OrderEntry({
       setError(`Disponível: ${p.stockQuantity} unidades de ${p.name}.`);
       return;
     }
+    const same = draft.lines.find(
+      (l) =>
+        l.productId === p.id &&
+        l.notes === notes &&
+        JSON.stringify(l.modifiers || []) === JSON.stringify(modifiers),
+    );
+    if ((same?.quantity || 0) + quantity > 20) {
+      setError("Limite de 20 unidades por linha.");
+      return;
+    }
+    if (quantity > productSelectionLimit(p, products, draft.lines)) {
+      setError(
+        "A quantidade disponível mudou; confira os itens e os acompanhamentos.",
+      );
+      return;
+    }
+    setAdded({ id: p.id, quantity, tick: Date.now() });
     setDraft((d) => {
       const found = d.lines.find(
         (l) =>
@@ -211,11 +248,11 @@ export function OrderEntry({
     });
   }
   const lineLimit = (productId: string, key?: string, list = draft.lines) =>
-    selectionLimit(
-      products.find((p) => p.id === productId)?.stockQuantity,
-      list
-        .filter((l) => l.productId === productId && l.key !== key)
-        .reduce((n, l) => n + l.quantity, 0),
+    productSelectionLimit(
+      products.find((p) => p.id === productId),
+      products,
+      list,
+      key,
     );
   function line(key: string, p: Partial<Line>) {
     if (locked.current) return;
@@ -258,6 +295,8 @@ export function OrderEntry({
         ? { deliveryAddress: draft.deliveryAddress || blankAddress() }
         : {}),
       tableName: draft.fulfillment === "dinein" ? draft.tableName : "",
+      tableSessionId:
+        draft.fulfillment === "dinein" ? draft.tableSessionId : undefined,
       pickupCode: draft.pickupCode,
       payment: draft.payment,
       changeFor:
@@ -293,6 +332,7 @@ export function OrderEntry({
         ...emptyDraft(),
         tableName: draft.tableName,
         fulfillment: draft.fulfillment,
+        tableSessionId: r.order.tableSessionId || undefined,
       };
       // O gestor fecha o modal no callback; persista antes de desmontar a tela.
       try {
@@ -480,7 +520,19 @@ export function OrderEntry({
                   </strong>
                   <span>
                     {money(p.price)}
-                    <Plus size={18} />
+                    <span className="add-feedback-anchor">
+                      <Plus size={18} />
+                      {added?.id === p.id && (
+                        <span
+                          key={added.tick}
+                          className="add-bubble"
+                          role="status"
+                        >
+                          +{added.quantity} adicionado
+                          {added.quantity > 1 ? "s" : ""} ✓
+                        </span>
+                      )}
+                    </span>
                   </span>
                 </button>
               ))}
@@ -530,7 +582,12 @@ export function OrderEntry({
                   required
                   maxLength={24}
                   value={draft.tableName}
-                  onChange={(e) => patch({ tableName: e.target.value })}
+                  onChange={(e) =>
+                    patch({
+                      tableName: e.target.value,
+                      tableSessionId: undefined,
+                    })
+                  }
                   placeholder="Ex.: 12 ou varanda"
                 />
               </label>
@@ -741,6 +798,9 @@ export function StaffApp() {
     [busy, setBusy] = useState(false),
     [orders, setOrders] = useState<Order[]>([]),
     [tab, setTab] = useState("entry"),
+    [tableContext, setTableContext] = useState<
+      { tableName: string; tableSessionId: string } | undefined
+    >(),
     [last, setLast] = useState<Order | null>(null),
     [online, setOnline] = useState(navigator.onLine);
   useEffect(() => {
@@ -881,6 +941,13 @@ export function StaffApp() {
       )}
       <nav className="staff-tabs">
         <button
+          className={tab === "tables" ? "active" : ""}
+          onClick={() => setTab("tables")}
+        >
+          <UtensilsCrossed size={17} />
+          Mesas
+        </button>
+        <button
           className={tab === "entry" ? "active" : ""}
           onClick={() => setTab("entry")}
         >
@@ -928,8 +995,21 @@ export function StaffApp() {
           {error}
         </p>
       )}
-      {tab === "entry" ? (
-        <OrderEntry mode="waiter" onCreated={setLast} />
+      {tab === "tables" ? (
+        <Tables
+          mode="staff"
+          onAdd={(tableName, tableSessionId) => {
+            setTableContext({ tableName, tableSessionId });
+            setTab("entry");
+          }}
+        />
+      ) : tab === "entry" ? (
+        <OrderEntry
+          mode="waiter"
+          tableContext={tableContext}
+          onTableContextApplied={() => setTableContext(undefined)}
+          onCreated={setLast}
+        />
       ) : (
         <section className="staff-order-list">
           <h1>Do seu atendimento à entrega.</h1>

@@ -1,5 +1,47 @@
+import { validateComponents } from "./combos.mjs";
 import { transaction } from "./database.mjs";
 export function installCatalogTools({ app, db, admin, wrap, fail }) {
+  app.put(
+    "/api/admin/catalog/kitchens",
+    admin,
+    wrap((req, res) => {
+      const names = req.body?.potatoCategories,
+        categories = db
+          .prepare("SELECT name FROM categories")
+          .all()
+          .map((c) => c.name);
+      if (
+        !Array.isArray(names) ||
+        names.length > 100 ||
+        names.some((n) => !categories.includes(n))
+      )
+        fail(400, "Selecione categorias cadastradas.");
+      transaction(db, () => {
+        for (const category of categories)
+          db.prepare("UPDATE products SET station=? WHERE category=?").run(
+            names.includes(category) ? "Cozinha Batata" : "Cozinha",
+            category,
+          );
+        const old = db
+          .prepare("SELECT * FROM print_targets WHERE id='batata'")
+          .get();
+        if (old)
+          db.prepare(
+            "UPDATE print_targets SET station='Cozinha Batata',filter=? WHERE id='batata'",
+          ).run(
+            JSON.stringify({ mode: "station", values: ["Cozinha Batata"] }),
+          );
+        else
+          db.prepare(
+            "INSERT INTO print_targets(id,label,station,filter,options) VALUES ('batata','Comanda-batata','Cozinha Batata',?,?)",
+          ).run(
+            JSON.stringify({ mode: "station", values: ["Cozinha Batata"] }),
+            JSON.stringify({ preset: "minimal" }),
+          );
+      });
+      res.json({ ok: true });
+    }),
+  );
   app.get("/api/admin/catalog/export", admin, (_req, res) =>
     res.json(exportCatalog(db)),
   );
@@ -88,6 +130,7 @@ export function exportCatalog(db) {
         art: p.art,
         featured: !!p.featured,
         modifierGroupIds: JSON.parse(p.modifier_group_ids),
+        components: JSON.parse(p.components || "[]"),
         sort: p.sort,
       })),
   };
@@ -178,10 +221,35 @@ export function importCatalog(db, input, { dryRun = false } = {}, fail) {
       art: text(p.art, 30) || "burger",
       featured: !!p.featured,
       modifierGroupIds: links,
+      components: p.components || [],
     };
   });
   if (new Set(products.map((p) => p.id)).size !== products.length)
     fail(400, "Produtos repetidos.");
+  const universe = new Map(
+    db
+      .prepare("SELECT * FROM products")
+      .all()
+      .map((p) => [p.id, p]),
+  );
+  for (const p of products)
+    universe.set(p.id, {
+      ...p,
+      components: JSON.stringify(p.components),
+      modifier_group_ids: JSON.stringify(p.modifierGroupIds),
+    });
+  const allGroups = new Map(readModifierGroups(db).map((g) => [g.id, g]));
+  for (const g of groups) allGroups.set(g.id, g);
+  for (const p of universe.values())
+    validateComponents(db, JSON.parse(p.components || "[]"), p.id, fail, {
+      products: [...universe.values()],
+      groups: [...allGroups.values()],
+    });
+  for (const p of products)
+    p.components = validateComponents(db, p.components, p.id, fail, {
+      products: [...universe.values()],
+      groups: [...allGroups.values()],
+    });
   const currentProducts = new Set(
       db
         .prepare("SELECT id FROM products")
@@ -245,6 +313,11 @@ export function importCatalog(db, input, { dryRun = false } = {}, fail) {
           offset + i,
         ),
     );
+    for (const p of products)
+      db.prepare("UPDATE products SET components=? WHERE id=?").run(
+        JSON.stringify(p.components),
+        p.id,
+      );
   });
   return summary;
 }

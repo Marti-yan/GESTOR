@@ -1,20 +1,32 @@
+import { useCourierQueue } from "./useCourierQueue";
+import { nearestRoute } from "../shared/routes.cjs";
+import { Reorder, moved } from "./Reorder";
+import { ApiError } from "./api";
 import { LiveDeliveryMap, CourierLocationSharing } from "./DeliveryMap";
 import { useCallback, useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { api, money } from "./api";
 import type { DesktopInfo, Order } from "./types";
-type Courier = { id: string; name: string; phone?: string; active?: boolean };
+type Courier = {
+  epoch?: string;
+  id: string;
+  name: string;
+  phone?: string;
+  active?: boolean;
+};
 type Assignment = {
   order_id: string;
   courier_id: string;
   status: string;
   version: number;
   notes: string;
+  updated_at?: string;
   number?: number;
   courierName?: string;
 };
 type Delivery = Order & {
   assignment: Assignment;
+  receipt?: { received: number; recipient: string };
   location: {
     latitude: number;
     longitude: number;
@@ -275,6 +287,11 @@ export function CourierApp() {
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
     [offline, setOffline] = useState(!navigator.onLine),
+    [filter, setFilter] = useState("active"),
+    [routeIds, setRouteIds] = useState<string[]>([]),
+    [confirmDelivery, setConfirmDelivery] = useState<Delivery | null>(null),
+    [paymentReceived, setPaymentReceived] = useState(false),
+    [recipient, setRecipient] = useState(""),
     [editing, setEditing] = useState<Delivery | null>(null),
     [coords, setCoords] = useState({
       latitude: "",
@@ -288,10 +305,65 @@ export function CourierApp() {
       setOrders(r.orders);
       setOffline(false);
     } catch (e) {
-      setOffline(!navigator.onLine);
+      setOffline(true);
+      if (e instanceof ApiError && e.status === 401) {
+        setCourier(null);
+        setOrders([]);
+      }
       setMessage(error(e));
     }
   }, []);
+  const queue = useCourierQueue(courier?.id || "", load, courier?.epoch);
+  useEffect(() => {
+    if (courier) {
+      try {
+        const saved = JSON.parse(
+          localStorage.getItem("pronto-route-" + courier.id) || "[]",
+        );
+        setRouteIds(Array.isArray(saved) ? saved : []);
+      } catch {}
+    }
+  }, [courier?.id]);
+  function saveRoute(ids: string[]) {
+    setRouteIds(ids);
+    try {
+      localStorage.setItem("pronto-route-" + courier?.id, JSON.stringify(ids));
+    } catch {}
+  }
+  const activeOrders = orders.filter(
+    (o) => !["delivered", "failed"].includes(o.assignment.status),
+  );
+  const sortedOrders = [...orders].sort((a, b) => {
+    const rank = (o: Delivery) =>
+      routeIds.includes(o.id)
+        ? routeIds.indexOf(o.id)
+        : routeIds.length + orders.indexOf(o);
+    return rank(a) - rank(b);
+  });
+  const routeOrders = sortedOrders.filter(
+    (o) => o.assignment.status === "picked_up",
+  );
+  const routeUrl = routeOrders.length
+    ? "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" +
+      encodeURIComponent(
+        routeOrders.at(-1)!.location
+          ? `${routeOrders.at(-1)!.location!.latitude},${routeOrders.at(-1)!.location!.longitude}`
+          : routeOrders.at(-1)!.address || "",
+      ) +
+      (routeOrders.length > 1
+        ? "&waypoints=" +
+          encodeURIComponent(
+            routeOrders
+              .slice(0, -1)
+              .map((o) =>
+                o.location
+                  ? `${o.location.latitude},${o.location.longitude}`
+                  : o.address || "",
+              )
+              .join("|"),
+          )
+        : "")
+    : "";
   useEffect(() => {
     api<{ courier: Courier | null }>("/courier/session")
       .then((r) => setCourier(r.courier))
@@ -330,26 +402,29 @@ export function CourierApp() {
       setBusy(false);
     }
   }
-  async function move(o: Delivery, status: string) {
+  async function move(
+    o: Delivery,
+    status: string,
+    details: { paymentReceived?: boolean; recipient?: string } = {},
+  ) {
     let notes = "";
     if (status === "failed") {
       notes = window.prompt("Informe o que impediu a entrega:") || "";
       if (!notes) return;
     }
-    setBusy(true);
     try {
-      await api("/courier/orders/" + o.id + "/status", "POST", {
+      queue.enqueue({
+        orderId: o.id,
+        number: o.number,
         status,
         expectedVersion: o.assignment.version,
         notes,
+        ...details,
       });
-      setMessage("Etapa atualizada.");
-      await load();
+      setConfirmDelivery(null);
+      setMessage("");
     } catch (e) {
       setMessage(error(e));
-      await load();
-    } finally {
-      setBusy(false);
     }
   }
   async function saveLocation(e: React.FormEvent) {
@@ -383,6 +458,12 @@ export function CourierApp() {
         {courier && (
           <button
             className="button secondary"
+            disabled={queue.commands.length > 0}
+            title={
+              queue.commands.length
+                ? "Sincronize ou descarte as ações pendentes antes de sair"
+                : "Sair"
+            }
             onClick={async () => {
               await api("/courier/logout", "POST");
               setCourier(null);
@@ -426,7 +507,128 @@ export function CourierApp() {
       ) : (
         <>
           <h1>Olá, {courier.name}</h1>
+          <div className="courier-kpis">
+            <div>
+              <strong>{activeOrders.length}</strong>
+              <span>Em andamento</span>
+            </div>
+            <div>
+              <strong>
+                {
+                  orders.filter(
+                    (o) =>
+                      o.assignment.status === "delivered" &&
+                      new Date(
+                        o.assignment.updated_at || o.updatedAt,
+                      ).toLocaleDateString("pt-BR") ===
+                        new Date().toLocaleDateString("pt-BR"),
+                  ).length
+                }
+              </strong>
+              <span>Entregues hoje</span>
+            </div>
+            <div>
+              <strong>{queue.commands.length}</strong>
+              <span>Para sincronizar</span>
+            </div>
+          </div>
           <CourierLocationSharing />
+          {(queue.notice || queue.commands.length > 0) && (
+            <section className="operation-panel pending-actions">
+              <strong role="status">{queue.notice}</strong>
+              {queue.commands.map((c) => (
+                <div key={c.id}>
+                  <p>
+                    #{c.number} · {stage[c.status]} ·{" "}
+                    {c.error || "Salvo no aparelho, aguardando confirmação"}
+                  </p>
+                  <button
+                    className="button secondary"
+                    onClick={() => queue.discard(c.id)}
+                  >
+                    Descartar ação local
+                  </button>
+                </div>
+              ))}
+              <button className="button secondary" onClick={queue.sync}>
+                Tentar sincronizar
+              </button>
+            </section>
+          )}
+          <section className="operation-panel courier-route">
+            <h2>Minha rota</h2>
+            <p>
+              Ordene as paradas ou use uma sugestão por proximidade dos pontos
+              confirmados.
+            </p>
+            <div className="operation-actions">
+              <button
+                className="button secondary"
+                disabled={!activeOrders.length}
+                onClick={() => {
+                  const suggest = (origin?: {
+                    latitude: number;
+                    longitude: number;
+                  }) => {
+                    saveRoute(
+                      nearestRoute(activeOrders, origin).map((o) => o.id),
+                    );
+                    setMessage(
+                      "Ordem sugerida por distância em linha reta. Confira as ruas antes de sair.",
+                    );
+                  };
+                  if (window.isSecureContext && navigator.geolocation)
+                    navigator.geolocation.getCurrentPosition(
+                      (p) => suggest(p.coords),
+                      () => suggest(),
+                      { timeout: 8000, maximumAge: 60000 },
+                    );
+                  else suggest();
+                }}
+              >
+                Sugerir ordem por proximidade
+              </button>
+              {routeUrl && routeOrders.length <= 8 && (
+                <a
+                  className="button primary"
+                  target="_blank"
+                  rel="noreferrer"
+                  href={routeUrl}
+                >
+                  Navegar rota ({routeOrders.length} paradas)
+                </a>
+              )}
+            </div>
+            {routeOrders.length > 8 && (
+              <p>
+                Abra a rota de cada pedido ou organize até 8 paradas por vez.
+              </p>
+            )}
+            <small>
+              Inclui no mapa apenas pedidos já retirados. A sugestão local não
+              considera trânsito ou mão de direção.
+            </small>
+          </section>
+          <div
+            className="courier-filters"
+            role="group"
+            aria-label="Filtrar entregas"
+          >
+            {[
+              ["active", "Em andamento"],
+              ["assigned", "A retirar"],
+              ["picked_up", "Na rua"],
+              ["history", "Histórico"],
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                className={`button ${filter === key ? "primary" : "secondary"}`}
+                onClick={() => setFilter(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <div className="operation-actions">
             <button className="button secondary" onClick={load}>
               Atualizar entregas
@@ -442,109 +644,242 @@ export function CourierApp() {
           </div>
           {offline && (
             <p className="error-banner">
-              Sem conexão. A lista pode estar desatualizada; etapas só são
-              confirmadas com o servidor online.
+              Sem conexão. A lista pode estar desatualizada; ações podem ser
+              salvas neste aparelho e só ficam confirmadas quando o gestor
+              responder.
             </p>
           )}
-          {orders.map((o) => (
-            <article className="operation-panel" key={o.id}>
-              <div className="service-row">
-                <h2>
-                  #{o.number} · {o.customerName}
-                </h2>
-                <strong>{stage[o.assignment.status]}</strong>
-              </div>
-              <p>{o.address}</p>
-              {o.phone && (
-                <a className="button secondary" href={"tel:+" + o.phone}>
-                  Ligar para cliente
-                </a>
-              )}
-              <p>
-                {o.payment === "cash"
-                  ? "Dinheiro"
-                  : o.payment === "card"
-                    ? "Cartão"
-                    : "Pagamento pendente"}{" "}
-                · <strong>{money(o.total)}</strong>
-                {o.changeFor != null &&
-                  ` · Troco para ${money(o.changeFor)} (devolver ${money(o.changeFor - o.total)})`}
-              </p>
-              <ul>
-                {o.items.map((i) => (
-                  <li key={i.id}>
-                    {i.quantity}× {i.name}
-                    {i.notes && " · " + i.notes}
-                  </li>
-                ))}
-              </ul>
-              {o.notes && <p>Observação: {o.notes}</p>}
-              {o.location && (
+          {sortedOrders
+            .filter((o) =>
+              filter === "active"
+                ? !["delivered", "failed"].includes(o.assignment.status)
+                : filter === "history"
+                  ? ["delivered", "failed"].includes(o.assignment.status)
+                  : o.assignment.status === filter,
+            )
+            .map((o) => (
+              <article className="operation-panel" key={o.id}>
+                <div className="service-row">
+                  {!["delivered", "failed"].includes(o.assignment.status) && (
+                    <Reorder
+                      index={sortedOrders
+                        .filter(
+                          (x) =>
+                            !["delivered", "failed"].includes(
+                              x.assignment.status,
+                            ),
+                        )
+                        .findIndex((x) => x.id === o.id)}
+                      count={activeOrders.length}
+                      label={`parada do pedido ${o.number}`}
+                      onMove={(delta) => {
+                        const list = sortedOrders.filter(
+                          (x) =>
+                            !["delivered", "failed"].includes(
+                              x.assignment.status,
+                            ),
+                        );
+                        saveRoute(
+                          moved(
+                            list,
+                            list.findIndex((x) => x.id === o.id),
+                            delta,
+                          ).map((x) => x.id),
+                        );
+                      }}
+                    />
+                  )}
+                  <h2>
+                    #{o.number} · {o.customerName}
+                  </h2>
+                  <strong>{stage[o.assignment.status]}</strong>
+                </div>
+                <p>{o.address}</p>
+                {o.phone && (
+                  <a className="button secondary" href={"tel:+" + o.phone}>
+                    Ligar para cliente
+                  </a>
+                )}
+                {o.phone && (
+                  <a
+                    className="button secondary"
+                    href={`https://wa.me/${o.phone.startsWith("55") ? o.phone : "55" + o.phone}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    WhatsApp do cliente
+                  </a>
+                )}
                 <p>
-                  Localização confirmada: {o.location.reference}
-                  <br />
+                  {o.payment === "cash"
+                    ? "Dinheiro"
+                    : o.payment === "card"
+                      ? "Cartão"
+                      : "Pagamento pendente"}{" "}
+                  · <strong>{money(o.total)}</strong>
+                  {o.changeFor != null &&
+                    ` · Troco para ${money(o.changeFor)} (devolver ${money(o.changeFor - o.total)})`}
+                </p>
+                <ul>
+                  {o.items.map((i) => (
+                    <li key={i.id}>
+                      {i.quantity}× {i.name}
+                      {i.notes && " · " + i.notes}
+                    </li>
+                  ))}
+                </ul>
+                {o.notes && <p>Observação: {o.notes}</p>}
+                {!o.location && (
                   <a
                     className="button secondary"
                     target="_blank"
                     rel="noreferrer"
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${o.location.latitude},${o.location.longitude}`}
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(o.address || "")}`}
                   >
-                    Abrir rota no mapa
+                    Abrir endereço no mapa
                   </a>
-                </p>
-              )}
-              <div className="operation-actions">
-                {o.assignment.status === "assigned" && (
-                  <button
-                    className="button primary"
-                    disabled={busy || offline || o.status !== "ready"}
-                    onClick={() => move(o, "picked_up")}
-                  >
-                    {o.status === "ready"
-                      ? "Confirmar retirada"
-                      : "Aguardando ficar pronto"}
-                  </button>
                 )}
-                {o.assignment.status === "picked_up" && (
-                  <button
-                    className="button primary"
-                    disabled={busy || offline}
-                    onClick={() => move(o, "delivered")}
-                  >
-                    Confirmar entrega
-                  </button>
+                {o.receipt && (
+                  <p>
+                    Recebedor: {o.receipt.recipient || "Não informado"} ·{" "}
+                    {o.receipt.received
+                      ? "Recebimento informado pelo entregador"
+                      : "Pagamento não confirmado pelo entregador"}
+                  </p>
                 )}
-                {!["delivered", "failed"].includes(o.assignment.status) && (
+                {o.location && (
+                  <p>
+                    Localização confirmada: {o.location.reference}
+                    <br />
+                    <a
+                      className="button secondary"
+                      target="_blank"
+                      rel="noreferrer"
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${o.location.latitude},${o.location.longitude}`}
+                    >
+                      Abrir rota no mapa
+                    </a>
+                  </p>
+                )}
+                <div className="operation-actions">
+                  {o.assignment.status === "assigned" && (
+                    <button
+                      className="button primary"
+                      disabled={
+                        busy ||
+                        queue.commands.some((c) => c.orderId === o.id) ||
+                        o.status !== "ready"
+                      }
+                      onClick={() => move(o, "picked_up")}
+                    >
+                      {o.status === "ready"
+                        ? "Confirmar retirada"
+                        : "Aguardando ficar pronto"}
+                    </button>
+                  )}
+                  {o.assignment.status === "picked_up" && (
+                    <button
+                      className="button primary"
+                      disabled={
+                        busy || queue.commands.some((c) => c.orderId === o.id)
+                      }
+                      onClick={() => {
+                        setConfirmDelivery(o);
+                        setRecipient("");
+                        setPaymentReceived(false);
+                      }}
+                    >
+                      Confirmar entrega
+                    </button>
+                  )}
+                  {!["delivered", "failed"].includes(o.assignment.status) && (
+                    <button
+                      className="button secondary"
+                      disabled={
+                        busy || queue.commands.some((c) => c.orderId === o.id)
+                      }
+                      onClick={() => move(o, "failed")}
+                    >
+                      Não consegui entregar
+                    </button>
+                  )}
                   <button
                     className="button secondary"
-                    disabled={busy || offline}
-                    onClick={() => move(o, "failed")}
+                    disabled={offline}
+                    onClick={() => {
+                      setEditing(o);
+                      setCoords({
+                        latitude: o.location ? String(o.location.latitude) : "",
+                        longitude: o.location
+                          ? String(o.location.longitude)
+                          : "",
+                        reference: o.location?.reference || "",
+                        confirmed: false,
+                      });
+                    }}
                   >
-                    Não consegui entregar
+                    Confirmar localização do cliente
                   </button>
-                )}
-                <button
-                  className="button secondary"
-                  disabled={offline}
-                  onClick={() => {
-                    setEditing(o);
-                    setCoords({
-                      latitude: o.location ? String(o.location.latitude) : "",
-                      longitude: o.location ? String(o.location.longitude) : "",
-                      reference: o.location?.reference || "",
-                      confirmed: false,
-                    });
-                  }}
-                >
-                  Confirmar localização do cliente
-                </button>
-              </div>
-            </article>
-          ))}
+                </div>
+              </article>
+            ))}
           {!orders.length && (
             <div className="operation-panel">Nenhuma entrega atribuída.</div>
           )}
         </>
+      )}
+      {confirmDelivery && (
+        <section className="courier-location">
+          <form
+            className="operation-panel"
+            onSubmit={(e) => {
+              e.preventDefault();
+              move(confirmDelivery, "delivered", {
+                recipient,
+                paymentReceived,
+              });
+            }}
+          >
+            <h2>Entregar pedido #{confirmDelivery.number}</h2>
+            <p>
+              {confirmDelivery.customerName} · {money(confirmDelivery.total)}
+            </p>
+            <label className="field">
+              Quem recebeu? (opcional)
+              <input
+                maxLength={80}
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+              />
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={paymentReceived}
+                onChange={(e) => setPaymentReceived(e.target.checked)}
+              />{" "}
+              Recebi / conferi o pagamento com o cliente
+            </label>
+            <small>
+              Este registro é manual. Nenhuma cobrança eletrônica é realizada
+              aqui.
+            </small>
+            <div className="operation-actions">
+              <button className="button primary">
+                {offline
+                  ? "Salvar entrega para sincronizar"
+                  : "Confirmar entrega"}
+              </button>
+              <button
+                type="button"
+                className="button secondary"
+                onClick={() => setConfirmDelivery(null)}
+              >
+                Voltar
+              </button>
+            </div>
+          </form>
+        </section>
       )}
       {editing && (
         <section className="courier-location">

@@ -2,6 +2,12 @@
 
 Estes são pedidos prontos para as próximas etapas de desenvolvimento. O MVP atual já cobre cardápio → gestor → impressão. Cada etapa deve preservar esse fluxo e acrescentar testes apropriados.
 
+## Entregue sem VPS na 0.8.0
+
+Garçom com balão no + e mesas/contas; combos fixos com estoque compartilhado e impressão por cozinha; entregador com fila idempotente, filtros e rotas; cardápio com HTML inicial/compressão; planilha, demo fictício e backups locais. [Roteiro de apresentação](OPERACAO-LOCAL-0.8.md).
+
+O cardápio Ecta/Loja dos Sonhos continua pendente de acesso (403). Próximo comando: “Importe esta exportação real da loja, preservando preços e adicionais; Pastéis/Batatas/Porções vão para Cozinha Batata e as demais categorias para Cozinha.”
+
 ## 1. Validar a Elgin i8 na operação real
 
 > Homologue o envio ESC/POS RAW e a alternativa HTML da Elgin i8 USB de 80 mm com base no teste físico: fonte, colunas, acentos, avanço, guilhotina, falta de papel e reconexão USB. Preserve os modelos por setor, o aceite antes de imprimir pedidos do cardápio e o diário que evita reenviar automaticamente uma comanda incerta. Registre os modelos/versões de driver e firmware validados.
@@ -20,11 +26,11 @@ Aceite: cliente em outra rede faz pedido, gestor recebe e Elgin imprime; dados s
 
 Aceite: revogação impede acesso do dispositivo e restauração recupera pedidos sem imprimir novamente.
 
-## 4. Variantes e combos
+## 4. Variantes e combos variáveis
 
-A versão 0.3.0 já inclui grupos de complementos/adicionais com limites, preços e destaques.
+A versão 0.8.0 já inclui combos fixos com acompanhamento por cozinha, snapshots e reserva do estoque dos componentes; a 0.3.0 trouxe grupos de complementos/adicionais.
 
-> Acrescente tamanhos, variantes e combos com regras de preço e distribuição de componentes para os setores corretos de impressão, preservando os grupos e snapshots existentes.
+> Acrescente tamanhos, variantes e escolha entre acompanhamentos no combo com regras de preço e distribuição por cozinha. Preserve o estoque compartilhado e snapshots dos combos fixos.
 
 Aceite: total correto no cardápio, gestor e comanda; opção inválida não cria pedido.
 
@@ -38,7 +44,9 @@ Aceite: corrigir o endereço do cadastro não modifica pedidos anteriores.
 
 A 0.6.0 já traz PIN individual, atribuição, coleta/entrega/ocorrência, ponto confirmado do cliente e GPS opcional no mapa. HTTPS e acesso externo precisam da etapa de infraestrutura.
 
-> Homologue o PWA em celulares reais com HTTPS e GPS, implemente otimização de rotas e entrega em lotes. Avalie aplicativo móvel se precisar de localização garantida em segundo plano. Adicione reconciliação segura para ações offline sem duplicar entregas.
+A 0.8.0 acrescenta fila idempotente de ações offline, conflitos visíveis, ordem manual/proximidade de paradas e navegação externa.
+
+> Homologue o PWA em celulares reais com HTTPS e GPS, acrescente roteamento viário e retirada em lote transacional. Avalie aplicativo móvel se precisar de localização garantida em segundo plano. Preserve a fila e os controles de atribuição.
 
 Aceite: dois entregadores não assumem a mesma atribuição e ações sem sinal são reconciliadas.
 

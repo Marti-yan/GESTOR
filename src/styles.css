@@ -6377,3 +6377,295 @@ svg {
   border-radius: 8px;
   background: white;
 }
+
+/* Atalhos de operação para uso com uma mão no celular. */
+.add-feedback-anchor {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  color: var(--orange);
+}
+.add-bubble {
+  position: absolute;
+  right: -4px;
+  bottom: 34px;
+  z-index: 8;
+  white-space: nowrap;
+  background: #244f3a;
+  color: white;
+  border-radius: 10px;
+  padding: 9px 12px;
+  box-shadow: 0 5px 18px #183a3026;
+  font-size: 12px;
+  font-weight: 700;
+  pointer-events: none;
+  animation: added-pop 1.6s ease both;
+}
+.add-bubble::after {
+  content: "";
+  position: absolute;
+  right: 14px;
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+  background: #244f3a;
+}
+@keyframes added-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.9);
+  }
+  12%,
+  80% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+.entry-product {
+  overflow: visible;
+}
+.entry-product:has(.add-bubble) {
+  border-color: #458466;
+  background: #f5fbf5;
+  z-index: 2;
+}
+.combo-summary {
+  background: #f4f7ed;
+  border: 1px solid #dfe6d7;
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 7px;
+  margin: 12px 0;
+}
+.combo-inline {
+  display: block;
+  color: #57714d;
+  line-height: 1.45;
+  margin: 6px 0;
+}
+.combo-editor {
+  border: 1px solid #dfe5d7;
+  padding: 16px;
+  border-radius: 14px;
+  margin: 18px 0;
+  min-width: 0;
+}
+.combo-editor legend {
+  font-weight: 750;
+  padding: 0 6px;
+}
+.combo-editor p,
+.combo-editor > small {
+  display: block;
+  line-height: 1.6;
+  color: var(--muted);
+  font-size: 13px;
+}
+.combo-component {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 68px auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e5e8df;
+}
+.combo-component .field {
+  margin: 0;
+  min-width: 0;
+}
+.combo-component select {
+  min-width: 0;
+  max-width: 100%;
+}
+.combo-editor > .button {
+  margin: 12px 0;
+}
+.tables-panel {
+  min-width: 0;
+}
+.table-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  margin: 20px 0;
+}
+.table-card {
+  background: #fff;
+  border: 1px solid #dde4d4;
+  border-radius: 18px;
+  padding: 20px;
+  color: #253b2c;
+  display: grid;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+.table-card > strong {
+  font-size: 23px;
+}
+.table-card b {
+  font-size: 22px;
+}
+.table-card > span,
+.table-card small {
+  color: #75816d;
+  font-size: 12px;
+}
+.table-card.has-ready {
+  border-color: #67a073;
+  background: #f3faef;
+  box-shadow: 0 0 0 2px #bad4b33b;
+}
+.table-detail {
+  max-width: 900px;
+  margin: 0 auto;
+}
+.table-order {
+  border-bottom: 1px dashed #d4ddca;
+  padding: 18px 0;
+}
+.table-order > div,
+.table-order p {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.table-order small {
+  width: 100%;
+  color: #b24c28;
+}
+.table-order .button {
+  margin: 10px 0 0 14px;
+}
+.table-bill {
+  background: #f7f8f1;
+  border-radius: 14px;
+  padding: 18px;
+  margin-top: 20px;
+}
+.table-bill h2 {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.table-bill .button {
+  margin: 16px 0;
+}
+.table-bill small {
+  color: #7a826e;
+  display: block;
+}
+.courier-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0;
+}
+.courier-kpis > div {
+  background: white;
+  border: 1px solid #e1e7d9;
+  border-radius: 16px;
+  padding: 16px 10px;
+  display: grid;
+  gap: 6px;
+  text-align: center;
+}
+.courier-kpis strong {
+  font-size: 30px;
+  color: #26442f;
+}
+.courier-kpis span {
+  font-size: 12px;
+  color: #748269;
+}
+.courier-filters {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px 0;
+}
+.courier-filters button {
+  white-space: nowrap;
+}
+.pending-actions {
+  border-color: #e8bc6a !important;
+  background: #fff9e9 !important;
+}
+.courier-route small {
+  display: block;
+  color: #75816c;
+  margin-top: 10px;
+}
+.courier-location form > small {
+  display: block;
+  margin: 15px 0;
+  color: #788268;
+}
+.manager-sidebar {
+  overflow-y: auto;
+}
+.menu-category-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px;
+}
+.menu-category-section:first-child {
+  content-visibility: visible;
+}
+.menu-category-section .product-card {
+  animation: none;
+}
+@media (max-width: 640px) {
+  .staff-tabs {
+    overflow-x: auto;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #f6f7f1;
+  }
+  .staff-tabs button {
+    white-space: nowrap;
+    flex-shrink: 0;
+    min-height: 48px;
+  }
+  .table-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .table-card {
+    padding: 14px;
+  }
+  .table-card > strong {
+    font-size: 20px;
+  }
+  .combo-component {
+    grid-template-columns: minmax(0, 1fr) 64px auto;
+  }
+  .combo-component > .reorder {
+    grid-column: 1/-1;
+  }
+  .courier-kpis strong {
+    font-size: 26px;
+  }
+  .courier-app .operation-panel {
+    padding: 18px 14px;
+  }
+  .entry-product-grid.list .add-bubble {
+    right: -4px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .add-bubble {
+    animation: none;
+  }
+}

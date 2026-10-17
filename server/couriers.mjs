@@ -1,4 +1,4 @@
-import { randomUUID, randomBytes } from "node:crypto";
+import { randomUUID, randomBytes, createHash } from "node:crypto";
 import {
   readSessionToken,
   tokenHash,
@@ -17,16 +17,23 @@ export function installCouriers({
   rateLimit,
   secureCookie,
 }) {
+  db.prepare("INSERT OR IGNORE INTO settings VALUES ('courier-epoch',?)").run(
+    JSON.stringify(randomUUID()),
+  );
+  const epoch = JSON.parse(
+    db.prepare("SELECT value FROM settings WHERE key='courier-epoch'").get()
+      .value,
+  );
   const readCourier = (req) => {
     const token = readSessionToken(req, "pronto_courier_session");
     if (!token || token.length > 160) return null;
-    return (
+    const value =
       db
         .prepare(
           "SELECT c.id,c.name FROM sessions s JOIN couriers c ON c.id=s.actor_name WHERE s.token_hash=? AND s.expires_at>? AND s.role='courier' AND c.active=1",
         )
-        .get(tokenHash(token), Date.now()) || null
-    );
+        .get(tokenHash(token), Date.now()) || null;
+    return value ? { ...value, epoch } : null;
   };
   const courier = (req, res, next) => {
     req.courier = readCourier(req);
@@ -134,7 +141,7 @@ export function installCouriers({
         maxAge: 12 * 3600000,
         path: "/",
       });
-      res.json({ courier: { id: c.id, name: c.name } });
+      res.json({ courier: { id: c.id, name: c.name, epoch } });
     }),
   );
   app.post("/api/courier/logout", (req, res) => {
@@ -189,7 +196,19 @@ export function installCouriers({
       res.json({ ok: true });
     }),
   );
-  const locationKey = (o) => o.phone || "order:" + o.id;
+  const locationKey = (o) =>
+    (o.phone || "order:" + o.id) +
+    ":" +
+    createHash("sha256")
+      .update(
+        o.address
+          .normalize("NFKC")
+          .trim()
+          .toLocaleLowerCase("pt-BR")
+          .replace(/\s+/g, " "),
+      )
+      .digest("hex")
+      .slice(0, 32);
   app.post(
     "/api/courier/location/start",
     courier,
@@ -335,6 +354,12 @@ export function installCouriers({
           return {
             ...o,
             assignment: a,
+            receipt:
+              db
+                .prepare(
+                  "SELECT received,recipient,created_at FROM delivery_receipts WHERE order_id=?",
+                )
+                .get(o.id) || null,
             location:
               db
                 .prepare(
@@ -350,7 +375,46 @@ export function installCouriers({
     "/api/courier/orders/:id/status",
     courier,
     wrap((req, res) => {
+      if (req.body?.epoch !== undefined && req.body.epoch !== epoch)
+        fail(
+          409,
+          "O banco foi restaurado. Descarte a ação antiga e confira a entrega atual.",
+        );
+      const requestId = req.body?.requestId;
+      if (
+        requestId !== undefined &&
+        (typeof requestId !== "string" ||
+          !/^[a-zA-Z0-9_-]{16,100}$/.test(requestId))
+      )
+        fail(400, "Identificador da ação inválido.");
+      const payloadHash = createHash("sha256")
+        .update(
+          JSON.stringify({
+            status: req.body?.status,
+            expectedVersion: req.body?.expectedVersion,
+            notes: clean(req.body?.notes, 400),
+            paymentReceived: req.body?.paymentReceived === true,
+            recipient: clean(req.body?.recipient, 80),
+          }),
+        )
+        .digest("hex");
+      let repeated = false;
       transaction(db, () => {
+        if (requestId) {
+          const old = db
+            .prepare("SELECT * FROM courier_commands WHERE request_id=?")
+            .get(requestId);
+          if (old) {
+            if (
+              old.courier_id !== req.courier.id ||
+              old.order_id !== req.params.id ||
+              old.payload_hash !== payloadHash
+            )
+              fail(409, "Identificador já utilizado em outra ação.");
+            repeated = true;
+            return;
+          }
+        }
         const a = db
             .prepare(
               "SELECT * FROM delivery_assignments WHERE order_id=? AND courier_id=?",
@@ -370,7 +434,25 @@ export function installCouriers({
           ["delivered", "failed"].includes(a.status)
         )
           fail(409, "Essa etapa não está disponível para a entrega.");
+        if (next === "failed" && !clean(req.body.notes, 400))
+          fail(400, "Descreva o motivo da ocorrência.");
         const now = new Date().toISOString();
+        if (requestId)
+          db.prepare("INSERT INTO courier_commands VALUES (?,?,?,?,?)").run(
+            requestId,
+            req.courier.id,
+            order.id,
+            payloadHash,
+            now,
+          );
+        if (next === "delivered")
+          db.prepare("INSERT INTO delivery_receipts VALUES (?,?,?,?,?)").run(
+            order.id,
+            req.courier.id,
+            req.body.paymentReceived === true ? 1 : 0,
+            clean(req.body.recipient, 80),
+            now,
+          );
         db.prepare(
           "UPDATE delivery_assignments SET status=?,notes=?,version=version+1,updated_at=? WHERE order_id=?",
         ).run(next, clean(req.body.notes, 400), now, order.id);
@@ -390,7 +472,7 @@ export function installCouriers({
           ).run(randomUUID(), order.id, now);
         }
       });
-      res.json({ ok: true });
+      res.json({ ok: true, repeated });
     }),
   );
   app.post(

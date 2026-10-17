@@ -1,9 +1,10 @@
+import { stockLines } from "./combos.mjs";
 import { randomUUID } from "node:crypto";
 import { transaction, readOrder } from "./database.mjs";
 
 export function reserveStock(db, lines, orderId, now, fail) {
   const quantities = new Map();
-  for (const line of lines)
+  for (const line of stockLines(lines))
     quantities.set(
       line.productId,
       (quantities.get(line.productId) || 0) + line.quantity,
@@ -22,6 +23,8 @@ export function reserveStock(db, lines, orderId, now, fail) {
     const product = db
       .prepare("SELECT name,stock_quantity FROM products WHERE id=?")
       .get(id);
+    if (!product)
+      fail(409, "Um componente do pedido foi removido. Atualize o cardápio.");
     if (product.stock_quantity === null) continue;
     const result = db
       .prepare(

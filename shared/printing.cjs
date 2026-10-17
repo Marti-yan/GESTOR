@@ -24,17 +24,28 @@ function normalizeFilter(input, station = "*") {
 }
 function filterItems(items, target = {}) {
   const filter = normalizeFilter(target.filter, target.station);
-  return items.filter(
-    (i) =>
-      filter.mode === "all" ||
-      filter.values.includes(
-        filter.mode === "products"
-          ? i.productId
-          : filter.mode === "categories"
-            ? i.category
-            : i.station,
-      ),
-  );
+  const matches = (i) =>
+    filter.mode === "all" ||
+    filter.values.includes(
+      filter.mode === "products"
+        ? i.productId
+        : filter.mode === "categories"
+          ? i.category
+          : i.station,
+    );
+  return items.flatMap((i) => {
+    const primary = matches(i),
+      components = i.components || [],
+      selected = components.filter(matches);
+    if (!primary && !selected.length) return [];
+    return [
+      {
+        ...i,
+        comboReferenceOnly: !primary,
+        components: components.map((c) => ({ ...c, prepareHere: matches(c) })),
+      },
+    ];
+  });
 }
 function matchingTargets(targets, items, counter = false) {
   return targets.filter(

@@ -18,6 +18,9 @@ export async function api<T>(
     headers: { "Content-Type": "application/json", ...headers },
     body: body === undefined ? undefined : JSON.stringify(body),
     credentials: "same-origin",
+    signal: path.startsWith("/courier/")
+      ? AbortSignal.timeout(12000)
+      : undefined,
   });
   const data = await response
     .json()

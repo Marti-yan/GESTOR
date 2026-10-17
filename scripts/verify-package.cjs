@@ -25,7 +25,7 @@ function verifyPackage(appOutDir) {
   const resources = join(resolve(appOutDir), "resources");
   const archive = join(resources, "app.asar");
   const metadata = JSON.parse(extractFile(archive, "package.json").toString());
-  for (const name of ["node.exe", "server-bundle.cjs", "web/index.html"]) {
+  for (const name of ["node.exe", "server-bundle.cjs", "menu-ssr.cjs", "web/index.html"]) {
     if (!existsSync(join(resources, name)))
       throw new Error(`Recurso ausente no aplicativo: ${name}`);
   }
@@ -117,7 +117,7 @@ module.exports = async (context) => {
     .filter((name) => statSync(join(resources, "web", name)).isFile())
     .map((name) => "web/" + name.split(sep).join("/"))
     .sort();
-  for (const name of ["app.asar", "server-bundle.cjs", ...webFiles])
+  for (const name of ["app.asar", "server-bundle.cjs", "menu-ssr.cjs", ...webFiles])
     manifest.files[name] = hash(name);
   writeFileSync(
     join(resources, "pronto-build.json"),
