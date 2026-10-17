@@ -71,6 +71,7 @@ export function createApplication({
   secureCookie = false,
   addressFetch = fetch,
   providerFetch = fetch,
+  atendeSocketFactory,
 } = {}) {
   const db = openDatabase(dataDir || resolve(".data"));
   if (
@@ -213,6 +214,7 @@ export function createApplication({
     rateLimit,
     dataDir: dataDir || resolve(".data"),
     fetchImpl: providerFetch,
+    socketFactory:atendeSocketFactory,
   });
   installCouriers({ app, db, admin, wrap, fail, rateLimit, secureCookie });
   installCatalogTools({ app, db, admin, wrap, fail });

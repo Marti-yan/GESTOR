@@ -25,5 +25,8 @@ CREATE TABLE IF NOT EXISTS ai_jobs(id TEXT PRIMARY KEY,ticket_id TEXT NOT NULL,m
 CREATE TABLE IF NOT EXISTS ai_training_examples(id TEXT PRIMARY KEY,question TEXT NOT NULL,answer TEXT NOT NULL,approved INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS ai_training_jobs(id TEXT PRIMARY KEY,provider_id TEXT,status TEXT NOT NULL,model TEXT NOT NULL,trained_model TEXT,error TEXT,created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS provider_secrets(name TEXT PRIMARY KEY,value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS atende_ticket_links(local_ticket_id TEXT PRIMARY KEY REFERENCES chat_tickets(id),account_key TEXT NOT NULL,remote_ticket_id TEXT NOT NULL,remote_contact_id TEXT NOT NULL,owned INTEGER NOT NULL DEFAULT 0,UNIQUE(account_key,remote_ticket_id));
+CREATE TABLE IF NOT EXISTS atende_message_ids(account_key TEXT NOT NULL,remote_id TEXT NOT NULL,remote_wid TEXT NOT NULL DEFAULT '',local_message_id TEXT NOT NULL REFERENCES chat_messages(id),PRIMARY KEY(account_key,remote_id));
 `);
+  if(!db.prepare('PRAGMA table_info(chat_outbox)').all().some(c=>c.name==='connection_key'))db.exec('ALTER TABLE chat_outbox ADD COLUMN connection_key TEXT');
 }

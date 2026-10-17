@@ -2,6 +2,7 @@ import {
   randomUUID,
   randomBytes,
   createHmac,
+  createHash,
   timingSafeEqual,
 } from "node:crypto";
 import {
@@ -14,6 +15,7 @@ import {
 } from "./provider-utils.mjs";
 import { transaction } from "./database.mjs";
 import { installAI } from "./ai-service.mjs";
+import { createAtendeChat } from './atendechat.mjs';
 const stamp = () => new Date().toISOString();
 export function installCommunications({
   app,
@@ -24,6 +26,7 @@ export function installCommunications({
   rateLimit,
   dataDir,
   fetchImpl = fetch,
+  socketFactory,
 }) {
   const vault = secretVault(db, dataDir),
     ai = installAI({ app, db, admin, wrap, fail, vault, fetchImpl });
@@ -34,8 +37,12 @@ export function installCommunications({
     instance: "pronto",
     phoneNumberId: "",
     graphVersion: "v23.0",
+    atendeWhatsappId:'',
     ...setting(db, "whatsapp-config"),
   });
+  const atende=createAtendeChat({db,vault,config,ingest,pauseTicket,fetchImpl,socketFactory});
+  const connectionKey=()=>{const c=config();return c.provider==='none'?'none':createHash('sha256').update(JSON.stringify(c.provider==='atende'?[c.provider,c.baseUrl,atende.accountKey()]:c.provider==='evolution'?[c.provider,c.baseUrl,c.instance]:[c.provider,c.phoneNumberId])).digest('hex')};
+  db.prepare('UPDATE chat_outbox SET connection_key=? WHERE connection_key IS NULL').run(connectionKey());
   const contact = (id) =>
     db.prepare("SELECT * FROM chat_contacts WHERE id=?").get(id);
   const tags = (id) =>
@@ -50,7 +57,8 @@ export function installCommunications({
         "SELECT t.*,c.name,c.phone,c.unsubscribed FROM chat_tickets t JOIN chat_contacts c ON c.id=t.contact_id WHERE t.id=?",
       )
       .get(id);
-    return t ? { ...t, tags: tags(t.id) } : null;
+    const remote=t?db.prepare('SELECT * FROM atende_ticket_links WHERE local_ticket_id=?').get(t.id):null;
+    return t ? { ...t, tags: tags(t.id),atende:remote?{ticketId:remote.remote_ticket_id,owned:!!remote.owned,current:remote.account_key===atende.accountKey()}:null } : null;
   };
   function getTicket(contactId) {
     let t = db
@@ -142,8 +150,8 @@ export function installCommunications({
     ).run(id, ticketId, body, kind, stamp());
     const outboxId = randomUUID();
     db.prepare(
-      "INSERT INTO chat_outbox(id,message_id,contact_id,ticket_id,kind,campaign_id,due_at,created_at) VALUES (?,?,?,?,?,?,?,?)",
-    ).run(outboxId, id, contactId, ticketId, kind, campaignId, due, stamp());
+      "INSERT INTO chat_outbox(id,message_id,contact_id,ticket_id,kind,campaign_id,due_at,created_at,connection_key) VALUES (?,?,?,?,?,?,?,?,?)",
+    ).run(outboxId, id, contactId, ticketId, kind, campaignId, due, stamp(),connectionKey());
     return outboxId;
   }
   function ingest({
@@ -153,6 +161,8 @@ export function installCommunications({
     body,
     fromMe = false,
     needsHuman = false,
+    suppressAI=false,
+    external=null,
   }) {
     const p = phone(number);
     if (!providerId || !clean(body, 4000) || p.length < 10 || p.length > 15)
@@ -193,7 +203,10 @@ export function installCommunications({
           return { echo: true };
         }
       }
-      const t = getTicket(c.id);
+      let t;
+      if(external){const mapped=db.prepare('SELECT t.* FROM atende_ticket_links l JOIN chat_tickets t ON t.id=l.local_ticket_id WHERE l.account_key=? AND l.remote_ticket_id=?').get(external.accountKey,external.remoteTicketId);t=mapped?.status!=='closed'?mapped:null}
+      t ||= getTicket(c.id);
+      if(external){const other=db.prepare('SELECT * FROM atende_ticket_links WHERE local_ticket_id=?').get(t.id);if(other&&(other.account_key!==external.accountKey||other.remote_ticket_id!==external.remoteTicketId))return {ignored:true};db.prepare('DELETE FROM atende_ticket_links WHERE account_key=? AND remote_ticket_id=? AND local_ticket_id<>?').run(external.accountKey,external.remoteTicketId,t.id);db.prepare('INSERT INTO atende_ticket_links VALUES (?,?,?,?,?) ON CONFLICT(local_ticket_id) DO UPDATE SET owned=excluded.owned').run(t.id,external.accountKey,external.remoteTicketId,external.remoteContactId,external.owned?1:0);if(!external.owned){db.prepare("UPDATE chat_tickets SET agent_mode='paused' WHERE id=?").run(t.id);t={...t,agent_mode:'paused'}}}
       const id = randomUUID();
       db.prepare(
         "INSERT INTO chat_messages(id,ticket_id,direction,body,provider_id,origin,state,created_at) VALUES (?,?,?,?,?,?,?,?)",
@@ -253,6 +266,7 @@ export function installCommunications({
       ).run(t.id);
       if (
         t.agent_mode === "auto" &&
+        !suppressAI &&
         ai.config().enabled &&
         ai.config().automatic &&
         !c.unsubscribed
