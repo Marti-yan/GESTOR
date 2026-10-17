@@ -38,6 +38,9 @@ export function Tables({
     return () => clearInterval(timer);
   }, [load]);
   const table = tables.find((t) => t.id === selected);
+  useEffect(() => {
+    setReceived(false);
+  }, [table?.id, table?.version, table?.total]);
   async function serve(order: Order) {
     setBusy(true);
     setError("");

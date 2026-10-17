@@ -14,7 +14,7 @@
 
 - Itens de preparo imprimem na cozinha indicada, mas não consomem estoque de outro produto. Vincule a produtos reais depois de confirmar porções/sabores.
 
-- O site constava fechado e prazo 60–90 min. O catálogo não altera automaticamente abertura, nome da loja ou prazo; configure-os em Minha loja.
+- O site constava fechado e prazo 60–90 min. O importador permite aplicar nome/prazo e desativar outros produtos após conferência. O estado de abertura, telefone e taxas da loja não são alterados.
 
 ## Conferência de preços
 

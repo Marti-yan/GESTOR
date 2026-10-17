@@ -543,3 +543,32 @@ test("catálogo fornecido Loja Dos Sonhos: 79 preços, 15 categorias e combos po
     200,
   );
 });
+
+test("categoria dos acompanhamentos de combo também recebe a caixa configurada", async (t) => {
+  const f = await fixture(t);
+  await importDemo(f);
+  const o = (await f.send([item("demo-combo-bacon")], { internal: true })).body
+    .order;
+  const target = {
+    id: "all",
+    width: 80,
+    station: "*",
+    filter: { mode: "all", values: [] },
+    options: {
+      categoryHighlights: [
+        { category: "Demonstração • Bebidas", scope: "category", style: "box" },
+      ],
+    },
+  };
+  const blocks = receipt.receiptBlocks(
+    readOrder(f.db, o.id),
+    readStore(f.db),
+    target,
+  ).blocks;
+  const start = blocks.findIndex(
+    (b) => b.kind === "group-start" && b.text.includes("BEBIDAS"),
+  );
+  assert.ok(start >= 0);
+  assert.equal(blocks[start + 1].text, "- 1x Refrigerante lata — demonstração");
+  assert.equal(blocks[start + 2].kind, "group-end");
+});

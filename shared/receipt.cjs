@@ -321,17 +321,35 @@ function receiptBlocks(order, store, target = {}, flags = {}) {
           for (const category of [
             ...new Set(components.map((c) => c.category || "Acompanhamentos")),
           ]) {
-            add(category.toUpperCase(), { bold: true, kind: "section" });
+            const highlight = o.categoryHighlights.find(
+              (r) => r.category === category,
+            );
+            const wholeComponentCategory = highlight?.scope === "category";
+            add(
+              category.toUpperCase(),
+              wholeComponentCategory
+                ? { bold: true, kind: "group-start", style: highlight.style }
+                : { bold: true, kind: "section" },
+            );
             for (const c of components.filter(
               (c) => (c.category || "Acompanhamentos") === category,
             ))
               add(
                 `- ${c.quantity * i.quantity}x ${c.name}${i.quantity > 1 ? ` (${c.quantity} por combo)` : ""}`,
                 {
-                  bold: Boolean(c.prepareHere),
-                  kind: c.prepareHere && kitchen ? "box" : "note",
+                  bold: Boolean(c.prepareHere) || highlight?.style === "bold",
+                  kind:
+                    !wholeComponentCategory && highlight
+                      ? highlight.style
+                      : wholeComponentCategory
+                        ? "note"
+                        : c.prepareHere && kitchen
+                          ? "box"
+                          : "note",
                 },
               );
+            if (wholeComponentCategory)
+              add("", { kind: "group-end", style: highlight.style });
           }
         }
       }

@@ -1,7 +1,13 @@
 import { randomUUID } from "node:crypto";
 // Offline only. Never replace a live database or replay old print/outbox work.
 import { DatabaseSync } from "node:sqlite";
-import { copyFileSync, existsSync, mkdirSync, rmSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  rmSync,
+  renameSync,
+} from "node:fs";
 import { resolve, join } from "node:path";
 const [sourcePath, targetDir, confirmation] = process.argv.slice(2);
 if (!sourcePath || !targetDir || confirmation !== "--gestor-fechado")
@@ -81,8 +87,7 @@ if (existsSync(destination))
     destination,
     join(directory, "antes-da-restauracao-" + Date.now() + ".sqlite"),
   );
-copyFileSync(staging, destination);
-rmSync(staging);
+renameSync(staging, destination);
 console.log(
   "Backup restaurado. Filas antigas e sessões foram desativadas; entre no gestor e confira pedidos e integrações.",
 );

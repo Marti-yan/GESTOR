@@ -4,7 +4,7 @@ Data: 17/10/2026. Ambiente Linux, Node.js 24.19.0; instalador Windows x64 por co
 
 ## Verificações automatizadas
 
-`npm test`: **93 testes aprovados**, incluindo a base anterior de pedidos, estoque, relatórios, impressão, políticas do desktop, Atende Chat/WhatsApp, IA, entregadores, migrações e atualizador.
+`npm test`: **94 testes aprovados**, incluindo a base anterior de pedidos, estoque, relatórios, impressão, políticas do desktop, Atende Chat/WhatsApp, IA, entregadores, migrações e atualizador.
 
 Novos cenários:
 
