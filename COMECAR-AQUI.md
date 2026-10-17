@@ -1,10 +1,10 @@
-# Testar o Pronto Gestor 0.4.0 na rede local
+# Testar o Pronto Gestor 0.5.0 na rede local
 
 ## Atualizar a instalação existente
 
-Feche o gestor pela bandeja, baixe e execute o **[atualizador 0.4.0](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.4.0/Reparar-Pronto-0.4.0.exe)**. Se houver uma janela de erro, feche-a também. Confira a pasta da instalação e conclua. O programa substitui aplicativo, servidor e interface e verifica os hashes. Seus pedidos, senha e configurações em `%APPDATA%\Pronto Gestor` são preservados. Ao abrir, confira **Pronto Gestor — 0.4.0** na barra de título.
+Feche o gestor pela bandeja, baixe e execute o **[atualizador 0.5.0](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.5.0/Reparar-Pronto-0.5.0.exe)**. Se houver uma janela de erro, feche-a também. Confira a pasta da instalação e conclua. O programa substitui aplicativo, servidor e interface e verifica os hashes. Seus pedidos, senha e configurações em `%APPDATA%\Pronto Gestor` são preservados. Ao abrir, confira **Pronto Gestor — 0.5.0** na barra de título.
 
-Para instalar do zero, baixe o **[pacote Windows 0.4.0 em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.4.0.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. Ele une as três partes, confere o SHA-256 e abre o instalador. O Node.js e o servidor já estão incluídos. Use Windows de 64 bits; não é necessário acessar o computador original.
+Para instalar do zero, baixe o **[pacote Windows 0.5.0 em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.5.0.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. Ele une as três partes, confere o SHA-256 e abre o instalador. O Node.js e o servidor já estão incluídos. Use Windows de 64 bits; não é necessário acessar o computador original.
 
 Cada instalação mantém seus dados locais. Instalar em outro computador não sincroniza o banco do primeiro.
 
@@ -48,7 +48,7 @@ Em **Cardápio → Complementos e adicionais**, crie grupos e opções, defina p
 
 ## Próximas atualizações pelo aplicativo
 
-Depois de instalar a 0.4.0, use **Minha loja → Atualizações do gestor → Buscar atualização**. Quando houver versão mais nova publicada, baixe e abra o instalador pelo próprio gestor. O arquivo é verificado antes de instalar. A operação permanece local, sem VPS. Consulte **ATUALIZACOES.md**.
+Depois de instalar a 0.5.0, use **Minha loja → Atualizações do gestor → Buscar atualização**. Quando houver versão mais nova publicada, baixe e abra o instalador pelo próprio gestor. O arquivo é verificado antes de instalar. A operação permanece local, sem VPS. Consulte **ATUALIZACOES.md**.
 
 ## Rede e funcionamento
 
