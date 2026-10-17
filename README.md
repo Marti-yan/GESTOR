@@ -187,7 +187,7 @@ dist/                 Interface compilada
 release/              Instalador Windows gerado
 ```
 
-Limites do MVP: uma loja, até 200 produtos, uma instância da API e até 250 pedidos exibidos no gestor. O banco preserva os demais pedidos, mas a interface ainda não possui paginação/relatórios completos. Ilustrações são representações visuais, substituíveis por fotos em uma próxima etapa. O alerta sonoro no navegador depende da permissão de reprodução após interação.
+Limites do MVP: uma loja, até 200 produtos, uma instância da API e até 250 pedidos exibidos no gestor. O banco preserva os demais pedidos, mas o quadro ainda não possui paginação; relatórios operacionais com filtros/CSV estão disponíveis. Ilustrações são representações visuais, substituíveis por fotos em uma próxima etapa. O alerta sonoro no navegador depende da permissão de reprodução após interação.
 
 Veja **[ATUALIZACOES.md](ATUALIZACOES.md)** para o canal main/master e a publicação de versões.
 

@@ -68,6 +68,10 @@ Em **Relatórios**, aplique filtros e exporte resumo, pedidos ou itens em CSV. E
 
 ## Atendimento, agente e entregadores
 
-A 0.7.0 inclui esses módulos. Veja **[WHATSAPP-IA-ENTREGADORES.md](WHATSAPP-IA-ENTREGADORES.md)** para começar, configurar provedores e entender o GPS/HTTPS. A conexão específica do Atende Chat depende das informações do outro projeto; copie o pedido em **[LEVANTAMENTO-ATENDECHAT.md](LEVANTAMENTO-ATENDECHAT.md)**.
+A 0.7.0 inclui esses módulos. Veja **[WHATSAPP-IA-ENTREGADORES.md](WHATSAPP-IA-ENTREGADORES.md)** para começar, configurar provedores e entender o GPS/HTTPS. O adaptador Atende Chat foi implementado na 0.7.0; siga **[INTEGRACAO-ATENDECHAT-PRECIFIC.md](INTEGRACAO-ATENDECHAT-PRECIFIC.md)** para configurar e homologar o backend.
 
 No teste local, o PWA recebe atribuições na mesma rede. Compartilhar o GPS no celular exige HTTPS confiável; o mapa usa internet. Nenhuma VPS foi modificada nesta versão.
+
+## Precific e Atende Chat
+
+Abra **Precific** e entre com sua conta do site original. Em **WhatsApp → Conexão WhatsApp**, selecione **Atende Chat** e configure o backend/conta. Guia: **INTEGRACAO-ATENDECHAT-PRECIFIC.md**.
