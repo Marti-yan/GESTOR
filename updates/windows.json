@@ -1,15 +1,15 @@
 {
-  "version": "0.5.0",
+  "version": "0.6.0",
   "minVersion": "0.2.0",
-  "url": "https://raw.githubusercontent.com/Marti-yan/GESTOR/12668662b98cce0a7c788bf0a735c550b4637349/Reparar-Pronto-0.5.0.exe",
-  "size": 2004720,
-  "sha256": "716a295721ca9ac93fe2a11d2962af6fa117f27591deb2215e3b25ab1e7d1415",
-  "sourceCommit": "f7d9dc1105934e5a5598b5c39ee0abe9367793c5",
+  "url": "https://raw.githubusercontent.com/Marti-yan/GESTOR/9c0237bbbb09416eba11b5dacafe55513ef78464/Reparar-Pronto-0.6.0.exe",
+  "size": 2425040,
+  "sha256": "af5640a17594f13f754ce1446683ac91772cef5b86f8af90cf388b1b766c22dc",
+  "sourceCommit": "dfe35bf2c25d3569c6feab4906182726b6ce0804",
   "notes": [
-    "Endereços corrigidos no executável, formulários mais largos e remoção do bloco de conexão.",
-    "Seleção limitada ao estoque, somando as variações do mesmo produto; motivo do ajuste opcional.",
-    "Ordenação de produtos, grupos e opções; importação e exportação do catálogo em JSON.",
-    "Comandas por categoria, caixa para categoria inteira e nomes em negrito com tamanho maior.",
-    "Via do balcão separada da numeração das comandas de cozinha."
+    "Atendimento por tickets, tags/Kanban, contatos, respostas rápidas e campanhas com consentimento.",
+    "Adaptadores WhatsApp Evolution API e Cloud API; requerem configuração e homologação do provedor.",
+    "Agente por API com RAG local, dados da loja e exemplos revisados para fine-tuning opcional.",
+    "PWA do entregador com PIN, atribuição de pedidos e confirmação de localização do cliente.",
+    "GPS compartilhado por autorização, mapa com posição/precisão e interrupção do compartilhamento."
   ]
 }
