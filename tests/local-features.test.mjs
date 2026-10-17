@@ -461,3 +461,85 @@ test("rota por proximidade conserva pedidos sem ponto e não perde nem duplica p
     ["a", "b", "c"],
   );
 });
+
+test("catálogo fornecido Loja Dos Sonhos: 79 preços, 15 categorias e combos por cozinha sem inventar porções", async (t) => {
+  const f = await fixture(t),
+    catalog = JSON.parse(
+      readFileSync(
+        new URL("../catalogos/loja-dos-sonhos/cardapio.json", import.meta.url),
+      ),
+    );
+  assert.equal(catalog.products.length, 79);
+  assert.equal(catalog.categories.length, 15);
+  assert.equal(
+    catalog.products.some((p) => p.category === "SALGADOS"),
+    false,
+  );
+  const body = {
+    catalog,
+    dryRun: true,
+    replaceActive: true,
+    applyStoreInfo: true,
+  };
+  const preview = await f.rq("/admin/catalog/import", "POST", body);
+  assert.equal(preview.status, 200, JSON.stringify(preview.body));
+  assert.equal(preview.body.summary.archived, 9);
+  assert.equal(readStore(f.db).name, "Brasa da Casa");
+  assert.equal(
+    (await f.rq("/admin/catalog/import", "POST", { ...body, dryRun: false }))
+      .status,
+    200,
+  );
+  const products = (await f.rq("/catalog")).body.products;
+  assert.equal(products.length, 79);
+  assert.equal(readStore(f.db).name, "Loja Dos Sonhos");
+  assert.equal(readStore(f.db).estimatedMinimumMinutes, 60);
+  assert.equal(readStore(f.db).estimatedMinutes, 90);
+  for (const p of products)
+    if (
+      ["PASTEIS", "BATATA FRITA", "BATATA DOS SONHOS", "PORÇÕES"].includes(
+        p.category,
+      )
+    )
+      assert.equal(p.station, "Cozinha Batata");
+  const combo = products.find(
+    (p) => p.name === "COMBO EXPLOSÃO DE BACON - 2 GUARAVITAS",
+  );
+  assert.equal(combo.price, 3999);
+  assert.equal(
+    combo.components.find((c) => c.name === "Batata maluca P").preparation,
+    true,
+  );
+  assert.equal(combo.components.find((c) => c.name === "X-BACON").quantity, 2);
+  const categories = catalog.categories
+    .filter((c) =>
+      ["PASTEIS", "BATATA FRITA", "BATATA DOS SONHOS", "PORÇÕES"].includes(
+        c.name,
+      ),
+    )
+    .map((c) => c.name);
+  await f.rq("/admin/catalog/kitchens", "PUT", {
+    potatoCategories: categories,
+  });
+  const sent = await f.send([item(combo.id)], { internal: true });
+  assert.equal(sent.status, 201, JSON.stringify(sent.body));
+  assert.equal(sent.body.order.total, 3999);
+  assert.equal(
+    f.db
+      .prepare(
+        "SELECT COUNT(*) AS n FROM print_jobs WHERE order_id=? AND purpose='production'",
+      )
+      .get(sent.body.order.id).n,
+    2,
+  );
+  const exported = (await f.rq("/admin/catalog/export")).body;
+  assert.equal(
+    (
+      await f.rq("/admin/catalog/import", "POST", {
+        catalog: exported,
+        dryRun: true,
+      })
+    ).status,
+    200,
+  );
+});

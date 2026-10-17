@@ -1,4 +1,5 @@
 export type ComboComponent = {
+  preparation?: boolean;
   productId: string;
   quantity: number;
   name?: string;
@@ -39,6 +40,7 @@ export type Store = {
   deliveryFee: number;
   minimumOrder: number;
   estimatedMinutes: number;
+  estimatedMinimumMinutes?: number;
   allowDelivery: boolean;
   allowPickup: boolean;
 };

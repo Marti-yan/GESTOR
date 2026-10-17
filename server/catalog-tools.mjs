@@ -1,5 +1,5 @@
 import { validateComponents } from "./combos.mjs";
-import { transaction } from "./database.mjs";
+import { transaction, readStore } from "./database.mjs";
 export function installCatalogTools({ app, db, admin, wrap, fail }) {
   app.put(
     "/api/admin/catalog/kitchens",
@@ -22,6 +22,24 @@ export function installCatalogTools({ app, db, admin, wrap, fail }) {
             names.includes(category) ? "Cozinha Batata" : "Cozinha",
             category,
           );
+        for (const p of db
+          .prepare("SELECT id,components FROM products")
+          .all()) {
+          const components = JSON.parse(p.components || "[]").map((c) =>
+            c.preparation && categories.includes(c.category)
+              ? {
+                  ...c,
+                  station: names.includes(c.category)
+                    ? "Cozinha Batata"
+                    : "Cozinha",
+                }
+              : c,
+          );
+          db.prepare("UPDATE products SET components=? WHERE id=?").run(
+            JSON.stringify(components),
+            p.id,
+          );
+        }
         const old = db
           .prepare("SELECT * FROM print_targets WHERE id='batata'")
           .get();
@@ -53,7 +71,11 @@ export function installCatalogTools({ app, db, admin, wrap, fail }) {
         summary: importCatalog(
           db,
           req.body?.catalog,
-          { dryRun: req.body?.dryRun === true },
+          {
+            dryRun: req.body?.dryRun === true,
+            replaceActive: req.body?.replaceActive === true,
+            applyStoreInfo: req.body?.applyStoreInfo === true,
+          },
           fail,
         ),
       }),
@@ -137,7 +159,12 @@ export function exportCatalog(db) {
 }
 import { readModifierGroups, validateModifierGroup } from "./modifiers.mjs";
 import { randomUUID } from "node:crypto";
-export function importCatalog(db, input, { dryRun = false } = {}, fail) {
+export function importCatalog(
+  db,
+  input,
+  { dryRun = false, replaceActive = false, applyStoreInfo = false } = {},
+  fail,
+) {
   if (
     !input ||
     input.format !== "pronto-catalog/v1" ||
@@ -262,15 +289,63 @@ export function importCatalog(db, input, { dryRun = false } = {}, fail) {
     new Set([...currentGroups, ...groups.map((g) => g.id)]).size > 60
   )
     fail(400, "A combinação dos catálogos excede o limite da loja.");
+  let storeInfo = null;
+  if (applyStoreInfo) {
+    const info = input.source,
+      times = info?.estimatedMinutes;
+    if (
+      !info ||
+      typeof info.name !== "string" ||
+      info.name.trim().length < 2 ||
+      !times ||
+      !Number.isInteger(times.min) ||
+      !Number.isInteger(times.max) ||
+      times.min < 5 ||
+      times.max > 240 ||
+      times.min > times.max
+    )
+      fail(400, "Nome e prazo da loja inválidos no arquivo.");
+    storeInfo = {
+      ...(typeof info.subtitle === "string"
+        ? { subtitle: info.subtitle.trim().slice(0, 160) }
+        : {}),
+      name: info.name.trim().slice(0, 80),
+      estimatedMinimumMinutes: times.min,
+      estimatedMinutes: times.max,
+    };
+  }
   const summary = {
+    storeInfo,
     products: products.length,
     groups: groups.length,
     categories: categories.length,
     added: products.filter((p) => !currentProducts.has(p.id)).length,
     updated: products.filter((p) => currentProducts.has(p.id)).length,
+    archived: replaceActive
+      ? db
+          .prepare("SELECT id FROM products WHERE available=1")
+          .all()
+          .filter((p) => !products.some((v) => v.id === p.id)).length
+      : 0,
+    notices: Array.isArray(input.notices)
+      ? input.notices
+          .filter((n) => typeof n === "string")
+          .slice(0, 20)
+          .map((n) => n.slice(0, 500))
+      : [],
   };
   if (dryRun) return summary;
   transaction(db, () => {
+    if (storeInfo)
+      db.prepare("UPDATE settings SET value=? WHERE key='store'").run(
+        JSON.stringify({ ...readStore(db), ...storeInfo }),
+      );
+    if (replaceActive)
+      for (const p of db
+        .prepare("SELECT id FROM products WHERE available=1")
+        .all())
+        if (!products.some((v) => v.id === p.id))
+          db.prepare("UPDATE products SET available=0 WHERE id=?").run(p.id);
     const categoryOffset = db
       .prepare("SELECT COALESCE(MAX(sort),-1)+1 AS n FROM categories")
       .get().n;

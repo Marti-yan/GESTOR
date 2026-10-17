@@ -467,7 +467,7 @@ export function Manager({
           ) : section === "entrega" ? (
             <DeliverySettings />
           ) : section === "cardapio" ? (
-            <CatalogManager notify={notify} />
+            <CatalogManager notify={notify} onStoreChanged={setStore} />
           ) : section === "impressao" ? (
             <Printing notify={notify} desktop={desktop} />
           ) : section === "garcom" ? (
@@ -1280,7 +1280,13 @@ function Orders({
   );
 }
 
-function CatalogManager({ notify }: { notify: (s: string) => void }) {
+function CatalogManager({
+  notify,
+  onStoreChanged,
+}: {
+  notify: (s: string) => void;
+  onStoreChanged: (s: Store) => void;
+}) {
   const [products, setProducts] = useState<Product[]>([]),
     [categories, setCategories] = useState<Category[]>([]),
     [modifierGroups, setModifierGroups] = useState<ModifierGroup[]>([]),
@@ -1291,12 +1297,14 @@ function CatalogManager({ notify }: { notify: (s: string) => void }) {
   const load = useCallback(
     () =>
       api<{
+        store: Store;
         products: Product[];
         categories: Category[];
         modifierGroups: ModifierGroup[];
       }>("/admin/catalog")
         .then((r) => {
           setProducts(r.products);
+          onStoreChanged(r.store);
           setCategories(r.categories);
           setModifierGroups(r.modifierGroups || []);
           setCategoryFilter((current) =>
@@ -1305,7 +1313,7 @@ function CatalogManager({ notify }: { notify: (s: string) => void }) {
           setError("");
         })
         .catch((e) => setError(errorText(e))),
-    [],
+    [onStoreChanged],
   );
   useEffect(() => {
     load();
@@ -1789,7 +1797,25 @@ function StoreSettings({
             </label>
           </div>
           <label className="field">
-            Prazo estimado (minutos)
+            Prazo mínimo (minutos)
+            <input
+              type="number"
+              min={5}
+              max={draft.estimatedMinutes}
+              value={
+                draft.estimatedMinimumMinutes ??
+                Math.max(5, draft.estimatedMinutes - 10)
+              }
+              onChange={(e) =>
+                setDraft({
+                  ...draft,
+                  estimatedMinimumMinutes: Number(e.target.value),
+                })
+              }
+            />
+          </label>
+          <label className="field">
+            Prazo máximo (minutos)
             <input
               required
               type="number"

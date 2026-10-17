@@ -31,13 +31,36 @@ export function validateComponents(
       seen.has(c.productId) ||
       !Number.isSafeInteger(c.quantity) ||
       c.quantity < 1 ||
-      c.quantity > 20
+      c.quantity > 1000
     )
       fail(
         400,
-        "Revise os acompanhamentos: sem repetição, de 1 a 20 unidades.",
+        "Revise os acompanhamentos: sem repetição, de 1 a 1000 unidades.",
       );
     seen.add(c.productId);
+    if (c.preparation === true) {
+      const clean = (v, n) =>
+        typeof v === "string" ? v.trim().slice(0, n) : "";
+      if (
+        !/^prep-[a-zA-Z0-9_-]{1,95}$/.test(c.productId) ||
+        clean(c.name, 100).length < 2 ||
+        !clean(c.station, 60) ||
+        !clean(c.category, 60)
+      )
+        fail(
+          400,
+          "Preencha nome, categoria e cozinha do acompanhamento de preparo.",
+        );
+      return {
+        productId: c.productId,
+        quantity: c.quantity,
+        preparation: true,
+        name: clean(c.name, 100),
+        station: clean(c.station, 60),
+        category: clean(c.category, 60),
+      };
+    }
+
     const p = rows.find((p) => p.id === c.productId);
     if (!p || JSON.parse(p.components || "[]").length)
       fail(
@@ -70,6 +93,7 @@ export function validateComponents(
 }
 export function snapshotComponents(db, p, check = false, fail) {
   return JSON.parse(p.components || "[]").map((c) => {
+    if (c.preparation === true) return { ...c };
     const item = db
       .prepare("SELECT * FROM products WHERE id=?")
       .get(c.productId);
@@ -115,6 +139,7 @@ export function catalogAvailability(db, p) {
   let stockQuantity = p.stock_quantity,
     available = Boolean(p.available);
   for (const c of JSON.parse(p.components || "[]")) {
+    if (c.preparation === true) continue;
     const item = db
       .prepare(
         "SELECT available,stock_quantity,components,modifier_group_ids FROM products WHERE id=?",
@@ -143,23 +168,27 @@ export function catalogAvailability(db, p) {
 export function stockLines(lines) {
   return lines.flatMap((i) => [
     i,
-    ...(i.components || []).map((c) => ({
-      productId: c.productId,
-      quantity: c.quantity * i.quantity,
-    })),
+    ...(i.components || [])
+      .filter((c) => !c.preparation)
+      .map((c) => ({
+        productId: c.productId,
+        quantity: c.quantity * i.quantity,
+      })),
   ]);
 }
 export function stockRequirements(db, p) {
   return [
     { productId: p.id, quantity: 1, stockQuantity: p.stock_quantity },
-    ...JSON.parse(p.components || "[]").map((c) => ({
-      ...c,
-      stockQuantity: (() => {
-        const item = db
-          .prepare("SELECT stock_quantity FROM products WHERE id=?")
-          .get(c.productId);
-        return item ? item.stock_quantity : 0;
-      })(),
-    })),
+    ...JSON.parse(p.components || "[]")
+      .filter((c) => !c.preparation)
+      .map((c) => ({
+        ...c,
+        stockQuantity: (() => {
+          const item = db
+            .prepare("SELECT stock_quantity FROM products WHERE id=?")
+            .get(c.productId);
+          return item ? item.stock_quantity : 0;
+        })(),
+      })),
   ];
 }

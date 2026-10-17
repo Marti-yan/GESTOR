@@ -44,3 +44,5 @@ Aba Precific com site original e sessão persistente; atualizações do site por
 ## Versão 0.8.0
 
 Mesas e contas, balão ao adicionar no garçom, combos com reserva de acompanhantes e impressão por cozinha, entregador com fila idempotente/filtros/rotas, SSR do cardápio público com divisão de módulos e compressão, importação por planilha e backups verificados. Veja [OPERACAO-LOCAL-0.8.md](OPERACAO-LOCAL-0.8.md). O atualizador inclui o módulo `menu-ssr.cjs` e verifica seu hash. Preserva dados e integrações existentes; nenhuma infraestrutura externa foi alterada.
+
+O preset Loja Dos Sonhos contém 79 produtos com os preços fornecidos pelo proprietário, 15 categorias e composições por cozinha. Fotos/adicionais e itens sem preço dependem de conferência; a importação não ocorre automaticamente durante a atualização do programa.

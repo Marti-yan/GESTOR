@@ -6669,3 +6669,56 @@ svg {
     animation: none;
   }
 }
+
+.catalog-paste textarea {
+  width: 100%;
+  border: 1px solid #dbe3d2;
+  border-radius: 10px;
+  padding: 12px;
+  resize: vertical;
+  font: inherit;
+}
+.catalog-paste summary {
+  padding: 14px 0;
+  cursor: pointer;
+  font-weight: 700;
+}
+.import-notices {
+  padding-left: 22px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #68785e;
+}
+.import-notices li {
+  margin: 8px 0;
+}
+.import-archive {
+  display: flex;
+  gap: 10px;
+  align-items: start;
+  margin: 16px 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.import-archive input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+.kitchen-category-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+.combo-component .field-grid {
+  margin-top: 10px;
+}
+.local-backups {
+  margin-top: 20px;
+  padding: 22px;
+}
+.local-backups small {
+  display: block;
+  line-height: 1.7;
+  color: #718067;
+}

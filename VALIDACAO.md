@@ -1,59 +1,37 @@
-# Validação do MVP 0.1.2
+# Validação do Pronto Gestor 0.8.0
 
-Data: 15/10/2026. Ambiente de desenvolvimento e build: Linux, Node.js 24.
+Data: 17/10/2026. Ambiente Linux, Node.js 24.19.0; instalador Windows x64 por compilação cruzada.
 
-## Correção 0.1.2 e reparador
+## Verificações automatizadas
 
-O usuário relatou a mesma importação antiga depois de instalar a versão 0.1.1. Os artefatos publicados continham o código corrigido, mas o código antigo continuava sendo executado no Windows. A versão 0.1.2 inclui o gerador de comanda e o agente no próprio arquivo do processo principal; o instalador completo e o reparador agora gravam os arquivos críticos diretamente e conferem seu SHA-256 no destino. Se o programa estiver em execução, o instalador pede que seja fechado; se a escrita ou o hash falhar, a atualização é interrompida.
+`npm test`: **93 testes aprovados**, incluindo a base anterior de pedidos, estoque, relatórios, impressão, políticas do desktop, Atende Chat/WhatsApp, IA, entregadores, migrações e atualizador.
 
-- Reparador nativo NSIS de aproximadamente 1,8 MB gerado.
-- Conteúdo do reparador extraído e comparado ao pacote: `app.asar`, API e manifesto de versão/hashes correspondem.
-- Execução do novo `app.asar` e da API em Electron/Node Linux, com o arquivo externo `shared/receipt.cjs` ausente: abertura, login, pedido anterior preservado, novo pedido visível e janela de comanda passaram.
-- Os 12 testes automatizados e a compilação de produção passaram.
-- O teste Linux não comprova o comportamento do instalador/reparador em Windows real. A cópia e o SHA-256 no destino são verificações incluídas nos executáveis; não houve uma execução nativa Windows neste ambiente.
+Novos cenários:
 
-## Verificações concluídas
+- Combo e avulso competem pelo saldo do componente, com rollback integral e devolução única antes do aceite.
+- Componentes abrem a comanda da outra cozinha; balcão fora da contagem; snapshots de receita/setor preservados após editar o catálogo.
+- Importação valida combos, preserva ordem/composição no JSON e oculta combo com componente indisponível.
+- Conta por mesa soma lançamentos; total/versão concorrentes impedem fechamento desatualizado; rascunho da conta encerrada não entra no atendimento novo.
+- Confirmação de entrega repetida/concorrente gera um evento e um registro de recebimento; ação do entregador anterior não passa após reatribuição.
+- Localização do mesmo telefone em outro endereço não reaproveita o ponto antigo.
+- Backup SQLite passa em integrity_check; restauração recupera pedidos e desativa filas/sessões antigas.
+- Planilha conserva preços, aspas e categorias; sugestão de proximidade conserva todas as paradas.
+- Catálogo Loja Dos Sonhos: 79 produtos, 15 categorias, preços fornecidos, ingredientes conhecidos vinculados, porções ambíguas como preparo, importação com arquivo/conta conferidos e duas comandas por combo.
+- Testes de componentes em DOM simulado: balão no + e bloqueio ao atingir saldo, hidratação sem apagar o carrinho salvo, fila offline com mesmo identificador e limite de estoque compartilhado na seleção.
+- Resposta HTTP inicial contém produtos/categorias sem esperar JavaScript; JSON público escapado contra fechamento de script; rotas privadas recebem shell separado.
 
-- TypeScript e compilação de produção da interface.
-- 12 testes automatizados de API e impressão, todos aprovados, incluindo abertura da página inicial a partir de diretório oculto.
-- Checkout real no Chromium: produto, observação, identificação do cliente e confirmação.
-- Acompanhamento pelo link exclusivo do pedido.
-- Configuração inicial da senha e acesso ao gestor pelo navegador.
-- Recebimento do pedido no gestor e avanço por preparo, pronto e finalizado.
-- Visualização de comanda com preservação das observações.
-- Layout de celular de 390 px, sem rolagem horizontal no cardápio.
-- Nenhum erro de JavaScript capturado durante o fluxo de navegador.
-- Bundle do servidor: catálogo, criação de pedido, acompanhamento, SQLite e arquivos da interface.
-- Aplicativo Electron executado em Linux com display virtual: servidor incluído, criação inicial da senha, bridge IPC, login e enumeração nativa de impressoras.
-- Integração completa no Electron com impressora simulada: novo pedido → reserva → renderização da comanda → chamada nativa com `silent: true` e largura de 80 mm → aceite salvo. Apenas um envio foi observado. A chamada física foi substituída por uma simulação neste teste.
-- Modelo de comanda em PDF com largura de 80 mm e altura calculada pelo conteúdo.
-- Diário de impressão: uma confirmação perdida é recuperada sem novo envio físico.
-- Diário de impressão: reinício durante o envio gera resultado incerto, sem reimpressão automática.
-- Reserva concorrente de trabalhos e separação de comandas por setor.
-- Instalador Windows NSIS gerado; integridade do arquivo verificada com 7-Zip e correspondência do código/interface empacotados conferida.
-- A falha `Cannot find module '../shared/receipt.cjs'` foi reproduzida no pacote 0.1.0 e corrigida com o carregamento a partir de `process.resourcesPath`.
-- A verificação de dependências do pacote final é executada automaticamente em `afterPack`, antes de gerar o instalador; o pacote antigo falhou nessa verificação e o novo passou.
-- O `app.asar`, o bundle da API, a interface e o módulo de comanda da distribuição Windows 0.1.1 foram executados com Electron Linux e Node Linux, em pasta de teste separada. Nesse modo empacotado: tela inicial, senha por IPC, pedido pelo endpoint público, pedido visível no gestor e janela de comanda passaram. Apenas os executáveis nativos foram substituídos pelos equivalentes Linux nesse teste; isso não equivale a executar o instalador no Windows.
+`npm run build` verifica TypeScript, gera módulos Vite e o renderizador SSR do cardápio. O menu público não carrega os módulos do gestor, atendimento, IA ou mapa na primeira abertura. Há compressão HTTP e cache longo apenas nos assets com hash. Isso valida estrutura/tamanho; não é medição em 3G ou em celular físico.
 
-## Limites da validação
+## Pacote e publicação
 
-- O instalador Windows é gerado por compilação cruzada. Não houve execução em um computador Windows real neste ambiente.
-- Não havia uma Elgin i8 USB conectada. Impressão silenciosa foi implementada com a API do Electron, mas a saída física, o driver e o corte precisam do teste no equipamento do restaurante.
-- O recebimento a partir de um celular físico na rede da loja depende de IP, firewall e configuração do Wi-Fi. O layout e as requisições foram exercitados no navegador automatizado.
-- Nenhum site foi publicado em Hostinger ou Sites. A entrega inicial executa o servidor incluído e o cardápio na rede local. O caminho de publicação externa está documentado.
-- Nenhuma integração com marketplace, WhatsApp ou pagamento online foi simulada como se estivesse ativa.
-- O teste atual permanece local, conforme solicitado. A VPS Integrator Host e o Atende Chat não foram acessados ou alterados.
+O build Windows executa a verificação do app.asar, das dependências de inicialização e dos recursos (incluindo menu-ssr.cjs). O atualizador inclui hashes SHA-256 dos arquivos críticos, além da verificação do executável pelo canal de atualizações.
 
-## Evidências locais
+As verificações finais do pacote/download são registradas durante a publicação. Bancos, sessões, provider.key, credenciais, node_modules e artefatos de testes ficam fora do ZIP de código-fonte. O catálogo da loja contém apenas os dados comerciais fornecidos pelo usuário.
 
-As capturas de cardápio, gestor, impressão e a comanda PDF estão na pasta `artifacts/` do workspace. O pedido usado nas capturas é explicitamente um **pedido de teste QA**. O banco de testes e as sessões não entram no pacote de código nem no instalador.
+## Limites
 
-## Aceite no restaurante
+Não houve execução nativa do instalador Windows, impressão física na Elgin i8, teste em celular real, login real no Precific nem homologação do backend real Atende Chat nesta versão. A conexão com a aba local Ecta não estava disponível: o catálogo foi transcrito do texto fornecido pelo proprietário, sem fotos ou grupos de opções não informados.
 
-1. Instalar/abrir o aplicativo no Windows e criar a senha.
-2. Configurar o driver da Elgin i8 e enviar a comanda de teste.
-3. Abrir o QR Code em um celular da mesma rede.
-4. Criar um pedido com observação, verificar o valor e conferir a impressão.
-5. Desconectar a impressora, enviar outro pedido e verificar o erro/fila.
-6. Reconectar, conferir o papel e solicitar o reenvio controlado.
-7. Encerrar pela bandeja, abrir novamente e verificar a persistência dos pedidos.
+O teste permanece local; VPS Integrator Host e hospedagem Hostinger não foram acessadas ou alteradas. Uso externo em 4G, instalação PWA e GPS no celular exigem acesso HTTPS ao computador/servidor; não estão publicados apenas por instalar este executável. A fila offline não substitui o servidor nem garante armazenamento se o navegador apagar seus dados.
+
+Roteiro de aceite e configuração: [OPERACAO-LOCAL-0.8.md](OPERACAO-LOCAL-0.8.md).

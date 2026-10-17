@@ -8,7 +8,7 @@ Para instalar do zero, baixe o **[pacote Windows 0.8.0 em ZIP](https://github.co
 
 Cada instalação mantém seus dados locais. Instalar em outro computador não sincroniza o banco do primeiro.
 
-Veja o roteiro completo de mesas, combos, garçom e entregador em [OPERACAO-LOCAL-0.8.md](OPERACAO-LOCAL-0.8.md). O catálogo de demonstração é fictício; o menu Ecta permanece pendente de leitura.
+Veja o roteiro completo de mesas, combos, garçom e entregador em [OPERACAO-LOCAL-0.8.md](OPERACAO-LOCAL-0.8.md). O cardápio real Loja Dos Sonhos, fornecido em texto, está no botão de importação com 79 produtos; as dúvidas sobre porções/itens sem preço aparecem na conferência. O exemplo genérico continua fictício.
 
 ## Configurar a Elgin i8 e testar o aceite
 
@@ -70,7 +70,7 @@ Em **Relatórios**, aplique filtros e exporte resumo, pedidos ou itens em CSV. E
 
 ## Atendimento, agente e entregadores
 
-A 0.8.0 inclui esses módulos. Veja **[WHATSAPP-IA-ENTREGADORES.md](WHATSAPP-IA-ENTREGADORES.md)** para começar, configurar provedores e entender o GPS/HTTPS. O adaptador Atende Chat foi implementado na 0.8.0; siga **[INTEGRACAO-ATENDECHAT-PRECIFIC.md](INTEGRACAO-ATENDECHAT-PRECIFIC.md)** para configurar e homologar o backend.
+A 0.8.0 inclui esses módulos. Veja **[WHATSAPP-IA-ENTREGADORES.md](WHATSAPP-IA-ENTREGADORES.md)** para começar, configurar provedores e entender o GPS/HTTPS. O adaptador Atende Chat foi implementado na 0.7.0; siga **[INTEGRACAO-ATENDECHAT-PRECIFIC.md](INTEGRACAO-ATENDECHAT-PRECIFIC.md)** para configurar e homologar o backend.
 
 No teste local, o PWA recebe atribuições na mesma rede. Compartilhar o GPS no celular exige HTTPS confiável; o mapa usa internet. Nenhuma VPS foi modificada nesta versão.
 

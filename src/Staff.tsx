@@ -472,22 +472,24 @@ export function OrderEntry({
           <p>Carregando o cardápio…</p>
         ) : !category ? (
           <div className={`entry-category-modules ${categoryView}`}>
-            {categories.map((c) => (
-              <button
-                type="button"
-                key={c.id}
-                onClick={() => setCategory(c.name)}
-              >
-                <span className="entry-category-icon">
-                  <UtensilsCrossed size={24} />
-                </span>
-                <strong>{c.name}</strong>
-                <small>
-                  {products.filter((p) => p.category === c.name).length} itens
-                </small>
-                <ArrowRight size={18} />
-              </button>
-            ))}
+            {categories
+              .filter((c) => products.some((p) => p.category === c.name))
+              .map((c) => (
+                <button
+                  type="button"
+                  key={c.id}
+                  onClick={() => setCategory(c.name)}
+                >
+                  <span className="entry-category-icon">
+                    <UtensilsCrossed size={24} />
+                  </span>
+                  <strong>{c.name}</strong>
+                  <small>
+                    {products.filter((p) => p.category === c.name).length} itens
+                  </small>
+                  <ArrowRight size={18} />
+                </button>
+              ))}
           </div>
         ) : (
           <>

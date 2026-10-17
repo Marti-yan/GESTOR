@@ -1072,6 +1072,13 @@ export function createApplication({
           fail(400, "O prazo deve estar entre 5 e 240 minutos.");
         next.estimatedMinutes = b.estimatedMinutes;
       }
+      if ("estimatedMinimumMinutes" in b) {
+        if (!integer(b.estimatedMinimumMinutes, 5, next.estimatedMinutes))
+          fail(400, "O prazo mínimo deve ser menor ou igual ao máximo.");
+        next.estimatedMinimumMinutes = b.estimatedMinimumMinutes;
+      }
+      if (next.estimatedMinimumMinutes > next.estimatedMinutes)
+        next.estimatedMinimumMinutes = Math.max(5, next.estimatedMinutes - 10);
       if (!next.allowDelivery && !next.allowPickup)
         fail(400, "Habilite ao menos entrega ou retirada.");
       db.prepare("UPDATE settings SET value=? WHERE key='store'").run(

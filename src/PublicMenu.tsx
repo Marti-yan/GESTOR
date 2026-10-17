@@ -369,7 +369,9 @@ export function Menu({
           <div className="restaurant-meta">
             <span>
               <Clock3 size={15} />
-              {store.estimatedMinutes - 10}–{store.estimatedMinutes} min
+              {store.estimatedMinimumMinutes ??
+                Math.max(5, store.estimatedMinutes - 10)}
+              –{store.estimatedMinutes} min
             </span>
             <span>
               <Truck size={15} />

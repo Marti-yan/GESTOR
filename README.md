@@ -6,6 +6,8 @@ Preparado para **Elgin i8 USB de 80 mm**, com envio ESC/POS pela fila do Windows
 
 ## Começar pelo instalador Windows
 
+O cardápio **Loja Dos Sonhos**, fornecido em texto pelo proprietário, está disponível no importador (79 produtos, 15 categorias). Confira [preços e pendências](catalogos/loja-dos-sonhos/CONFERENCIA.md).
+
 A versão **0.8.0** acrescenta mesas/contas, confirmação visual no + do garçom, combos com acompanhamento por cozinha e estoque compartilhado, portal do entregador com fila de ações e rotas, cardápio com HTML inicial, planilhas e backups. Veja o roteiro para apresentação em [OPERACAO-LOCAL-0.8.md](OPERACAO-LOCAL-0.8.md). As integrações Atende Chat e Precific permanecem disponíveis; detalhes em [INTEGRACAO-ATENDECHAT-PRECIFIC.md](INTEGRACAO-ATENDECHAT-PRECIFIC.md).
 
 **Já tem o gestor instalado?** Feche o programa pela bandeja e execute o **[atualizador 0.8.0](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.8.0/Reparar-Pronto-0.8.0.exe)**. Ele mantém `%APPDATA%\Pronto Gestor` e refaz os atalhos. Se o programa ainda for detectado em execução, reinicie o Windows antes de atualizar. Ao abrir, confira **Pronto Gestor — 0.8.0** na barra de título.

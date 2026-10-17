@@ -6,7 +6,7 @@ Estes são pedidos prontos para as próximas etapas de desenvolvimento. O MVP at
 
 Garçom com balão no + e mesas/contas; combos fixos com estoque compartilhado e impressão por cozinha; entregador com fila idempotente, filtros e rotas; cardápio com HTML inicial/compressão; planilha, demo fictício e backups locais. [Roteiro de apresentação](OPERACAO-LOCAL-0.8.md).
 
-O cardápio Ecta/Loja dos Sonhos continua pendente de acesso (403). Próximo comando: “Importe esta exportação real da loja, preservando preços e adicionais; Pastéis/Batatas/Porções vão para Cozinha Batata e as demais categorias para Cozinha.”
+O cardápio Loja Dos Sonhos foi cadastrado a partir do texto do proprietário: 79 produtos, 15 categorias e 17 composições. Próximo comando: “Complete os itens sem preço da categoria Salgados, confirme porções/sabores dos combos e cadastre os grupos de adicionais reais, preservando preços e cozinhas.”
 
 ## 1. Validar a Elgin i8 na operação real
 

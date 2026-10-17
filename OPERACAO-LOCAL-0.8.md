@@ -46,7 +46,7 @@ Na via setorizada, a identificação do combo fica como referência e os acompan
 
 O estoque de cada componente é reservado na mesma transação do pedido. Combo e venda avulsa consomem o mesmo saldo. Falta de qualquer componente rejeita o pedido inteiro sem deixar reserva parcial. Cancelamento antes do preparo devolve a reserva uma vez; após entrar em preparo, não repõe automaticamente insumos consumidos.
 
-A versão cobre acompanhamentos fixos. Combos aninhados e componentes com escolhas obrigatórias são recusados; cadastre um produto fixo (por exemplo, um sabor específico de bebida). A escolha variável entre acompanhamentos e o estoque por ingrediente/ficha técnica continuam no roteiro.
+A versão cobre acompanhamentos fixos vinculados a produtos e itens apenas de preparo, sem preço/estoque próprios. Combos aninhados e componentes com escolhas obrigatórias são recusados; cadastre um produto fixo (por exemplo, um sabor específico de bebida). A escolha variável entre acompanhamentos e o estoque por ingrediente/ficha técnica continuam no roteiro.
 
 ## Entregador
 
@@ -69,16 +69,22 @@ A preferência por Next.js era para ter conteúdo pronto antes do JavaScript. Es
 
 ## Cardápio Loja dos Sonhos
 
-O endereço solicitado é `https://ecta.com.br/LojaDosSonhos/#/restaurante2`. O ambiente retornou bloqueio 403 e a ferramenta de leitura web não conseguiu abrir o site; a aba local compartilhada não ficou acessível. **O cardápio real não foi copiado.** Não inventamos produtos, adicionais ou preços em nome da loja.
+O endereço solicitado é `https://ecta.com.br/LojaDosSonhos/#/restaurante2`. A leitura direta ficou bloqueada, mas o proprietário forneceu o texto completo nesta conversa. A partir dele, foi montado [catalogos/loja-dos-sonhos/cardapio.json](catalogos/loja-dos-sonhos/cardapio.json): **79 produtos com preço, 15 categorias e 17 combos/promoções com preparo distribuído**. A [conferência de preços e pendências](catalogos/loja-dos-sonhos/CONFERENCIA.md) acompanha os dados no Git.
 
-Está pronta a importação JSON e a importação de planilha com cabeçalho:
+Em **Cardápio → Conferir cardápio Loja Dos Sonhos (79 produtos)**, revise e confirme. A opção de desativar itens fora do arquivo vem marcada nesse preset: os produtos antigos permanecem cadastrados e no histórico, mas saem do cardápio público. A opção de aplicar nome e prazo atualiza para Loja Dos Sonhos / 60–90 minutos. Abertura, telefone e taxas não são modificados. Para imprimir as duas vias, aplique a configuração rápida das cozinhas e escolha as impressoras em Impressão.
+
+Pastéis, Batata dos Sonhos, Batata Frita e Porções são da **Cozinha Batata**; os demais produtos, **Cozinha**. Componentes dos combos seguem a cozinha própria, mesmo quando a categoria do combo é Promoção/Trio/Box.
+
+O trecho “SALGADOS / 175G / Sabor único / Pizza inteira com um sabor” não identifica item e preço; a categoria foi preservada sem criar produto vendável. Os adicionais e fotos não constavam do texto e não foram inventados. Batata maluca sem tamanho, batata P sem peso, nuggets sem quantidade e refrigerante sem sabor/volume definidos ficaram como **itens apenas de preparo**, com a pendência no nome. Eles imprimem e multiplicam corretamente, mas não consomem o estoque de uma porção avulsa diferente. Depois de confirmar a receita, vincule a um produto real no editor de combo.
+
+A importação por planilha continua disponível com cabeçalho:
 
 ```csv
 categoria;nome;descricao;preco;cozinha
 Batatas;Produto real;Descrição real;19,90;
 ```
 
-Aceita `;` ou tabulação e campos entre aspas. A cozinha pode ficar vazia: Pastéis/Batatas/Porções são roteados para Cozinha Batata, as outras categorias para Cozinha. JSON permite preservar grupos, opções e combos. O resumo de importação é conferido antes de alterar a loja. `examples/cardapio-demonstracao.json` é explicitamente fictício, destinado à apresentação.
+Aceita ponto e vírgula ou tabulação e campos entre aspas. JSON preserva grupos, opções e combos. `examples/cardapio-demonstracao.json` continua separado e explicitamente fictício para apresentações genéricas.
 
 ## Backups e recuperação
 
