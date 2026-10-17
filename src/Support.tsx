@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { api, createId } from "./api";
-import { AtendeSetup } from './AtendeSetup';
+import { AtendeSetup } from "./AtendeSetup";
 type Tag = { id: string; name: string; color: string };
 type Contact = {
   id: string;
@@ -13,7 +13,7 @@ type Contact = {
   notes: string;
 };
 type Ticket = {
-  atende?:{ticketId:string;owned:boolean;current:boolean}|null;
+  atende?: { ticketId: string; owned: boolean; current: boolean } | null;
   id: string;
   number: number;
   contact_id: string;
@@ -381,7 +381,9 @@ function Tickets() {
                 >
                   {detail.ticket.agent_mode === "auto"
                     ? "Assumir e pausar agente"
-                    : detail.ticket.atende?'Ativar agente do gestor':"Retomar agente"}
+                    : detail.ticket.atende
+                      ? "Ativar agente do gestor"
+                      : "Retomar agente"}
                 </button>
                 <select
                   aria-label="Etapa do ticket"
@@ -419,7 +421,8 @@ function Tickets() {
                 </button>
               </div>
               <p className="chat-hint">
-                {detail.ticket.atende&&`Ticket ${detail.ticket.atende.ticketId} do Atende Chat. `}
+                {detail.ticket.atende &&
+                  `Ticket ${detail.ticket.atende.ticketId} do Atende Chat. `}
                 {detail.ticket.agent_mode === "auto"
                   ? "O agente responde quando a automação global estiver ativa."
                   : "Você está no controle. Responder manualmente também pausa o agente."}
@@ -1219,7 +1222,7 @@ function WhatsAppConnection() {
     instance: string;
     phoneNumberId: string;
     graphVersion: string;
-    atendeWhatsappId:string;
+    atendeWhatsappId: string;
   };
   const [config, setConfig] = useState<Config>({
       provider: "none",
@@ -1228,7 +1231,7 @@ function WhatsAppConnection() {
       instance: "pronto",
       phoneNumberId: "",
       graphVersion: "v23.0",
-      atendeWhatsappId:'',
+      atendeWhatsappId: "",
     }),
     [apiKey, setKey] = useState(""),
     [appSecret, setAppSecret] = useState(""),
@@ -1250,6 +1253,20 @@ function WhatsAppConnection() {
       })
       .catch((e) => setMessage(err(e)));
   }, []);
+  useEffect(() => {
+    if (config.provider !== "atende" || !qr) return;
+    const timer = setInterval(
+      () =>
+        api<{ atende: { code?: string; state: string } }>("/admin/whatsapp")
+          .then((r) => {
+            setQR({ code: r.atende.code || "" });
+            setState(r.atende.state);
+          })
+          .catch(() => {}),
+      5000,
+    );
+    return () => clearInterval(timer);
+  }, [config.provider, !!qr]);
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -1260,7 +1277,9 @@ function WhatsAppConnection() {
       setAppSecret("");
       setQR(null);
       setMessage(
-        config.provider==='atende'?'Conexão salva. Entre no Atende Chat e selecione o número.':"Conexão salva. Configure o webhook e confira o estado do provedor.",
+        config.provider === "atende"
+          ? "Conexão salva. Entre no Atende Chat e selecione o número."
+          : "Conexão salva. Configure o webhook e confira o estado do provedor.",
       );
     } catch (e) {
       setMessage(err(e));
@@ -1272,7 +1291,8 @@ function WhatsAppConnection() {
     <section className="operation-panel">
       <h2>Conexão de WhatsApp</h2>
       <p>
-        Use a conexão existente do Atende Chat, uma instância Evolution ou um número da Cloud API.
+        Use a conexão existente do Atende Chat, uma instância Evolution ou um
+        número da Cloud API.
       </p>
       <form onSubmit={save}>
         <label className="field">
@@ -1297,10 +1317,12 @@ function WhatsAppConnection() {
           />{" "}
           Ativar processamento e fila de mensagens
         </label>
-        {['evolution','atende'].includes(config.provider) && (
+        {["evolution", "atende"].includes(config.provider) && (
           <div className="field-grid">
             <label className="field">
-              {config.provider==='atende'?'Endereço do backend Atende Chat':'Endereço base da Evolution API'}
+              {config.provider === "atende"
+                ? "Endereço do backend Atende Chat"
+                : "Endereço base da Evolution API"}
               <input
                 type="url"
                 required
@@ -1311,16 +1333,18 @@ function WhatsAppConnection() {
                 }
               />
             </label>
-            {config.provider==='evolution'&&<label className="field">
-              Nome da instância existente
-              <input
-                required
-                value={config.instance}
-                onChange={(e) =>
-                  setConfig({ ...config, instance: e.target.value })
-                }
-              />
-            </label>}
+            {config.provider === "evolution" && (
+              <label className="field">
+                Nome da instância existente
+                <input
+                  required
+                  value={config.instance}
+                  onChange={(e) =>
+                    setConfig({ ...config, instance: e.target.value })
+                  }
+                />
+              </label>
+            )}
           </div>
         )}
         {config.provider === "cloud" && (
@@ -1359,7 +1383,7 @@ function WhatsAppConnection() {
             </label>
           </>
         )}
-        {['evolution','cloud'].includes(config.provider) && (
+        {["evolution", "cloud"].includes(config.provider) && (
           <label className="field">
             {config.provider === "cloud" ? "Access Token" : "API Key"}
             <input
@@ -1379,7 +1403,16 @@ function WhatsAppConnection() {
           Salvar conexão
         </button>
       </form>
-      {config.provider==='atende'&&<AtendeSetup connectionId={config.atendeWhatsappId||''} onSelect={async id=>{const next={...config,atendeWhatsappId:id};await api('/admin/whatsapp','PUT',next);setConfig(next)}}/>}
+      {config.provider === "atende" && (
+        <AtendeSetup
+          connectionId={config.atendeWhatsappId || ""}
+          onSelect={async (id) => {
+            const next = { ...config, atendeWhatsappId: id };
+            await api("/admin/whatsapp", "PUT", next);
+            setConfig(next);
+          }}
+        />
+      )}
       <p role="status">{message}</p>
       <div className="operation-actions">
         <button
@@ -1403,7 +1436,7 @@ function WhatsAppConnection() {
         >
           Consultar estado
         </button>
-        {['evolution','atende'].includes(config.provider) && (
+        {["evolution", "atende"].includes(config.provider) && (
           <button
             className="button secondary"
             disabled={busy}
@@ -1421,7 +1454,9 @@ function WhatsAppConnection() {
               }
             }}
           >
-            {config.provider==='atende'?'Iniciar sessão e obter QR':'Obter QR da instância'}
+            {config.provider === "atende"
+              ? "Iniciar sessão e obter QR"
+              : "Obter QR da instância"}
           </button>
         )}
         <strong>{state}</strong>
@@ -1441,48 +1476,50 @@ function WhatsAppConnection() {
           {qr.pairingCode && <p>Código de pareamento: {qr.pairingCode}</p>}
         </div>
       )}
-      {config.provider!=='atende'&&<details>
-        <summary>Recebimento por webhook</summary>
-        <p>
-          Endpoint do gestor: <code>/api/integrations/whatsapp</code>. O
-          provedor precisa alcançar esse endereço. Para um provedor na internet,
-          use HTTPS público; o endereço 127.0.0.1 só funciona no próprio
-          computador.
-        </p>
-        <button
-          className="button secondary"
-          onClick={async () => {
-            try {
-              const r = await api<{ token: string }>(
-                "/admin/whatsapp/webhook-token",
-                "POST",
-                {},
-              );
-              setToken(r.token);
-            } catch (e) {
-              setMessage(err(e));
-            }
-          }}
-        >
-          Gerar ou trocar token de webhook
-        </button>
-        {token && (
-          <label className="field">
-            Copie este token para configurar o provedor
-            <input readOnly value={token} />
-          </label>
-        )}
-        <p>
-          Evolution: evento <code>MESSAGES_UPSERT</code>, URL acima e cabeçalho{" "}
-          <code>x-pronto-hook</code> com o token. Cloud API: token de
-          verificação acima, assinatura com App Secret e assinatura do campo
-          messages.
-        </p>
-        <p>
-          O agente processa mensagens de texto. Imagens, áudios e outros anexos
-          são encaminhados para atendimento humano.
-        </p>
-      </details>}
+      {config.provider !== "atende" && (
+        <details>
+          <summary>Recebimento por webhook</summary>
+          <p>
+            Endpoint do gestor: <code>/api/integrations/whatsapp</code>. O
+            provedor precisa alcançar esse endereço. Para um provedor na
+            internet, use HTTPS público; o endereço 127.0.0.1 só funciona no
+            próprio computador.
+          </p>
+          <button
+            className="button secondary"
+            onClick={async () => {
+              try {
+                const r = await api<{ token: string }>(
+                  "/admin/whatsapp/webhook-token",
+                  "POST",
+                  {},
+                );
+                setToken(r.token);
+              } catch (e) {
+                setMessage(err(e));
+              }
+            }}
+          >
+            Gerar ou trocar token de webhook
+          </button>
+          {token && (
+            <label className="field">
+              Copie este token para configurar o provedor
+              <input readOnly value={token} />
+            </label>
+          )}
+          <p>
+            Evolution: evento <code>MESSAGES_UPSERT</code>, URL acima e
+            cabeçalho <code>x-pronto-hook</code> com o token. Cloud API: token
+            de verificação acima, assinatura com App Secret e assinatura do
+            campo messages.
+          </p>
+          <p>
+            O agente processa mensagens de texto. Imagens, áudios e outros
+            anexos são encaminhados para atendimento humano.
+          </p>
+        </details>
+      )}
     </section>
   );
 }

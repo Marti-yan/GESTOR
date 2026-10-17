@@ -1,4 +1,4 @@
-# Pronto Gestor — MVP 0.6.0
+# Pronto Gestor — MVP 0.7.0
 
 Cardápio digital → aceite no gestor → comanda térmica. Garçom e gestor também lançam pedidos diretamente.
 
@@ -6,16 +6,16 @@ Preparado para **Elgin i8 USB de 80 mm**, com envio ESC/POS pela fila do Windows
 
 ## Começar pelo instalador Windows
 
-A versão **0.6.0** acrescenta atendimento por tickets, tags/Kanban, respostas rápidas, contatos e campanhas com consentimento, adaptadores WhatsApp Evolution/Cloud API, agente por API com RAG local e fine-tuning supervisionado. Inclui PWA de entregadores com PIN individual, atribuição, localização confirmada do cliente e mapa de GPS compartilhado. Consulte [WHATSAPP-IA-ENTREGADORES.md](WHATSAPP-IA-ENTREGADORES.md). A conexão específica do Atende Chat depende do levantamento do outro projeto: [LEVANTAMENTO-ATENDECHAT.md](LEVANTAMENTO-ATENDECHAT.md).
+A versão **0.7.0** acrescenta o adaptador Atende Chat por HTTP/Socket.IO, preservando a conexão WhatsApp existente, e a aba nativa Precific com site original e login persistente. Configuração e limites em [INTEGRACAO-ATENDECHAT-PRECIFIC.md](INTEGRACAO-ATENDECHAT-PRECIFIC.md).
 
-**Já tem o gestor instalado?** Feche o programa pela bandeja e execute o **[atualizador 0.6.0](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.6.0/Reparar-Pronto-0.6.0.exe)**. Ele mantém `%APPDATA%\Pronto Gestor` e refaz os atalhos. Se o programa ainda for detectado em execução, reinicie o Windows antes de atualizar. Ao abrir, confira **Pronto Gestor — 0.6.0** na barra de título.
+**Já tem o gestor instalado?** Feche o programa pela bandeja e execute o **[atualizador 0.7.0](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.7.0/Reparar-Pronto-0.7.0.exe)**. Ele mantém `%APPDATA%\Pronto Gestor` e refaz os atalhos. Se o programa ainda for detectado em execução, reinicie o Windows antes de atualizar. Ao abrir, confira **Pronto Gestor — 0.7.0** na barra de título.
 
-Para instalar do zero, baixe o **[pacote Windows em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.6.0.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. O script monta o `.exe`, confere o SHA-256 e abre a instalação. O pacote está em uma branch de distribuição separada porque o instalador excede o limite de arquivo comum do Git.
+Para instalar do zero, baixe o **[pacote Windows em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.7.0.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. O script monta o `.exe`, confere o SHA-256 e abre a instalação. O pacote está em uma branch de distribuição separada porque o instalador excede o limite de arquivo comum do Git.
 
 É possível instalar em outro computador com Windows de 64 bits; o computador de desenvolvimento não precisa estar disponível. Cada instalação mantém seu próprio banco local. Para testar cardápio e pedidos sem a impressora, mantenha a impressão automática desligada e visualize a comanda no gestor.
 
 1. Instale o driver Windows da Elgin i8. Confira que a impressora aparece em **Configurações → Impressoras e scanners** e imprima a página de teste do Windows.
-2. Execute `Pronto-Gestor-0.6.0-Windows-x64.exe` e abra o Pronto Gestor.
+2. Execute `Pronto-Gestor-0.7.0-Windows-x64.exe` e abra o Pronto Gestor.
 3. Crie uma senha de pelo menos 12 caracteres. Em **Minha loja**, informe o nome, taxa de entrega e prazo; em **Cardápio**, edite os produtos de exemplo.
 4. Em **Impressão**, selecione a Elgin i8 em **Comanda geral**, mantenha **80 mm** e modo **ESC/POS**. Escolha o modelo, ajuste a leitura e os destaques, salve e clique em **Testar este modelo**. Confira mesa, três lanches, bebidas, troco e o marcador FIM antes do corte.
 5. Ligue **Impressão automática**.
@@ -70,7 +70,7 @@ Recomendação inicial para operação: Windows 11 de 64 bits, 8 GB de RAM, SSD 
 - Entregadores com acesso individual por PIN, pedidos atribuídos, coleta/entrega/ocorrência e ponto confirmado do cliente.
 - GPS opcional do motoboy em mapa OpenStreetMap, precisão, última captura, indicação de posição antiga e interrupção do compartilhamento.
 
-**Não há confirmação online de pagamento neste MVP.** Dinheiro e cartão são recebidos na entrega ou retirada. Não foram incluídos iFood, 99Food, caixa/financeiro completo ou emissão fiscal. WhatsApp e IA exigem contas e credenciais externas; as conexões reais ainda precisam de homologação. O código do Atende Chat não foi disponibilizado neste ambiente.
+**Não há confirmação online de pagamento neste MVP.** Dinheiro e cartão são recebidos na entrega ou retirada. Não foram incluídos iFood, 99Food, caixa/financeiro completo ou emissão fiscal. WhatsApp e IA exigem contas e credenciais externas; as conexões reais ainda precisam de homologação. O adaptador Atende Chat segue o levantamento recebido e precisa de homologação no backend real.
 
 O catálogo inicial é **exemplo editável**. Não existem pedidos falsos pré-cadastrados na instalação.
 

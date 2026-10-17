@@ -28,5 +28,11 @@ CREATE TABLE IF NOT EXISTS provider_secrets(name TEXT PRIMARY KEY,value TEXT NOT
 CREATE TABLE IF NOT EXISTS atende_ticket_links(local_ticket_id TEXT PRIMARY KEY REFERENCES chat_tickets(id),account_key TEXT NOT NULL,remote_ticket_id TEXT NOT NULL,remote_contact_id TEXT NOT NULL,owned INTEGER NOT NULL DEFAULT 0,UNIQUE(account_key,remote_ticket_id));
 CREATE TABLE IF NOT EXISTS atende_message_ids(account_key TEXT NOT NULL,remote_id TEXT NOT NULL,remote_wid TEXT NOT NULL DEFAULT '',local_message_id TEXT NOT NULL REFERENCES chat_messages(id),PRIMARY KEY(account_key,remote_id));
 `);
-  if(!db.prepare('PRAGMA table_info(chat_outbox)').all().some(c=>c.name==='connection_key'))db.exec('ALTER TABLE chat_outbox ADD COLUMN connection_key TEXT');
+  if (
+    !db
+      .prepare("PRAGMA table_info(chat_outbox)")
+      .all()
+      .some((c) => c.name === "connection_key")
+  )
+    db.exec("ALTER TABLE chat_outbox ADD COLUMN connection_key TEXT");
 }

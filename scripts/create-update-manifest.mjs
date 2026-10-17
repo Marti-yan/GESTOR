@@ -22,11 +22,11 @@ const manifest = {
     encoding: "utf8",
   }).trim(),
   notes: [
-    "Atendimento por tickets, tags/Kanban, contatos, respostas rápidas e campanhas com consentimento.",
-    "Adaptadores WhatsApp Evolution API e Cloud API; requerem configuração e homologação do provedor.",
-    "Agente por API com RAG local, dados da loja e exemplos revisados para fine-tuning opcional.",
-    "PWA do entregador com PIN, atribuição de pedidos e confirmação de localização do cliente.",
-    "GPS compartilhado por autorização, mapa com posição/precisão e interrupção do compartilhamento.",
+    "Aba Precific carrega o site original com a mesma conta e dados da hospedagem.",
+    "Login do Precific persistente; atualizações do site por recarga, sem novo instalador.",
+    "Adaptador Atende Chat por HTTP e Socket.IO, preservando a sessão WhatsApp existente.",
+    "Tickets, QR, texto e pausa do agente ao assumir ou trocar de atendente.",
+    "Fila vinculada à conexão para impedir envio de mensagens antigas por outro número.",
   ],
 };
 mkdirSync(dirname(resolve(output)), { recursive: true });

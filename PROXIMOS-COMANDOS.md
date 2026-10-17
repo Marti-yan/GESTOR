@@ -62,7 +62,7 @@ Aceite: fluxo homologado com registros e tratamento de falhas; não presumir equ
 
 ## 10. Homologar WhatsApp / Atende Chat
 
-A 0.6.0 inclui tickets, tags/Kanban, contatos, respostas rápidas, campanhas com consentimento e adaptadores de texto Evolution/Cloud API. Falta homologar no provedor real e receber o levantamento do Atende Chat.
+A 0.6.0 inclui tickets, tags/Kanban, contatos, respostas rápidas, campanhas com consentimento e adaptadores de texto Evolution/Cloud API. O adaptador Atende Chat foi implementado na 0.7.0; falta homologar no backend real e confirmar o contrato de refresh de JWT/mídia.
 
 > Use o levantamento do Atende Chat para integrar sua conexão existente. Homologue entrada/saída, reconexão, QR, confirmações e deduplicação no número de teste. Depois acrescente mídia/transcrição, onboarding oficial e vínculo explícito com pedidos, sem duplicá-los.
 

@@ -142,7 +142,12 @@ async function requestApi(path, method = "GET", body, extraHeaders = {}) {
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
-    signal: AbortSignal.timeout(path.startsWith('/admin/whatsapp/atende/')||path.startsWith('/admin/tickets/')?35000:12000),
+    signal: AbortSignal.timeout(
+      path.startsWith("/admin/whatsapp/atende/") ||
+        path.startsWith("/admin/tickets/")
+        ? 35000
+        : 12000,
+    ),
     redirect: "error",
   });
   const data = await response
@@ -325,17 +330,26 @@ function assertSender(event) {
   if (url.origin !== localServerUrl) throw new Error("Origem não autorizada.");
 }
 function registerIpc() {
-  ipcMain.handle('pronto:precific',async(event,request={})=>{
+  ipcMain.handle("pronto:precific", async (event, request = {}) => {
     assertSender(event);
-    if(event.sender!==mainWindow.webContents||event.senderFrame!==mainWindow.webContents.mainFrame)throw Error('Origem não autorizada.');
-    if(request.action==='hide'||quitting)return precificTab.hide();
-    if(!sessionToken)throw Error('Entre no gestor para abrir o Precific.');
-    if(!new URL(mainWindow.webContents.getURL()).hash.startsWith('#/gestor/precific'))throw Error('Abra a aba Precific primeiro.');
-    if(request.action==='show')return precificTab.show(request.bounds);
-    if(request.action==='status')return precificTab.snapshot();
-    if(request.action==='reload')return precificTab.reload();
-    if(request.action==='open')return precificTab.open();
-    throw Error('Ação do Precific inválida.');
+    if (
+      event.sender !== mainWindow.webContents ||
+      event.senderFrame !== mainWindow.webContents.mainFrame
+    )
+      throw Error("Origem não autorizada.");
+    if (request.action === "hide" || quitting) return precificTab.hide();
+    if (!sessionToken) throw Error("Entre no gestor para abrir o Precific.");
+    if (
+      !new URL(mainWindow.webContents.getURL()).hash.startsWith(
+        "#/gestor/precific",
+      )
+    )
+      throw Error("Abra a aba Precific primeiro.");
+    if (request.action === "show") return precificTab.show(request.bounds);
+    if (request.action === "status") return precificTab.snapshot();
+    if (request.action === "reload") return precificTab.reload();
+    if (request.action === "open") return precificTab.open();
+    throw Error("Ação do Precific inválida.");
   });
   ipcMain.handle("pronto:check-update", async (event) => {
     assertSender(event);
@@ -587,9 +601,17 @@ function createWindow() {
     },
   });
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
-  precificTab=new PrecificTab({window:mainWindow,WebContentsView,session,openExternal:url=>shell.openExternal(url)});
-  mainWindow.webContents.on('did-navigate-in-page',(_e,url,main)=>{if(main&&!new URL(url).hash.startsWith('#/gestor/precific'))precificTab.hide()});
-  mainWindow.on('closed',()=>precificTab.destroy());
+  precificTab = new PrecificTab({
+    window: mainWindow,
+    WebContentsView,
+    session,
+    openExternal: (url) => shell.openExternal(url),
+  });
+  mainWindow.webContents.on("did-navigate-in-page", (_e, url, main) => {
+    if (main && !new URL(url).hash.startsWith("#/gestor/precific"))
+      precificTab.hide();
+  });
+  mainWindow.on("closed", () => precificTab.destroy());
   mainWindow.on("page-title-updated", (event) => event.preventDefault());
   mainWindow.webContents.on("will-navigate", (event, url) => {
     try {

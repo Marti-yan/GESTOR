@@ -6352,4 +6352,28 @@ svg {
   max-width: 100%;
 }
 
-.precific-page{display:flex;flex-direction:column;gap:16px}.precific-toolbar{display:flex;gap:20px;align-items:center;justify-content:space-between;flex-wrap:wrap}.precific-toolbar h1{margin:0 0 8px}.precific-toolbar small{color:var(--muted)}.precific-viewport{height:calc(100dvh - 240px);min-height:420px;border:1px solid var(--line);border-radius:8px;background:white}
+.precific-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.precific-toolbar {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.precific-toolbar h1 {
+  margin: 0 0 8px;
+}
+.precific-toolbar small {
+  color: var(--muted);
+}
+.precific-viewport {
+  height: calc(100dvh - 240px);
+  min-height: 420px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+}

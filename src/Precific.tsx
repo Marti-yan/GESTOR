@@ -1,8 +1,112 @@
-import {useEffect,useRef,useState} from 'react';
-const URL='https://precific.martinscoders.com/';
-export function Precific({hidden=false}:{hidden?:boolean}){
- const node=useRef<HTMLDivElement>(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),desktop=window.prontoDesktop;
- useEffect(()=>{if(!desktop?.precific||hidden)return;let active=true;const update=()=>{if(!node.current||!active)return;const r=node.current.getBoundingClientRect();desktop.precific!({action:'show',bounds:{x:r.x,y:r.y,width:r.width,height:r.height}}).then(s=>{if(active){setError(s.error);setLoading(s.loading)}}).catch(e=>{if(active)setError(e.message)})};update();const observer=new ResizeObserver(update);if(node.current)observer.observe(node.current);window.addEventListener('resize',update);window.addEventListener('scroll',update,true);const timer=setInterval(()=>desktop.precific!({action:'status'}).then(s=>{if(active){setError(s.error);setLoading(s.loading)}}).catch(e=>{if(active)setError(e.message)}),1500);return()=>{active=false;observer.disconnect();clearInterval(timer);window.removeEventListener('resize',update);window.removeEventListener('scroll',update,true);desktop.precific!({action:'hide'}).catch(()=>{})}},[desktop,hidden]);
- async function act(action:'reload'|'open'){try{if(desktop?.precific)await desktop.precific({action});else window.open(URL,'_blank','noopener,noreferrer')}catch(e){setError(e instanceof Error?e.message:'Não foi possível abrir o Precific.')}}
- return <section className="precific-page"><div className="precific-toolbar"><div><h1>Precific</h1><small>{desktop?.precific?(loading?'Carregando…':'Use sua conta do Precific.'):'Acesse com a mesma conta que usa no Precific.'}</small></div><div className="operation-actions">{desktop?.precific&&<button className="button secondary" onClick={()=>act('reload')}>Atualizar site</button>}<button className="button secondary" onClick={()=>act('open')}>Abrir no navegador</button></div></div>{error&&<p className="error-banner" role="alert">{error}</p>}{desktop?.precific?<div className="precific-viewport" ref={node}/>:<div className="operation-panel"><p>Abra o Precific para acessar seus dados e configurações.</p><a className="button primary" href={URL} target="_blank" rel="noreferrer">Acessar Precific</a></div>}</section>
+import { useEffect, useRef, useState } from "react";
+const URL = "https://precific.martinscoders.com/";
+export function Precific({ hidden = false }: { hidden?: boolean }) {
+  const node = useRef<HTMLDivElement>(null),
+    [error, setError] = useState(""),
+    [loading, setLoading] = useState(true),
+    desktop = window.prontoDesktop;
+  useEffect(() => {
+    if (!desktop?.precific || hidden) return;
+    let active = true;
+    const update = () => {
+      if (!node.current || !active) return;
+      const r = node.current.getBoundingClientRect();
+      desktop.precific!({
+        action: "show",
+        bounds: { x: r.x, y: r.y, width: r.width, height: r.height },
+      })
+        .then((s) => {
+          if (active) {
+            setError(s.error);
+            setLoading(s.loading);
+          }
+        })
+        .catch((e) => {
+          if (active) setError(e.message);
+        });
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    if (node.current) observer.observe(node.current);
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    const timer = setInterval(
+      () =>
+        desktop.precific!({ action: "status" })
+          .then((s) => {
+            if (active) {
+              setError(s.error);
+              setLoading(s.loading);
+            }
+          })
+          .catch((e) => {
+            if (active) setError(e.message);
+          }),
+      1500,
+    );
+    return () => {
+      active = false;
+      observer.disconnect();
+      clearInterval(timer);
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+      desktop.precific!({ action: "hide" }).catch(() => {});
+    };
+  }, [desktop, hidden]);
+  async function act(action: "reload" | "open") {
+    try {
+      if (desktop?.precific) await desktop.precific({ action });
+      else window.open(URL, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Não foi possível abrir o Precific.",
+      );
+    }
+  }
+  return (
+    <section className="precific-page">
+      <div className="precific-toolbar">
+        <div>
+          <h1>Precific</h1>
+          <small>
+            {desktop?.precific
+              ? loading
+                ? "Carregando…"
+                : "Use sua conta do Precific."
+              : "Acesse com a mesma conta que usa no Precific."}
+          </small>
+        </div>
+        <div className="operation-actions">
+          {desktop?.precific && (
+            <button className="button secondary" onClick={() => act("reload")}>
+              Atualizar site
+            </button>
+          )}
+          <button className="button secondary" onClick={() => act("open")}>
+            Abrir no navegador
+          </button>
+        </div>
+      </div>
+      {error && (
+        <p className="error-banner" role="alert">
+          {error}
+        </p>
+      )}
+      {desktop?.precific ? (
+        <div className="precific-viewport" ref={node} />
+      ) : (
+        <div className="operation-panel">
+          <p>Abra o Precific para acessar seus dados e configurações.</p>
+          <a
+            className="button primary"
+            href={URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Acessar Precific
+          </a>
+        </div>
+      )}
+    </section>
+  );
 }

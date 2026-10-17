@@ -67,7 +67,7 @@ Configure contas, credenciais, URLs públicas e webhooks antes de usar números 
 
 ### Atende Chat
 
-O código do Atende Chat não foi disponibilizado neste ambiente. Não foi possível afirmar qual biblioteca/versão usa nem copiar sua conexão. Use [LEVANTAMENTO-ATENDECHAT.md](LEVANTAMENTO-ATENDECHAT.md) no outro projeto. Se houver uma API compatível, podemos consumir a conexão existente; se a biblioteca estiver embutida no backend, será necessário um adaptador específico. Não conecte o mesmo número a outra sessão sem verificar o comportamento do sistema atual.
+Adaptador implementado na 0.7.0 a partir do levantamento recebido. Mantém a sessão Baileys original no Atende Chat. Configuração e limites em [INTEGRACAO-ATENDECHAT-PRECIFIC.md](INTEGRACAO-ATENDECHAT-PRECIFIC.md).
 
 ## Tickets, tags e respostas rápidas
 

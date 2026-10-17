@@ -214,7 +214,7 @@ export function createApplication({
     rateLimit,
     dataDir: dataDir || resolve(".data"),
     fetchImpl: providerFetch,
-    socketFactory:atendeSocketFactory,
+    socketFactory: atendeSocketFactory,
   });
   installCouriers({ app, db, admin, wrap, fail, rateLimit, secureCookie });
   installCatalogTools({ app, db, admin, wrap, fail });

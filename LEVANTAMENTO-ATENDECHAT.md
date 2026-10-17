@@ -1,3 +1,5 @@
+> O levantamento foi recebido e o adaptador 0.7.0 foi implementado. Para configurar/homologar, veja [INTEGRACAO-ATENDECHAT-PRECIFIC.md](INTEGRACAO-ATENDECHAT-PRECIFIC.md). O roteiro abaixo continua como referência.
+
 # Informações para integrar o Atende Chat
 
 Não é necessário transferir o projeto inteiro. Abra o Atende Chat com a outra IA e envie o pedido abaixo. Traga a resposta para o chat do GESTOR. Depois do levantamento, podemos pedir apenas dois ou três arquivos pequenos e específicos.
@@ -37,4 +39,4 @@ Não envie `.env`, pastas de autenticação, QR, chaves, banco, números reais o
 
 ## Interface que o Pronto já prepara
 
-O módulo novo possui contatos, tags, tickets, respostas rápidas e fila persistente de texto. Há adaptadores para Evolution API e Meta Cloud API. O levantamento servirá para confirmar compatibilidade ou implementar um adaptador específico para o transporte do Atende Chat, preservando a pausa do agente, a deduplicação e o histórico. Não foi possível verificar nem reutilizar o código do Atende Chat porque esse projeto não está montado neste ambiente.
+O módulo novo possui contatos, tags, tickets, respostas rápidas e fila persistente de texto. Há adaptadores para Evolution API e Meta Cloud API. O levantamento servirá para confirmar compatibilidade ou implementar um adaptador específico para o transporte do Atende Chat, preservando a pausa do agente, a deduplicação e o histórico. A integração usa o contrato HTTP/Socket.IO do levantamento, sem copiar ou executar a sessão Baileys.
