@@ -1,14 +1,15 @@
 {
-  "version": "0.4.0",
+  "version": "0.5.0",
   "minVersion": "0.2.0",
-  "url": "https://raw.githubusercontent.com/Marti-yan/GESTOR/98a71b2e047f82033203d2c93c870432be26927a/Reparar-Pronto-0.4.0.exe",
-  "size": 2000116,
-  "sha256": "8b4aee7304b1d224c6852bdb40eb638e07281443bf5f9f9f2a9b157d36690c24",
-  "sourceCommit": "9649d6074e74e5132c1703dcb877be2ef92e4044",
+  "url": "https://raw.githubusercontent.com/Marti-yan/GESTOR/12668662b98cce0a7c788bf0a735c550b4637349/Reparar-Pronto-0.5.0.exe",
+  "size": 2004720,
+  "sha256": "716a295721ca9ac93fe2a11d2962af6fa117f27591deb2215e3b25ab1e7d1415",
+  "sourceCommit": "f7d9dc1105934e5a5598b5c39ee0abe9367793c5",
   "notes": [
-    "Relatórios com filtros, indicadores, tempos e exportação CSV de pedidos e itens.",
-    "Estoque por produto com reserva transacional, histórico e proteção contra ajustes desatualizados.",
-    "Endereço estruturado com CEP opcional via ViaCEP, cidades e bairros cadastrados pela loja.",
-    "Entrega também nos lançamentos do gestor e garçom, mantendo o fluxo de impressão."
+    "Endereços corrigidos no executável, formulários mais largos e remoção do bloco de conexão.",
+    "Seleção limitada ao estoque, somando as variações do mesmo produto; motivo do ajuste opcional.",
+    "Ordenação de produtos, grupos e opções; importação e exportação do catálogo em JSON.",
+    "Comandas por categoria, caixa para categoria inteira e nomes em negrito com tamanho maior.",
+    "Via do balcão separada da numeração das comandas de cozinha."
   ]
 }
