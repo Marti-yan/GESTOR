@@ -306,6 +306,7 @@ export function installCommunications({
       hasKey: vault.has("whatsapp"),
       hasWebhookToken: vault.has("whatsapp-hook"),
       hasAppSecret: vault.has("meta-app-secret"),
+      atende:atende.status(),
     }),
   );
   app.put(
@@ -313,16 +314,16 @@ export function installCommunications({
     admin,
     wrap((req, res) => {
       const b = req.body || {};
-      if (!["none", "evolution", "cloud"].includes(b.provider))
+      if (!["none", "evolution", "cloud",'atende'].includes(b.provider))
         fail(400, "Provedor inválido.");
       let baseUrl = "";
-      if (b.provider === "evolution") {
+      if (['evolution','atende'].includes(b.provider)) {
         try {
           baseUrl = providerBase(b.baseUrl);
         } catch (e) {
           fail(400, e.message);
         }
-        if (!/^[\w-]{1,80}$/.test(b.instance || ""))
+        if (b.provider==='evolution'&&!/^[\w-]{1,80}$/.test(b.instance || ""))
           fail(400, "Nome de instância inválido.");
       }
       if (
@@ -332,8 +333,9 @@ export function installCommunications({
       )
         fail(400, "Informe Phone Number ID e versão da Graph API.");
       const previous = config();
+      if(b.provider==='atende'&&b.atendeWhatsappId&&!/^[1-9]\d{0,12}$/.test(String(b.atendeWhatsappId)))fail(400,'Selecione uma conexão válida.');
       if (
-        b.provider !== "none" &&
+        ['evolution','cloud'].includes(b.provider) &&
         (previous.provider !== b.provider || previous.baseUrl !== baseUrl) &&
         vault.has("whatsapp") &&
         !clean(b.apiKey, 4000)
@@ -352,10 +354,16 @@ export function installCommunications({
         instance: clean(b.instance, 80),
         phoneNumberId: clean(b.phoneNumberId, 30),
         graphVersion: clean(b.graphVersion, 12) || "v23.0",
+        atendeWhatsappId:b.provider==='atende'?String(b.atendeWhatsappId||''):'',
       });
       res.json({ ok: true });
     }),
   );
+  const atendeRoute=fn=>wrap(async(req,res)=>{try{await fn(req,res)}catch(e){fail(e.status||e.httpStatus||502,clean(e.message,400))}});
+  app.post('/api/admin/whatsapp/atende/login',admin,atendeRoute(async(req,res)=>{rateLimit(req,'atende-login',10,15*60000);if(!clean(req.body?.email,250)||typeof req.body?.password!=='string'||!req.body.password||req.body.password.length>256)fail(400,'Informe e-mail e senha do Atende Chat.');res.json(await atende.login(req.body.email,req.body.password))}));
+  app.get('/api/admin/whatsapp/atende/connections',admin,atendeRoute(async(_req,res)=>res.json({connections:await atende.connections()})));
+  app.post('/api/admin/whatsapp/atende/sync',admin,atendeRoute(async(_req,res)=>{if(config().provider!=='atende'||!config().enabled||!atende.status().loggedIn||!atende.accountKey())fail(409,'Ative a conexão, entre no Atende Chat e selecione um número.');atende.sync({force:true}).catch(()=>{});res.status(202).json(atende.status())}));
+  app.post('/api/admin/whatsapp/atende/forget',admin,wrap((_req,res)=>res.json(atende.forget())));
   app.post("/api/admin/whatsapp/webhook-token", admin, (_req, res) => {
     const token = randomBytes(32).toString("hex");
     vault.set("whatsapp-hook", token);
@@ -366,6 +374,7 @@ export function installCommunications({
     admin,
     wrap(async (_req, res) => {
       const c = config();
+      if(c.provider==='atende')return res.json(await atende.connection(true));
       if (c.provider !== "evolution")
         fail(
           409,
@@ -393,6 +402,7 @@ export function installCommunications({
     wrap(async (_req, res) => {
       const c = config();
       if (c.provider === "none") return res.json({ state: "unconfigured" });
+      if(c.provider==='atende')return res.json({...await atende.connection(),atende:atende.status()});
       if (c.provider === "evolution") {
         const r = await providerRequest(
           "/instance/connectionState/" + encodeURIComponent(c.instance),
@@ -614,7 +624,13 @@ export function installCommunications({
   app.patch(
     "/api/admin/tickets/:id",
     admin,
-    wrap((req, res) => {
+    wrap(async(req, res) => {
+      const before=ticket(req.params.id),b=req.body||{};
+      if(!before)fail(404,'Ticket não encontrado.');
+      if(before.version!==b.expectedVersion)fail(409,'A conversa mudou. Atualize antes de alterar.');
+      if(b.status&&!['waiting','open','closed'].includes(b.status)||b.agentMode&&!['auto','paused'].includes(b.agentMode))fail(400,'Estado inválido.');
+      if(b.tagIds&&(!Array.isArray(b.tagIds)||b.tagIds.length>30||b.tagIds.some(id=>!db.prepare('SELECT 1 FROM chat_tags WHERE id=?').get(id))))fail(400,'Tags inválidas.');
+      if(config().provider==='atende'&&(b.agentMode||b.status==='closed')){try{if(b.status==='closed'){await atende.closeTicket(before.id);if(ticket(before.id)?.status==='closed')return res.json({ticket:ticket(before.id)})}else await atende.claim(before.id)}catch(e){fail(e.status||e.httpStatus||502,clean(e.message,400))}}
       transaction(db, () => {
         const t = ticket(req.params.id),
           b = req.body || {};
@@ -668,12 +684,13 @@ export function installCommunications({
   app.post(
     "/api/admin/tickets/:id/messages",
     admin,
-    wrap((req, res) => {
+    wrap(async(req, res) => {
       const t = ticket(req.params.id),
         body = clean(req.body?.body, 4000),
         key = clean(req.headers["idempotency-key"], 100);
       if (!t || t.status === "closed")
         fail(409, "Abra um ticket ativo para responder.");
+      if(!body)fail(400,'Digite uma mensagem.');
       if (!/^[\w-]{16,100}$/.test(key))
         fail(400, "Identificador de envio inválido.");
       const id = "send:" + key,
@@ -683,14 +700,19 @@ export function installCommunications({
           fail(409, "Identificador já utilizado para outra mensagem.");
         return res.json({ id, repeated: true });
       }
+      if(config().provider==='atende'){try{await atende.claim(t.id)}catch(e){fail(e.status||e.httpStatus||502,clean(e.message,400))}}
+      let repeated=false;
       transaction(db, () => {
+        const existing=db.prepare('SELECT * FROM chat_messages WHERE id=?').get(id);
+        if(existing){if(existing.ticket_id!==t.id||existing.body!==body)fail(409,'Identificador já utilizado para outra mensagem.');repeated=true;return}
+        if(ticket(t.id)?.status==='closed')fail(409,'O ticket foi concluído. Atualize a conversa.');
         pauseTicket(t.id);
         db.prepare("UPDATE chat_tickets SET status='open' WHERE id=?").run(
           t.id,
         );
         queueMessage({ ticketId: t.id, contactId: t.contact_id, body, id });
       });
-      res.status(201).json({ id });
+      res.status(repeated?200:201).json({ id,repeated });
     }),
   );
   app.get("/api/admin/quick-replies", admin, (_req, res) =>
@@ -863,6 +885,7 @@ export function installCommunications({
         fail(409, "Alteração indisponível.");
       if (next === "running") {
         const p = config();
+        if(p.provider==='atende')fail(409,'Use as campanhas do Atende Chat para esse provedor. A API externa de envio ainda não confirma idempotência e entrega.');
         if (!p.enabled || p.provider === "none" || !vault.has("whatsapp"))
           fail(409, "Ative e configure o WhatsApp antes de iniciar.");
         if (p.provider === "cloud" && !JSON.parse(c.template).name)
@@ -927,6 +950,7 @@ export function installCommunications({
       m = db
         .prepare("SELECT * FROM chat_messages WHERE id=?")
         .get(o.message_id);
+    if(c.provider==='atende')return atende.send(o,m.body);
     if (c.provider === "evolution") {
       const r = await providerRequest(
         "/message/sendText/" + encodeURIComponent(c.instance),
@@ -1176,6 +1200,8 @@ export function installCommunications({
       ).run(now);
       const c = config();
       if (!c.enabled || c.provider === "none") return;
+      if(c.provider==='atende')atende.sync().catch(()=>{});
+      if(c.provider==='atende'&&(!atende.status().loggedIn||!atende.accountKey()))return;
       await processAI();
       prepareCampaign();
       const o = transaction(db, () => {
@@ -1187,6 +1213,12 @@ export function installCommunications({
         if (!row) return null;
         const p = contact(row.contact_id),
           t = ticket(row.ticket_id);
+        if(row.connection_key!=='none'&&row.connection_key!==connectionKey()){
+          const error='A conexão do WhatsApp mudou. Confira a conversa antes de enviar novamente.';
+          db.prepare("UPDATE chat_outbox SET state='failed',error=? WHERE id=?").run(error,row.id);db.prepare("UPDATE chat_messages SET state='failed',error=? WHERE id=?").run(error,row.message_id);
+          if(row.campaign_id){db.prepare("UPDATE chat_campaign_recipients SET state='failed' WHERE outbox_id=?").run(row.id);db.prepare("UPDATE chat_campaigns SET status='paused' WHERE id=?").run(row.campaign_id)}return null;
+        }
+        if(row.connection_key==='none')db.prepare('UPDATE chat_outbox SET connection_key=? WHERE id=?').run(connectionKey(),row.id);
         if (
           (row.kind === "campaign" && (!p?.consent || p.unsubscribed)) ||
           (row.kind === "ai" &&
@@ -1224,9 +1256,9 @@ export function installCommunications({
             "UPDATE chat_outbox SET state='sent',error=NULL WHERE id=?",
           ).run(o.id);
           db.prepare(
-            "UPDATE OR IGNORE chat_messages SET state='sent',provider_id=? WHERE id=?",
+            "UPDATE OR IGNORE chat_messages SET state=CASE WHEN state IN ('read','delivered') THEN state ELSE 'sent' END,provider_id=? WHERE id=?",
           ).run(providerId, o.message_id);
-          db.prepare("UPDATE chat_messages SET state='sent' WHERE id=?").run(
+          db.prepare("UPDATE chat_messages SET state=CASE WHEN state IN ('read','delivered') THEN state ELSE 'sent' END WHERE id=?").run(
             o.message_id,
           );
           if (o.campaign_id)
@@ -1271,9 +1303,11 @@ export function installCommunications({
   }
   return {
     ai,
+    atende,
     ingest,
     tick,
     start() {
+      atende.start();
       if (!timer) {
         timer = setInterval(
           () =>
@@ -1289,6 +1323,7 @@ export function installCommunications({
       clearInterval(timer);
       timer = null;
       while (busy) await new Promise((r) => setTimeout(r, 25));
+      await atende.stop();
     },
   };
 }
