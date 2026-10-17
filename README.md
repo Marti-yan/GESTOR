@@ -1,34 +1,19 @@
-# Pronto Gestor 0.3.0 — teste local Windows
+# Pronto Gestor 0.4.0 — teste local Windows
 
-## Atualizar uma instalação existente
+Atualize em **Minha loja → Atualizações** (a partir da 0.3.0), ou feche pela bandeja e execute **Reparar-Pronto-0.4.0.exe**. O banco em APPDATA é preservado. Confira a impressão automática ao reabrir.
 
-Feche pela bandeja e [baixe Reparar-Pronto-0.3.0.exe](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.3.0/Reparar-Pronto-0.3.0.exe). Ele substitui aplicativo, API e interface com hashes conferidos, preservando pedidos e configurações em APPDATA. Confira **0.3.0** na barra de título.
+Para instalar do zero, extraia todo o ZIP desta branch e abra **Instalar.cmd**. As três partes binárias são unidas e o SHA-256 é verificado antes da instalação. Windows x64; Node e servidor incluídos. Nenhuma VPS é necessária para o teste local.
 
-A versão 0.2.0 não tinha atualização integrada. Depois deste primeiro arquivo, use **Minha loja → Atualizações do gestor → Buscar atualização** para consultar as próximas versões. Internet é necessária para baixar; a operação dos pedidos continua local, sem VPS.
+## Funcionalidades novas
 
-## Instalar do zero
+- Relatórios com filtros, indicadores, agrupamentos, tempos e CSV de resumo/pedidos/itens.
+- Limite de estoque por produto, reserva transacional no envio e histórico. Pedidos simultâneos não excedem o saldo.
+- Cancelamento antes do preparo devolve reserva; depois do aceite, reposição manual.
+- CEP opcional via ViaCEP, endereço manual, cidades/bairros cadastrados na loja.
+- Entrega no lançamento do gestor e garçom; fluxo de impressão preservado.
 
-[Baixe o ZIP completo](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.3.0.zip), escolha **Extrair tudo** e abra **Instalar.cmd**. Ele une as três partes e verifica o SHA-256 do instalador. Windows de 64 bits; servidor e Node.js incluídos.
+40 testes passaram. Pacote e recursos extraídos do atualizador conferidos por hash. Interface conferida em Electron/Linux, incluindo pedido de entrega, relatórios/CSV e formulário de endereço a 390 px. ViaCEP foi simulado nos testes: a consulta externa real e a impressão física devem ser conferidas no computador Windows.
 
-## O que mudou
+Estoque por produto, sem ficha técnica compartilhada. Relatórios são de pedidos, sem confirmação financeira/CMV/lucro. Cidades/bairros são sugestões, mantendo a taxa geral de entrega. Leia **RELATORIOS-ESTOQUE-ENDERECOS.md**.
 
-- Editor de comanda em três passos, com prévia e indicação de alterações pendentes.
-- Espaço extra entre linhas em milímetros, que funciona inclusive em letra grande.
-- Modelos prontos: geral, batata e balcão opcional. Confira as impressoras e produtos selecionados na batata.
-- Total bem grande e posição de cada via: **2 COMANDAS — VIA 1/2**, **3 COMANDAS — VIA 2/3**. Aviso obrigatório em todas as vias.
-- Destaques por categoria e grupo de adicionais: negrito, caixinha ou fundo preto.
-- Complementos e adicionais com preços por unidade, mínimos, máximos e limites por opção, disponíveis no cardápio, gestor e garçom.
-- Cozinha como padrão; caixa pequena para acrescentar uma via do balcão, inclusive pelo resumo do pedido do cardápio.
-- Download de atualizações pela main/master do GitHub, com tamanho e SHA-256 conferidos antes da instalação.
-
-## Conferir antes de atender
-
-Siga [COMECAR-AQUI.md](COMECAR-AQUI.md), [IMPRESSAO.md](IMPRESSAO.md) e [ATUALIZACOES.md](ATUALIZACOES.md). Instale o driver da Elgin i8 USB, selecione 80 mm/ESC-POS, salve e teste. Confira itens, observações, contagem de comandas e **FIM** antes de ativar a impressão automática.
-
-Ao instalar pela atualização integrada, o aplicativo fecha e a impressão automática é pausada. Conclua o assistente, abra o gestor e confira antes de reativar.
-
-33 testes passaram, incluindo migrações 0.1/0.2, fila, múltiplas vias, adicionais, espaçamento e atualizador. A interface foi conferida em Electron/Linux: prévia com 280 px de diferença entre espaçamentos, seleção obrigatória de adicionais, preços e três comandas com batata e balcão. O atualizador foi extraído e seus recursos comparados ao manifesto de hashes.
-
-A impressão física e a instalação nativa no Windows ainda precisam de validação com a Elgin. O executável não possui certificado comercial de assinatura. O PWA no celular exige HTTPS para instalar; o navegador funciona na LAN HTTP.
-
-Código: [projeto](https://github.com/Marti-yan/GESTOR/tree/codex/mvp-pronto-gestor). O pacote não contém banco da loja ou credenciais. Hashes: [SHA256SUMS.txt](SHA256SUMS.txt).
+Código: https://github.com/Marti-yan/GESTOR/tree/codex/mvp-pronto-gestor . O pacote não contém banco da loja ou credenciais. Veja SHA256SUMS.txt.
