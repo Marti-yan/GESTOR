@@ -1,0 +1,16 @@
+node_modules/
+dist/
+release/
+.runtime/
+.data/
+.env
+.env.*
+!.env.example
+provider.key
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.log
+artifacts/
+test-results/
+.DS_Store

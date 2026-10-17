@@ -1,0 +1,126 @@
+{
+  "name": "pronto-gestor",
+  "version": "0.8.0",
+  "private": true,
+  "description": "Cardápio digital, gestor de pedidos e impressão térmica — MVP",
+  "type": "module",
+  "author": "Pronto",
+  "main": "desktop/main.cjs",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "vite --host 127.0.0.1",
+    "dev:server": "node --watch server/index.mjs",
+    "start": "node server/index.mjs",
+    "build": "tsc --noEmit && vite build && node scripts/build-ssr.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "desktop": "electron .",
+    "build:windows": "npm run build && node scripts/prepare-windows.mjs && electron-builder --win nsis --x64 --publish never && node scripts/build-repair.mjs",
+    "verify:package": "node scripts/verify-package.cjs release/win-unpacked",
+    "package:source": "node scripts/package-source.mjs"
+  },
+  "dependencies": {
+    "compression": "^1.8.1",
+    "express": "^5.1.0",
+    "iconv-lite": "0.7.3",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.468.0",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "socket.io-client": "^4.8.4"
+  },
+  "devDependencies": {
+    "@electron/asar": "3.4.1",
+    "@types/leaflet": "^1.9.22",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "electron": "^42.0.0",
+    "electron-builder": "^26.0.0",
+    "esbuild": "^0.25.0",
+    "jsdom": "^30.1.3",
+    "typescript": "^5.9.0",
+    "vite": "^7.0.0"
+  },
+  "build": {
+    "appId": "br.app.pronto.gestor",
+    "productName": "Pronto Gestor",
+    "artifactName": "Pronto-Gestor-${version}-Windows-x64.${ext}",
+    "directories": {
+      "output": "release"
+    },
+    "afterPack": "scripts/verify-package.cjs",
+    "files": [
+      {
+        "from": ".runtime/desktop",
+        "to": "desktop",
+        "filter": [
+          "**/*"
+        ]
+      },
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "server",
+        "to": "server",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "shared",
+        "to": "shared",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "dist",
+        "to": "web",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": ".runtime/windows/node.exe",
+        "to": "node.exe"
+      },
+      {
+        "from": ".runtime/server.cjs",
+        "to": "server-bundle.cjs"
+      },
+      {
+        "from": ".runtime/windows/Node-LICENSE.txt",
+        "to": "Node-LICENSE.txt"
+      },
+      {
+        "from": ".runtime/menu-ssr.cjs",
+        "to": "menu-ssr.cjs"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "signAndEditExecutable": false,
+      "icon": "desktop/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Pronto Gestor",
+      "deleteAppDataOnUninstall": false,
+      "include": "desktop/installer.nsh",
+      "script": "desktop/installer.nsi",
+      "installerLanguages": [
+        "pt_BR"
+      ]
+    }
+  }
+}

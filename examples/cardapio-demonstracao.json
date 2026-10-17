@@ -1,0 +1,69 @@
+{
+  "format": "pronto-catalog/v1",
+  "description": "EXEMPLO FICTÍCIO para demonstrar combos. NÃO é a cópia do cardápio Ecta/Loja dos Sonhos. Preços ilustrativos.",
+  "categories": [
+    { "id": "demo-lanches", "name": "Demonstração • Lanches" },
+    { "id": "demo-batatas", "name": "Demonstração • Batatas" },
+    { "id": "demo-porcoes", "name": "Demonstração • Porções" },
+    { "id": "demo-pasteis", "name": "Demonstração • Pastéis" },
+    { "id": "demo-bebidas", "name": "Demonstração • Bebidas" }
+  ],
+  "modifierGroups": [],
+  "products": [
+    {
+      "id": "demo-combo-bacon",
+      "name": "Combo Explosão de Bacon — demonstração",
+      "category": "Demonstração • Lanches",
+      "description": "Exemplo: lanche na cozinha padrão, batata e salgadinhos na cozinha batata, bebida na padrão. Valores fictícios.",
+      "price": 4990,
+      "station": "Cozinha",
+      "art": "bacon",
+      "available": true,
+      "components": [
+        { "productId": "demo-batata", "quantity": 1 },
+        { "productId": "demo-salgadinhos", "quantity": 1 },
+        { "productId": "demo-refri", "quantity": 1 }
+      ]
+    },
+    {
+      "id": "demo-batata",
+      "name": "Batata maluca — demonstração",
+      "category": "Demonstração • Batatas",
+      "description": "Acompanhamento fictício para demonstrar a segunda cozinha.",
+      "price": 1990,
+      "station": "Cozinha Batata",
+      "art": "loaded-fries",
+      "available": true
+    },
+    {
+      "id": "demo-salgadinhos",
+      "name": "Salgadinhos — demonstração",
+      "category": "Demonstração • Porções",
+      "description": "Porção de demonstração.",
+      "price": 1290,
+      "station": "Cozinha Batata",
+      "art": "fries",
+      "available": true
+    },
+    {
+      "id": "demo-pastel",
+      "name": "Pastel de carne — demonstração",
+      "category": "Demonstração • Pastéis",
+      "description": "Produto fictício para testar limite de estoque e cozinha.",
+      "price": 1490,
+      "station": "Cozinha Batata",
+      "art": "burger",
+      "available": true
+    },
+    {
+      "id": "demo-refri",
+      "name": "Refrigerante lata — demonstração",
+      "category": "Demonstração • Bebidas",
+      "description": "Bebida fixa de demonstração.",
+      "price": 650,
+      "station": "Cozinha",
+      "art": "soda",
+      "available": true
+    }
+  ]
+}

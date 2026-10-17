@@ -1,0 +1,53 @@
+name: Instalador Windows
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Instalar dependências
+        run: npm ci
+      - name: Verificar pedidos e impressão
+        run: npm test
+      - name: Gerar instalador Windows de 64 bits
+        run: npm run build:windows
+      - name: Preparar código-fonte e verificação do instalador
+        run: |
+          npm run package:source
+          cd release
+          sha256sum Pronto-Gestor-*-Windows-x64.exe Reparar-Pronto-*.exe > ../artifacts/SHA256SUMS.txt
+      - name: Publicar versão de teste com arquivos para download
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRONTO_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$PRONTO_TAG" \
+            release/Pronto-Gestor-*-Windows-x64.exe \
+            release/Reparar-Pronto-*.exe \
+            artifacts/Pronto-Gestor-Codigo-Fonte.zip \
+            artifacts/SHA256SUMS.txt \
+            COMECAR-AQUI.md \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --prerelease \
+            --title "Pronto Gestor $PRONTO_TAG — MVP para testes" \
+            --notes-file .github/release-notes.md
