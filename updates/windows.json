@@ -1,15 +1,16 @@
 {
-  "version": "0.7.0",
+  "version": "0.8.0",
   "minVersion": "0.2.0",
-  "url": "https://raw.githubusercontent.com/Marti-yan/GESTOR/c89c474178570b32c0edc47e771ae2e0b075aea7/Reparar-Pronto-0.7.0.exe",
-  "size": 2725513,
-  "sha256": "6153f4d3cd8a41765a1d5cd10ee160741a56c56d69295f4363c9f86641f093ff",
-  "sourceCommit": "9adb2ccf82dc396b5c26f4878175145baa65f9f5",
+  "url": "https://raw.githubusercontent.com/Marti-yan/GESTOR/4fb1e86b9033abe13b6a2501612a974cfa9d7442/Reparar-Pronto-0.8.0.exe",
+  "size": 2945238,
+  "sha256": "5dc9ac4d4bcc7d01fbf6c4f6618d01e5459b881edd794a30b50cbec484e5ea7e",
+  "sourceCommit": "f1c7a5dde9a3156d3935771321eb9d1c8681a6d0",
   "notes": [
-    "Aba Precific carrega o site original com a mesma conta e dados da hospedagem.",
-    "Login do Precific persistente; atualizações do site por recarga, sem novo instalador.",
-    "Adaptador Atende Chat por HTTP e Socket.IO, preservando a sessão WhatsApp existente.",
-    "Tickets, QR, texto e pausa do agente ao assumir ou trocar de atendente.",
-    "Fila vinculada à conexão para impedir envio de mensagens antigas por outro número."
+    "Garçom: confirmação no +, mesas, conta acumulada e pedidos prontos para servir.",
+    "Combos reservam acompanhamentos e imprimem nas cozinhas corretas, com contagem de vias.",
+    "Entregador: filtros, ordem de paradas, rotas e ações pendentes sem duplicar confirmações.",
+    "Cardápio com HTML inicial no servidor local e módulos separados para abertura rápida.",
+    "Importação por planilha, exemplo fictício de combo e configuração de cozinha por categoria.",
+    "Backups locais verificados e restauração offline com filas antigas desativadas."
   ]
 }
