@@ -36,6 +36,8 @@ export type Store = {
   allowPickup: boolean;
 };
 export type Product = {
+  stockQuantity?: number | null;
+  stockVersion?: number;
   id: string;
   name: string;
   description: string;
@@ -56,11 +58,7 @@ export type CartItem = {
   modifiers?: ModifierSelection[];
 };
 export type OrderStatus =
-  | "new"
-  | "preparing"
-  | "ready"
-  | "completed"
-  | "cancelled";
+  "new" | "preparing" | "ready" | "completed" | "cancelled";
 export type PrintState =
   | "pending"
   | "claimed"
@@ -88,6 +86,7 @@ export type Order = {
   phone?: string;
   fulfillment: "pickup" | "delivery" | "dinein";
   address?: string;
+  deliveryAddress?: import("./Delivery").DeliveryAddress;
   payment: "cash" | "card" | "pending";
   source: "menu" | "waiter" | "manager";
   tableName: string;

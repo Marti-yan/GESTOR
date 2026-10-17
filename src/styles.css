@@ -5656,3 +5656,121 @@ svg {
     margin-top: 10px;
   }
 }
+
+/* Relatórios, estoque e endereços */
+.operations-page {
+  padding: 24px;
+  max-width: 1500px;
+  margin: auto;
+}
+.operations-page h1 {
+  margin: 0 0 12px;
+}
+.operations-page > p,
+.operation-panel > p {
+  color: var(--muted, #65715c);
+  line-height: 1.6;
+}
+.operation-panel {
+  padding: 20px;
+  margin: 16px 0;
+  border: 1px solid #dfe5d7;
+  border-radius: 14px;
+  background: #fff;
+  min-width: 0;
+}
+.operation-panel legend {
+  padding: 0 8px;
+  font-weight: 700;
+}
+.operation-panel textarea {
+  min-height: 90px;
+}
+.operation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin: 16px 0;
+}
+.report-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #dfe5d7;
+  border-radius: 14px;
+  margin: 20px 0;
+  align-items: end;
+}
+.report-filters .operation-actions {
+  grid-column: 1/-1;
+}
+.report-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+.report-kpis .operation-panel {
+  margin: 0;
+}
+.report-kpis article strong {
+  display: block;
+  font-size: 23px;
+  margin-top: 10px;
+}
+.report-table {
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #dfe5d7;
+  border-radius: 12px;
+  margin: 18px 0;
+  max-height: 650px;
+}
+.report-table table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+.report-table th,
+.report-table td {
+  padding: 13px 16px;
+  border-bottom: 1px solid #edf0e8;
+}
+.report-table th {
+  position: sticky;
+  top: 0;
+  background: #f1f4ed;
+}
+.address-fields .field-grid {
+  gap: 12px;
+}
+.manager-content > .operation-panel {
+  margin: 24px;
+}
+@media (max-width: 650px) {
+  .operations-page {
+    padding: 14px;
+  }
+  .report-filters {
+    grid-template-columns: 1fr 1fr;
+    padding: 12px;
+  }
+  .report-filters .field input,
+  .report-filters .field select {
+    min-width: 0;
+    width: 100%;
+  }
+  .report-kpis {
+    grid-template-columns: 1fr 1fr;
+  }
+  .report-kpis article strong {
+    font-size: 19px;
+  }
+  .address-fields .field-grid {
+    grid-template-columns: 1fr;
+  }
+}

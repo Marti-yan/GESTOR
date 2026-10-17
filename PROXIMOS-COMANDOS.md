@@ -96,3 +96,12 @@ npm run desktop        # gestor Electron após build
 npm run build:windows  # instalador autossuficiente Windows x64
 npm run package:source # ZIP do código, excluindo dados/segredos
 ```
+
+## Depois da 0.4.0
+
+- Criar insumos e fichas técnicas para vários produtos/adicionais consumirem o mesmo estoque.
+- Acrescentar custos/CMV, fechamento de caixa, confirmação de pagamento e despesas aos relatórios.
+- Definir áreas de entrega restritas e taxas por bairro/cidade.
+- Adicionar localização confirmada no mapa, entregadores e rotas.
+
+Já implementado na 0.4.0: relatórios de pedidos com filtros/CSV, saldo por produto com reserva transacional e histórico, CEP opcional e sugestões de cidades/bairros.

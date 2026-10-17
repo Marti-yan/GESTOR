@@ -1,3 +1,4 @@
+import { AddressFields, blankAddress, type DeliveryAddress } from "./Delivery";
 import { useEffect, useRef, useState } from "react";
 import {
   Plus,
@@ -43,7 +44,8 @@ type Draft = {
   tableName: string;
   customerName: string;
   phone: string;
-  fulfillment: "dinein" | "pickup";
+  fulfillment: "dinein" | "pickup" | "delivery";
+  deliveryAddress?: DeliveryAddress;
   payment: "pending" | "cash" | "card";
   change: string;
   pickupCode: string;
@@ -135,20 +137,36 @@ export function OrderEntry({
       .finally(() => setLoading(false));
   }, []);
   useEffect(() => {
+    const refresh = () =>
+      api<{ products: Product[] }>("/catalog")
+        .then((r) => setProducts(r.products))
+        .catch(() => {});
+    const id = setInterval(refresh, 10000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
+  useEffect(() => {
     try {
       localStorage.setItem(storageKey, JSON.stringify(draft));
     } catch {}
   }, [draft, storageKey]);
   const patch = (p: Partial<Draft>) => setDraft((d) => ({ ...d, ...p }));
-  const total = draft.lines.reduce(
-    (sum, l) =>
-      sum +
-      (products.find((p) => p.id === l.productId)
-        ? unitPrice(products.find((p) => p.id === l.productId)!, l.modifiers)
-        : 0) *
-        l.quantity,
-    0,
-  );
+  const total =
+    draft.lines.reduce(
+      (sum, l) =>
+        sum +
+        (products.find((p) => p.id === l.productId)
+          ? unitPrice(
+              products.find((p) => p.id === l.productId)!,
+              l.modifiers,
+            )
+          : 0) *
+          l.quantity,
+      0,
+    ) + (draft.fulfillment === "delivery" ? store?.deliveryFee || 0 : 0);
   const count = draft.lines.reduce((sum, l) => sum + l.quantity, 0);
   function add(
     p: Product,
@@ -157,6 +175,17 @@ export function OrderEntry({
     modifiers: ModifierSelection[] = [],
   ) {
     if (locked.current) return;
+    if (
+      p.stockQuantity != null &&
+      draft.lines
+        .filter((l) => l.productId === p.id)
+        .reduce((n, l) => n + l.quantity, 0) +
+        quantity >
+        p.stockQuantity
+    ) {
+      setError(`Disponível: ${p.stockQuantity} unidades de ${p.name}.`);
+      return;
+    }
     setDraft((d) => {
       const found = d.lines.find(
         (l) =>
@@ -198,6 +227,9 @@ export function OrderEntry({
       customerName: draft.customerName,
       phone: draft.phone,
       fulfillment: draft.fulfillment,
+      ...(draft.fulfillment === "delivery"
+        ? { deliveryAddress: draft.deliveryAddress || blankAddress() }
+        : {}),
       tableName: draft.fulfillment === "dinein" ? draft.tableName : "",
       pickupCode: draft.pickupCode,
       payment: draft.payment,
@@ -392,7 +424,7 @@ export function OrderEntry({
                   key={p.id}
                   type="button"
                   className="entry-product"
-                  disabled={busy}
+                  disabled={busy || p.stockQuantity === 0}
                   onClick={() =>
                     p.modifierGroups?.length
                       ? setCustomizing({ product: p })
@@ -402,7 +434,14 @@ export function OrderEntry({
                   <div className="entry-art">
                     <FoodArt kind={p.art} />
                   </div>
-                  <strong>{p.name}</strong>
+                  <strong>
+                    {p.name}
+                    {p.stockQuantity === 0
+                      ? " · Esgotado"
+                      : p.stockQuantity != null
+                        ? ` · ${p.stockQuantity} disponíveis`
+                        : ""}
+                  </strong>
                   <span>
                     {money(p.price)}
                     <Plus size={18} />
@@ -438,6 +477,13 @@ export function OrderEntry({
               onClick={() => patch({ fulfillment: "pickup" })}
             >
               Retirada / balcão
+            </button>
+            <button
+              type="button"
+              className={draft.fulfillment === "delivery" ? "active" : ""}
+              onClick={() => patch({ fulfillment: "delivery" })}
+            >
+              Entrega
             </button>
           </div>
           <div className="entry-fields">
@@ -476,6 +522,24 @@ export function OrderEntry({
               }
             />
           </label>
+          {draft.fulfillment === "delivery" && (
+            <>
+              <AddressFields
+                value={draft.deliveryAddress || blankAddress()}
+                onChange={(deliveryAddress) => patch({ deliveryAddress })}
+              />
+              <p>Taxa de entrega: {money(store?.deliveryFee || 0)}</p>
+              <label className="field">
+                Telefone do cliente
+                <input
+                  type="tel"
+                  maxLength={30}
+                  value={draft.phone}
+                  onChange={(e) => patch({ phone: e.target.value })}
+                />
+              </label>
+            </>
+          )}
           <div className="entry-lines">
             {!draft.lines.length ? (
               <div className="entry-empty">

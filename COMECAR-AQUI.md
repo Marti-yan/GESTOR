@@ -1,10 +1,10 @@
-# Testar o Pronto Gestor 0.3.0 na rede local
+# Testar o Pronto Gestor 0.4.0 na rede local
 
 ## Atualizar a instalação existente
 
-Feche o gestor pela bandeja, baixe e execute o **[atualizador 0.3.0](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.3.0/Reparar-Pronto-0.3.0.exe)**. Se houver uma janela de erro, feche-a também. Confira a pasta da instalação e conclua. O programa substitui aplicativo, servidor e interface e verifica os hashes. Seus pedidos, senha e configurações em `%APPDATA%\Pronto Gestor` são preservados. Ao abrir, confira **Pronto Gestor — 0.3.0** na barra de título.
+Feche o gestor pela bandeja, baixe e execute o **[atualizador 0.4.0](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.4.0/Reparar-Pronto-0.4.0.exe)**. Se houver uma janela de erro, feche-a também. Confira a pasta da instalação e conclua. O programa substitui aplicativo, servidor e interface e verifica os hashes. Seus pedidos, senha e configurações em `%APPDATA%\Pronto Gestor` são preservados. Ao abrir, confira **Pronto Gestor — 0.4.0** na barra de título.
 
-Para instalar do zero, baixe o **[pacote Windows 0.3.0 em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.3.0.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. Ele une as três partes, confere o SHA-256 e abre o instalador. O Node.js e o servidor já estão incluídos. Use Windows de 64 bits; não é necessário acessar o computador original.
+Para instalar do zero, baixe o **[pacote Windows 0.4.0 em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.4.0.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. Ele une as três partes, confere o SHA-256 e abre o instalador. O Node.js e o servidor já estão incluídos. Use Windows de 64 bits; não é necessário acessar o computador original.
 
 Cada instalação mantém seus dados locais. Instalar em outro computador não sincroniza o banco do primeiro.
 
@@ -48,7 +48,7 @@ Em **Cardápio → Complementos e adicionais**, crie grupos e opções, defina p
 
 ## Próximas atualizações pelo aplicativo
 
-Depois de instalar a 0.3.0, use **Minha loja → Atualizações do gestor → Buscar atualização**. Quando houver versão mais nova publicada, baixe e abra o instalador pelo próprio gestor. O arquivo é verificado antes de instalar. A operação permanece local, sem VPS. Consulte **ATUALIZACOES.md**.
+Depois de instalar a 0.4.0, use **Minha loja → Atualizações do gestor → Buscar atualização**. Quando houver versão mais nova publicada, baixe e abra o instalador pelo próprio gestor. O arquivo é verificado antes de instalar. A operação permanece local, sem VPS. Consulte **ATUALIZACOES.md**.
 
 ## Rede e funcionamento
 
@@ -61,3 +61,7 @@ Depois de instalar a 0.3.0, use **Minha loja → Atualizações do gestor → Bu
 O executável foi gerado e os fluxos foram verificados em Linux com Electron. O instalador e a ponte nativa de impressão precisam ser conferidos em Windows real, junto com a Elgin física. O programa ainda não possui certificado de assinatura comercial.
 
 Requisitos, código e backup em **README.md**; próximas etapas em **PROXIMOS-COMANDOS.md**.
+
+## Relatórios, estoque e endereços
+
+Em **Relatórios**, aplique filtros e exporte resumo, pedidos ou itens em CSV. Em **Estoque**, ajuste o saldo disponível de cada produto; pedidos reservam no envio e cancelamentos antes do preparo devolvem a reserva. Em **Endereços**, cadastre cidades e bairros para sugestões no checkout. CEP é opcional; ViaCEP ajuda a preencher. Gestor e garçom também podem lançar entregas. Regras e limitações em [RELATORIOS-ESTOQUE-ENDERECOS.md](RELATORIOS-ESTOQUE-ENDERECOS.md).

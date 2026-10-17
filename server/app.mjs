@@ -1,3 +1,9 @@
+import {
+  installOperations,
+  normalizeDeliveryAddress,
+  reserveStock,
+  releaseStock,
+} from "./operations.mjs";
 import express from "express";
 import packageInfo from "../package.json" with { type: "json" };
 import { randomUUID, randomBytes, createHash } from "node:crypto";
@@ -59,6 +65,7 @@ export function createApplication({
   adminPassword = "",
   bootstrapToken = "",
   secureCookie = false,
+  addressFetch = fetch,
 } = {}) {
   const db = openDatabase(dataDir || resolve(".data"));
   if (
@@ -151,6 +158,8 @@ export function createApplication({
         ...p,
         available: Boolean(p.available),
         featured: Boolean(p.featured),
+        stockQuantity: p.stock_quantity,
+        stockVersion: p.stock_version,
         modifierGroupIds: JSON.parse(p.modifier_group_ids || "[]"),
         modifierGroups: groups.filter((g) =>
           JSON.parse(p.modifier_group_ids || "[]").includes(g.id),
@@ -179,6 +188,7 @@ export function createApplication({
   app.get("/api/health", (_req, res) =>
     res.json({ ok: true, version: packageInfo.version }),
   );
+  installOperations({ app, db, admin, wrap, fail, rateLimit, addressFetch });
   app.get("/api/catalog", (_req, res) =>
     res.json({
       store: readStore(db),
@@ -323,9 +333,13 @@ export function createApplication({
         .all(req.staff.name);
       res.json({
         orders: rows.map((row) => {
-          const { phone, address, ...order } = readOrder(db, row.id, {
-            privateData: false,
-          });
+          const { phone, address, deliveryAddress, ...order } = readOrder(
+            db,
+            row.id,
+            {
+              privateData: false,
+            },
+          );
           return order;
         }),
       });
@@ -399,7 +413,26 @@ export function createApplication({
       fail(400, "Escolha uma forma de recebimento disponível.");
     if (fulfillment === "dinein" && !tableName)
       fail(400, "Informe a mesa para o pedido no salão.");
-    const address = fulfillment === "delivery" ? text(body.address, 400) : "";
+    const deliveryAddress =
+      fulfillment === "delivery"
+        ? normalizeDeliveryAddress(body.deliveryAddress, fail)
+        : {};
+    const address =
+      fulfillment === "delivery"
+        ? Object.keys(deliveryAddress).length
+          ? [
+              deliveryAddress.street,
+              deliveryAddress.number,
+              deliveryAddress.neighborhood,
+              deliveryAddress.city,
+              deliveryAddress.state,
+              deliveryAddress.complement,
+              deliveryAddress.reference,
+            ]
+              .filter(Boolean)
+              .join(", ")
+          : text(body.address, 400)
+        : "";
     if (fulfillment === "delivery" && address.length < 8)
       fail(400, "Informe rua, número, bairro e um ponto de referência.");
     if (
@@ -459,6 +492,7 @@ export function createApplication({
       trackingToken = randomBytes(24).toString("hex"),
       now = new Date().toISOString();
     transaction(db, () => {
+      reserveStock(db, lines, id, now, fail);
       db.prepare(
         `INSERT INTO orders(id,idempotency_key,request_hash,tracking_token,customer_name,phone,fulfillment,address,payment,change_for,notes,subtotal,delivery_fee,total,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       ).run(
@@ -488,6 +522,10 @@ export function createApplication({
         internal ? text(body.pickupCode, 24) : "",
         source === "waiter" ? req.staff.name : internal ? "Operador" : "",
         internal ? now : null,
+        id,
+      );
+      db.prepare("UPDATE orders SET delivery_address=? WHERE id=?").run(
+        JSON.stringify(deliveryAddress),
         id,
       );
       if (internal && body.printAtCounter === true)
@@ -544,7 +582,7 @@ export function createApplication({
         fail(404, "Pedido não encontrado. Confira o link de acompanhamento.");
       const order = readOrder(db, row.id, { privateData: false });
       // Acompanhamento público não devolve endereço nem telefone.
-      const { phone, address, ...safeOrder } = order;
+      const { phone, address, deliveryAddress, ...safeOrder } = order;
       res.json({ order: safeOrder, store: readStore(db) });
     }),
   );
@@ -591,12 +629,15 @@ export function createApplication({
           "INSERT INTO order_events(id,order_id,status,created_at) VALUES (?,?,?,?)",
         ).run(randomUUID(), order.id, next, now);
         if (order.status === "new" && next === "preparing") {
+          reserveStock(db, order.items, order.id, now, fail);
           db.prepare("UPDATE orders SET accepted_at=? WHERE id=?").run(
             now,
             order.id,
           );
           enqueuePrintJobs(db, order.id, now);
         }
+        if (next === "cancelled" && order.status === "new")
+          releaseStock(db, order.id, now);
         if (next === "cancelled")
           db.prepare(
             "UPDATE print_jobs SET state='cancelled',updated_at=? WHERE order_id=? AND state IN ('pending','claimed')",

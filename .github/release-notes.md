@@ -1,16 +1,11 @@
-Pronto Gestor 0.3.0: edição de comanda mais simples, adicionais e atualização pelo aplicativo.
+Pronto Gestor 0.4.0: relatórios, estoque reservado e endereço estruturado.
 
-- Editor em três passos com prévia, ajustes técnicos recolhidos e indicação clara de alterações pendentes.
-- Espaço extra entre linhas em milímetros, aplicado também em fonte grande e em trabalhos ainda na fila.
-- Modelos prontos: geral, batata (só número e itens escolhidos) e balcão opcional.
-- Total de comandas bem grande e posição da via em cada impressão, sem opção de ocultar o aviso.
-- Destaques independentes por categoria e grupo de complementos/adicionais: negrito, caixa e fundo preto.
-- Grupos com preços, mínimos, máximos e limites por opção, disponíveis no cardápio, gestor e garçom. Preços recalculados pelo servidor e histórico preservado.
-- Cozinha como destino padrão; via extra do balcão pela caixa pequena no lançamento ou pelo resumo do pedido.
-- Atualizações em Minha loja: consulta a main/master do GitHub, download com SHA-256 e abertura do instalador após fechar o gestor.
+- Relatórios com filtros, indicadores, 15 agrupamentos, tempos médios e CSV de resumo, pedidos e itens.
+- Quantidade limitada por produto; reserva transacional impede vendas simultâneas acima do saldo, com histórico e ajuste protegido contra saldo desatualizado.
+- Cancelamento antes do preparo devolve a reserva. Após aceitar, reposição é manual para evitar reutilizar ingrediente já consumido.
+- Endereços com CEP opcional via ViaCEP; cadastro de cidades/bairros e lançamento de entrega também no gestor/garçom.
+- Mantém aceite antes da impressão para cardápio e aceite/impressão diretos no gestor e garçom.
 
-Para a primeira atualização à 0.3.0, feche pela bandeja e execute `Reparar-Pronto-0.3.0.exe`. As próximas versões poderão ser buscadas no aplicativo. O instalador preserva os dados em APPDATA. Ao instalar pelo aplicativo, a impressão automática é pausada: confira e reative após abrir.
+Relatórios representam pedidos, não caixa conciliado nem lucro. Estoque por insumo compartilhado/ficha técnica será etapa posterior. Endereços cadastrados são sugestões, com taxa geral da loja.
 
-O teste permanece local, sem VPS. O celular usa o navegador por HTTP na LAN; instalar como PWA exige HTTPS. A geração, a fila e os fluxos foram validados em Linux; o instalador nativo e a impressão física precisam de conferência no Windows com a Elgin i8. O executável não possui certificado comercial.
-
-Guias: COMECAR-AQUI.md, IMPRESSAO.md e ATUALIZACOES.md.
+Atualize em Minha loja → Atualizações (0.3.0+) ou use Reparar-Pronto-0.4.0.exe com o gestor fechado pela bandeja. Dados locais são preservados. Consulte RELATORIOS-ESTOQUE-ENDERECOS.md para regras e limitações. Não há implantação em VPS nesta versão. A consulta externa real ao ViaCEP e a impressão física devem ser conferidas no computador Windows; o ambiente de desenvolvimento testou a API de CEP com respostas simuladas.

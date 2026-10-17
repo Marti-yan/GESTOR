@@ -72,6 +72,14 @@ export function openDatabase(directory) {
   addColumn("order_items", "base_price", "INTEGER");
   addColumn("products", "modifier_group_ids", "TEXT NOT NULL DEFAULT '[]'");
   addColumn("orders", "counter_requested", "INTEGER NOT NULL DEFAULT 0");
+  addColumn("products", "stock_quantity", "INTEGER");
+  addColumn("products", "stock_version", "INTEGER NOT NULL DEFAULT 0");
+  addColumn("orders", "delivery_address", "TEXT NOT NULL DEFAULT '{}'");
+  db.exec(`CREATE TABLE IF NOT EXISTS stock_movements (
+    id TEXT PRIMARY KEY, product_id TEXT NOT NULL, order_id TEXT,
+    delta INTEGER NOT NULL, reason TEXT NOT NULL, created_at TEXT NOT NULL
+  ); CREATE INDEX IF NOT EXISTS idx_stock_product ON stock_movements(product_id,created_at);`);
+
   addColumn("print_targets", "options", "TEXT NOT NULL DEFAULT '{}'");
   addColumn("print_targets", "location", "TEXT NOT NULL DEFAULT 'kitchen'");
   addColumn("print_targets", "filter", "TEXT");
@@ -329,6 +337,7 @@ export function readOrder(db, id, { privateData = true } = {}) {
     phone: row.phone,
     fulfillment: row.fulfillment,
     address: row.address,
+    deliveryAddress: JSON.parse(row.delivery_address || "{}"),
     payment: row.payment,
     changeFor: row.change_for,
     notes: row.notes,

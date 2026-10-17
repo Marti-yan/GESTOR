@@ -22,10 +22,10 @@ const manifest = {
     encoding: "utf8",
   }).trim(),
   notes: [
-    "Editor de comandas simplificado e espaço extra entre linhas em milímetros.",
-    "Modelos geral, batata e balcão; número de comandas bem grande em cada via.",
-    "Complementos e adicionais, com preços e destaques configuráveis.",
-    "Via opcional do balcão e atualização pelo próprio gestor.",
+    "Relatórios com filtros, indicadores, tempos e exportação CSV de pedidos e itens.",
+    "Estoque por produto com reserva transacional, histórico e proteção contra ajustes desatualizados.",
+    "Endereço estruturado com CEP opcional via ViaCEP, cidades e bairros cadastrados pela loja.",
+    "Entrega também nos lançamentos do gestor e garçom, mantendo o fluxo de impressão.",
   ],
 };
 mkdirSync(dirname(resolve(output)), { recursive: true });

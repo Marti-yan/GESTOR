@@ -1,3 +1,6 @@
+import { Reports } from "./Reports";
+import { Stock } from "./Stock";
+import { AddressFields, DeliverySettings, blankAddress } from "./Delivery";
 import {
   useCallback,
   useEffect,
@@ -312,6 +315,18 @@ function Menu({ notify }: { notify: (s: string) => void }) {
       .finally(() => setLoading(false));
   }, []);
   useEffect(() => {
+    const refresh = () =>
+      api<{ products: Product[] }>("/catalog")
+        .then((r) => setProducts(r.products))
+        .catch(() => {});
+    const id = setInterval(refresh, 10000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
+  useEffect(() => {
     localStorage.setItem("pronto-cart", JSON.stringify(cart));
   }, [cart]);
   const categories = [
@@ -337,6 +352,19 @@ function Menu({ notify }: { notify: (s: string) => void }) {
     modifiers: ModifierSelection[],
   ) {
     if (!selected) return;
+    const stock = products.find((p) => p.id === selected.id)?.stockQuantity;
+    if (
+      stock != null &&
+      cart
+        .filter((i) => i.product.id === selected.id)
+        .reduce((n, i) => n + i.quantity, 0) +
+        quantity >
+        stock
+    ) {
+      notify(`Disponível: ${stock} unidades de ${selected.name}.`);
+      return;
+    }
+
     const key = `${selected.id}:${notes.trim()}:${JSON.stringify([...modifiers].sort((a, b) => (a.groupId + a.optionId).localeCompare(b.groupId + b.optionId)))}`;
     setCart((old) => {
       const found = old.find((i) => i.key === key);
@@ -618,7 +646,7 @@ function Menu({ notify }: { notify: (s: string) => void }) {
                               setQuantity(1);
                               setNotes("");
                             }}
-                            disabled={!store.open}
+                            disabled={!store.open || p.stockQuantity === 0}
                             style={{ animationDelay: `${i * 40}ms` }}
                           >
                             <div className={`product-image art-${p.art}`}>
@@ -633,7 +661,14 @@ function Menu({ notify }: { notify: (s: string) => void }) {
                               </span>
                             </div>
                             <div className="product-copy">
-                              <h3>{p.name}</h3>
+                              <h3>
+                                {p.name}
+                                {p.stockQuantity === 0
+                                  ? " · Esgotado"
+                                  : p.stockQuantity != null
+                                    ? ` · ${p.stockQuantity} disponíveis`
+                                    : ""}
+                              </h3>
                               <p>{p.description}</p>
                               <div>
                                 <strong>{money(p.price)}</strong>
@@ -723,7 +758,7 @@ function Checkout({
     [fulfillment, setFulfillment] = useState<"delivery" | "pickup">(
       store.allowPickup ? "pickup" : "delivery",
     ),
-    [address, setAddress] = useState(""),
+    [deliveryAddress, setDeliveryAddress] = useState(blankAddress),
     [payment, setPayment] = useState("card"),
     [changeFor, setChangeFor] = useState(""),
     [notes, setNotes] = useState(""),
@@ -746,7 +781,7 @@ function Checkout({
         customerName: name,
         phone,
         fulfillment,
-        address,
+        deliveryAddress,
         payment,
         expectedTotal: total,
         changeFor:
@@ -835,19 +870,10 @@ function Checkout({
           )}
         </div>
         {fulfillment === "delivery" && (
-          <label className="field">
-            Endereço completo
-            <textarea
-              required
-              minLength={8}
-              maxLength={400}
-              autoComplete="street-address"
-              placeholder="Rua, número, bairro, complemento e referência"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-            />
-            <small>A entrega será combinada pelo telefone informado.</small>
-          </label>
+          <AddressFields
+            value={deliveryAddress}
+            onChange={setDeliveryAddress}
+          />
         )}
         <label className="field">
           Pagamento
@@ -1261,6 +1287,17 @@ function Manager({
               icon: <Printer size={19} />,
               label: "Impressão",
             },
+            {
+              id: "relatorios",
+              icon: <LayoutDashboard size={19} />,
+              label: "Relatórios",
+            },
+            {
+              id: "estoque",
+              icon: <ShoppingBag size={19} />,
+              label: "Estoque",
+            },
+            { id: "entrega", icon: <Truck size={19} />, label: "Endereços" },
             { id: "garcom", icon: <Smartphone size={19} />, label: "Garçons" },
             { id: "loja", icon: <Settings2 size={19} />, label: "Minha loja" },
           ].map((item) => (
@@ -1290,7 +1327,7 @@ function Manager({
             <LogOut size={17} /> Sair do gestor
           </button>
           <span className="sidebar-version">
-            PRONTO GESTOR <b>v{desktop?.version || "0.3.0"}</b>
+            PRONTO GESTOR <b>v{desktop?.version || "0.4.0"}</b>
           </span>
         </div>
       </aside>
@@ -1300,6 +1337,9 @@ function Manager({
             Minha loja <ChevronRight size={14} />
             <strong>
               {{
+                relatorios: "Relatórios",
+                estoque: "Estoque",
+                entrega: "Endereços",
                 pedidos: "Pedidos",
                 cardapio: "Cardápio",
                 impressao: "Impressão",
@@ -1338,7 +1378,13 @@ function Manager({
           </div>
         </header>
         <div className="manager-content">
-          {section === "cardapio" ? (
+          {section === "relatorios" ? (
+            <Reports />
+          ) : section === "estoque" ? (
+            <Stock />
+          ) : section === "entrega" ? (
+            <DeliverySettings />
+          ) : section === "cardapio" ? (
             <CatalogManager notify={notify} />
           ) : section === "impressao" ? (
             <Printing notify={notify} desktop={desktop} />
@@ -1367,7 +1413,7 @@ function Manager({
           </span>
           <span>
             {desktop ? "Aplicativo Windows" : "Gestor web"} • Pronto{" "}
-            {desktop?.version || "0.3.0"}
+            {desktop?.version || "0.4.0"}
           </span>
         </footer>
       </div>
