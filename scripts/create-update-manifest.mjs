@@ -22,11 +22,11 @@ const manifest = {
     encoding: "utf8",
   }).trim(),
   notes: [
-    "Endereços corrigidos no executável, formulários mais largos e remoção do bloco de conexão.",
-    "Seleção limitada ao estoque, somando as variações do mesmo produto; motivo do ajuste opcional.",
-    "Ordenação de produtos, grupos e opções; importação e exportação do catálogo em JSON.",
-    "Comandas por categoria, caixa para categoria inteira e nomes em negrito com tamanho maior.",
-    "Via do balcão separada da numeração das comandas de cozinha.",
+    "Atendimento por tickets, tags/Kanban, contatos, respostas rápidas e campanhas com consentimento.",
+    "Adaptadores WhatsApp Evolution API e Cloud API; requerem configuração e homologação do provedor.",
+    "Agente por API com RAG local, dados da loja e exemplos revisados para fine-tuning opcional.",
+    "PWA do entregador com PIN, atribuição de pedidos e confirmação de localização do cliente.",
+    "GPS compartilhado por autorização, mapa com posição/precisão e interrupção do compartilhamento.",
   ],
 };
 mkdirSync(dirname(resolve(output)), { recursive: true });

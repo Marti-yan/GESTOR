@@ -1,3 +1,6 @@
+import { installCommunications } from "./communications.mjs";
+import { serviceSchema } from "./service-schema.mjs";
+import { installCouriers } from "./couriers.mjs";
 import { installCatalogTools } from "./catalog-tools.mjs";
 import {
   installOperations,
@@ -67,6 +70,7 @@ export function createApplication({
   bootstrapToken = "",
   secureCookie = false,
   addressFetch = fetch,
+  providerFetch = fetch,
 } = {}) {
   const db = openDatabase(dataDir || resolve(".data"));
   if (
@@ -80,6 +84,7 @@ export function createApplication({
       hashPassword(adminPassword),
     );
   }
+  serviceSchema(db);
   const app = express();
   app.disable("x-powered-by");
   const limits = new Map();
@@ -103,7 +108,7 @@ export function createApplication({
     res.setHeader("X-Frame-Options", "DENY");
     res.setHeader(
       "Content-Security-Policy",
-      "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; font-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
+      "default-src 'self'; img-src 'self' data: https://tile.openstreetmap.org; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; font-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
     );
     if (req.path.startsWith("/api/"))
       res.setHeader("Cache-Control", "no-store");
@@ -127,6 +132,15 @@ export function createApplication({
     }
     next();
   });
+  app.use(
+    "/api/integrations/whatsapp",
+    express.json({
+      limit: "1mb",
+      verify(req, _res, buffer) {
+        req.rawBody = buffer;
+      },
+    }),
+  );
   app.use("/api/admin/catalog/import", express.json({ limit: "2mb" }));
   app.use(express.json({ limit: "64kb" }));
   const admin = (req, res, next) =>
@@ -190,6 +204,17 @@ export function createApplication({
   app.get("/api/health", (_req, res) =>
     res.json({ ok: true, version: packageInfo.version }),
   );
+  const communications = installCommunications({
+    app,
+    db,
+    admin,
+    wrap,
+    fail,
+    rateLimit,
+    dataDir: dataDir || resolve(".data"),
+    fetchImpl: providerFetch,
+  });
+  installCouriers({ app, db, admin, wrap, fail, rateLimit, secureCookie });
   installCatalogTools({ app, db, admin, wrap, fail });
   installOperations({ app, db, admin, wrap, fail, rateLimit, addressFetch });
   app.get("/api/catalog", (_req, res) =>
@@ -1348,5 +1373,5 @@ export function createApplication({
         : "Não foi possível concluir agora. Tente novamente.",
     });
   });
-  return { app, db };
+  return { app, db, communications };
 }

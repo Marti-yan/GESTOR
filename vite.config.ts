@@ -9,6 +9,8 @@ export default defineConfig({
     proxy: {
       "/api": "http://127.0.0.1:4317",
       "/manifest.webmanifest": "http://127.0.0.1:4317",
+      "/garcom.webmanifest": "http://127.0.0.1:4317",
+      "/entregador.webmanifest": "http://127.0.0.1:4317",
       "/sw.js": "http://127.0.0.1:4317",
     },
   },

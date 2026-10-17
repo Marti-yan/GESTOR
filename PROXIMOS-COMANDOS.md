@@ -34,9 +34,11 @@ Aceite: total correto no cardápio, gestor e comanda; opção inválida não cri
 
 Aceite: corrigir o endereço do cadastro não modifica pedidos anteriores.
 
-## 6. Portal dos entregadores
+## 6. Evoluir o portal dos entregadores
 
-> Crie um portal PWA de entregadores com login individual, pedidos atribuídos, aceite, coleta, conclusão e ocorrências. Permita confirmar ou propor correção da localização. Mostre apenas dados necessários às entregas autorizadas.
+A 0.6.0 já traz PIN individual, atribuição, coleta/entrega/ocorrência, ponto confirmado do cliente e GPS opcional no mapa. HTTPS e acesso externo precisam da etapa de infraestrutura.
+
+> Homologue o PWA em celulares reais com HTTPS e GPS, implemente otimização de rotas e entrega em lotes. Avalie aplicativo móvel se precisar de localização garantida em segundo plano. Adicione reconciliação segura para ações offline sem duplicar entregas.
 
 Aceite: dois entregadores não assumem a mesma atribuição e ações sem sinal são reconciliadas.
 
@@ -58,19 +60,25 @@ Aceite: mesmo pedido externo aparece uma vez e eventos fora de ordem não reabre
 
 Aceite: fluxo homologado com registros e tratamento de falhas; não presumir equivalência com o iFood.
 
-## 10. WhatsApp oficial e mensagens prontas
+## 10. Homologar WhatsApp / Atende Chat
 
-> Adicione WhatsApp Cloud API com onboarding autorizado, caixa de entrada, transferência humana, respostas rápidas e templates. Respeite janela de atendimento e consentimento. Ligue mensagens e conversas aos pedidos existentes sem duplicá-los.
+A 0.6.0 inclui tickets, tags/Kanban, contatos, respostas rápidas, campanhas com consentimento e adaptadores de texto Evolution/Cloud API. Falta homologar no provedor real e receber o levantamento do Atende Chat.
+
+> Use o levantamento do Atende Chat para integrar sua conexão existente. Homologue entrada/saída, reconexão, QR, confirmações e deduplicação no número de teste. Depois acrescente mídia/transcrição, onboarding oficial e vínculo explícito com pedidos, sem duplicá-los.
 
 Aceite: operador assume conversa e impede resposta simultânea da automação.
 
-## 11. IA com conhecimento e ferramentas
+## 11. Avaliar IA e acrescentar ferramentas
+
+A 0.6.0 inclui cadastro da loja, RAG lexical/FTS5, API OpenAI, sugestão, pausa por ticket e limite de chamadas. O agente orienta ao cardápio; não cria pedidos.
 
 > Adicione uma IA de atendimento com conhecimento versionado por loja, RAG e ferramentas restritas para consultar catálogo, calcular carrinho e criar rascunhos. Preço, frete, estoque e pagamento devem ser validados pelo backend. Crie avaliações antes de liberar confirmações automáticas.
 
 Aceite: cliente confirma o resumo; produto inexistente não entra no pedido; falha da IA permite atendimento humano.
 
-## 12. Fine-tuning, apenas se houver ganho comprovado
+## 12. Avaliar fine-tuning com dados revisados
+
+A 0.6.0 inclui exemplos revisados, JSONL, solicitação de treinamento pago confirmada na tela, acompanhamento, recuperação de trabalho incerto e ativação explícita. Nenhum treinamento real foi executado.
 
 > Avalie se fine-tuning melhora os erros medidos da IA. Compare com prompt/RAG, valide a disponibilidade atual dos fornecedores e as licenças dos modelos. Use dados com direitos adequados, separação por restaurante, treino/teste independentes e opção de reverter o modelo.
 

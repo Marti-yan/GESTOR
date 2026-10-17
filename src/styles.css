@@ -6000,3 +6000,354 @@ svg {
 .print-model-card {
   overflow: clip;
 }
+/* Atendimento, agente e entregas */
+.service-two-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+.service-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+.service-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.service-row > span:first-child,
+.service-row > strong:first-child {
+  flex: 1;
+  min-width: 120px;
+}
+.service-checks {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+}
+.service-checks label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.chat-kanban {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 4px 0 20px;
+}
+.chat-lane {
+  background: #edf0e7;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
+  flex: 1 0 260px;
+  min-width: 0;
+  max-width: 420px;
+}
+.chat-lane h2 {
+  font-size: 16px;
+  border-left: 4px solid;
+  padding-left: 10px;
+  margin: 4px 0 16px;
+}
+.chat-ticket {
+  display: block;
+  text-align: left;
+  width: 100%;
+  border: 1px solid #e1e6d8;
+  background: #fff;
+  border-radius: 10px;
+  padding: 15px;
+  color: var(--ink);
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+.chat-ticket > strong,
+.chat-ticket > small {
+  display: block;
+  margin: 5px 0;
+  overflow-wrap: anywhere;
+}
+.chat-ticket p {
+  font-size: 13px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-wrap;
+}
+.chat-tag-list {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.chat-tag-list > span,
+.chat-tag-list > label {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 11px;
+  border: 1px solid;
+  border-radius: 20px;
+  padding: 5px 9px;
+  background: #fff;
+}
+.chat-tag-list .icon-button {
+  width: 23px;
+  height: 23px;
+}
+.chat-pane {
+  position: fixed;
+  z-index: 110;
+  inset: 20px 20px 20px auto;
+  width: min(700px, calc(100vw - 40px));
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 100px #102a2845;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.chat-pane header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.chat-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 12px 20px 0;
+}
+.chat-hint {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 0 20px;
+  margin: 8px 0;
+}
+.chat-tag-list.editable {
+  padding: 0 20px;
+  max-height: 90px;
+  overflow: auto;
+  flex-shrink: 0;
+}
+.chat-messages {
+  flex: 1;
+  min-height: 100px;
+  overflow-y: auto;
+  background: #f1f3ed;
+  padding: 16px;
+}
+.chat-message {
+  background: #fff;
+  border: 1px solid #e0e5d9;
+  border-radius: 12px;
+  padding: 11px 14px;
+  margin: 8px 15% 8px 0;
+  overflow-wrap: anywhere;
+}
+.chat-message.out {
+  background: #e1eddb;
+  margin: 8px 0 8px 15%;
+}
+.chat-message p {
+  white-space: pre-wrap;
+  margin: 0 0 8px;
+  line-height: 1.5;
+  font-size: 14px;
+}
+.chat-message small {
+  font-size: 10px;
+  color: #677361;
+}
+.chat-composer {
+  padding: 14px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  border-top: 1px solid var(--line);
+}
+.chat-composer textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 65px;
+  max-height: 150px;
+}
+.chat-composer select {
+  max-width: 100%;
+  width: 100%;
+}
+.chat-composer textarea,
+.chat-composer select,
+.operation-actions select {
+  border: 1px solid var(--line);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font: inherit;
+}
+.contact-picker {
+  display: grid;
+  gap: 10px;
+  max-height: 260px;
+  overflow: auto;
+  padding: 12px;
+}
+.whatsapp-qr {
+  padding: 20px;
+}
+.whatsapp-qr img {
+  max-width: 260px;
+  width: 100%;
+}
+.courier-qr a {
+  overflow-wrap: anywhere;
+}
+.courier-app {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px 16px 60px;
+  min-height: 100dvh;
+  background: #f6f7f3;
+}
+.courier-app > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 8px 0 22px;
+}
+.courier-app header .logo {
+  font-size: 26px;
+}
+.courier-app header small {
+  font-size: 13px;
+}
+.courier-app .operation-panel {
+  margin: 18px 0;
+}
+.courier-app h1 {
+  font-size: 25px;
+}
+.courier-app h2 {
+  font-size: 19px;
+}
+.courier-app li {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+.courier-app footer {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-top: 30px;
+}
+.courier-location {
+  position: fixed;
+  inset: 0;
+  background: #1f332a66;
+  z-index: 120;
+  overflow: auto;
+  padding: 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+.courier-location form {
+  width: min(600px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+.delivery-map {
+  height: 400px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin: 18px 0;
+  position: relative;
+  z-index: 0;
+}
+.driver-position-list {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.driver-position-list button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 5px;
+}
+.driver-position-list span {
+  font-size: 11px;
+}
+.manager-sidebar nav {
+  overflow-y: auto;
+  min-height: 90px;
+  flex-shrink: 1;
+}
+.manager-sidebar .sidebar-bottom {
+  flex-shrink: 0;
+}
+@media (max-width: 850px) {
+  .service-two-col {
+    grid-template-columns: 1fr;
+  }
+  .chat-pane {
+    inset: 8px;
+    width: calc(100vw - 16px);
+  }
+  .chat-message {
+    margin-right: 8%;
+  }
+  .chat-message.out {
+    margin-left: 8%;
+  }
+  .delivery-map {
+    height: 330px;
+  }
+  .chat-actions {
+    padding: 8px 12px;
+  }
+  .chat-composer {
+    padding: 10px;
+  }
+  .service-tabs .button {
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+  .courier-app .operation-actions .button {
+    flex: 1;
+  }
+}
+
+.chat-actions select {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  max-width: 100%;
+}

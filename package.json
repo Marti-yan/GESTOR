@@ -1,6 +1,6 @@
 {
   "name": "pronto-gestor",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "description": "Cardápio digital, gestor de pedidos e impressão térmica — MVP",
   "type": "module",
@@ -24,6 +24,7 @@
   "dependencies": {
     "express": "^5.1.0",
     "iconv-lite": "0.7.3",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.468.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.0.0",
@@ -31,6 +32,7 @@
   },
   "devDependencies": {
     "@electron/asar": "3.4.1",
+    "@types/leaflet": "^1.9.22",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^5.0.0",

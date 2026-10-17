@@ -2,7 +2,7 @@ function isAllowedApiRequest(path, method = "GET") {
   return (
     typeof path === "string" &&
     path.length <= 4000 &&
-    /^\/(?:auth|catalog|admin|orders|track|health|staff|delivery-areas|address)(?:[/?]|$)/.test(
+    /^\/(?:auth|catalog|admin|orders|track|health|staff|delivery-areas|address|courier)(?:[/?]|$)/.test(
       path,
     ) &&
     !path.includes("..") &&

@@ -5,6 +5,8 @@ import { Reports } from "./Reports";
 import { Stock } from "./Stock";
 import { AddressFields, DeliverySettings, blankAddress } from "./Delivery";
 import {
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useRef,
@@ -111,6 +113,16 @@ const emptyStore: Store = {
   allowPickup: true,
 };
 
+const CourierApp = lazy(() =>
+  import("./Couriers").then((m) => ({ default: m.CourierApp })),
+);
+const CourierManager = lazy(() =>
+  import("./Couriers").then((m) => ({ default: m.CourierManager })),
+);
+const Support = lazy(() =>
+  import("./Support").then((m) => ({ default: m.Support })),
+);
+const Agent = lazy(() => import("./Agent").then((m) => ({ default: m.Agent })));
 function Logo({ compact = false }: { compact?: boolean }) {
   return (
     <a className={`logo ${compact ? "compact" : ""}`} href="#/">
@@ -228,18 +240,24 @@ export function App() {
   const [route, setRoute] = useState(
     () =>
       window.location.hash.slice(1) ||
-      (window.location.pathname.startsWith("/garcom")
-        ? "/garcom"
-        : window.prontoDesktop
-          ? "/gestor"
-          : "/"),
+      (window.location.pathname.startsWith("/entregador")
+        ? "/entregador"
+        : window.location.pathname.startsWith("/garcom")
+          ? "/garcom"
+          : window.prontoDesktop
+            ? "/gestor"
+            : "/"),
   );
   const [toast, setToast] = useState("");
   useEffect(() => {
     const handler = () =>
       setRoute(
         window.location.hash.slice(1) ||
-          (window.location.pathname.startsWith("/garcom") ? "/garcom" : "/"),
+          (window.location.pathname.startsWith("/entregador")
+            ? "/entregador"
+            : window.location.pathname.startsWith("/garcom")
+              ? "/garcom"
+              : "/"),
       );
     window.addEventListener("hashchange", handler);
     return () => window.removeEventListener("hashchange", handler);
@@ -249,9 +267,11 @@ export function App() {
       .querySelector('link[rel="manifest"]')
       ?.setAttribute(
         "href",
-        route.startsWith("/garcom")
-          ? "/garcom.webmanifest"
-          : "/manifest.webmanifest",
+        route.startsWith("/entregador")
+          ? "/entregador.webmanifest"
+          : route.startsWith("/garcom")
+            ? "/garcom.webmanifest"
+            : "/manifest.webmanifest",
       );
   }, [route]);
   useEffect(() => {
@@ -261,8 +281,10 @@ export function App() {
     }
   }, [toast]);
   return (
-    <>
-      {route.startsWith("/garcom") ? (
+    <Suspense fallback={<p className="operation-panel">Carregando módulo…</p>}>
+      {route.startsWith("/entregador") ? (
+        <CourierApp />
+      ) : route.startsWith("/garcom") ? (
         <StaffApp />
       ) : route.startsWith("/gestor") ? (
         <Manager route={route} notify={setToast} />
@@ -275,7 +297,7 @@ export function App() {
         <CheckCircle2 size={18} />
         {toast}
       </div>
-    </>
+    </Suspense>
   );
 }
 
@@ -1313,6 +1335,21 @@ function Manager({
               label: "Pedidos",
             },
             {
+              id: "atendimento",
+              icon: <Smartphone size={19} />,
+              label: "WhatsApp",
+            },
+            {
+              id: "agente",
+              icon: <Settings2 size={19} />,
+              label: "Agente de IA",
+            },
+            {
+              id: "entregadores",
+              icon: <Truck size={19} />,
+              label: "Entregadores",
+            },
+            {
               id: "cardapio",
               icon: <UtensilsCrossed size={19} />,
               label: "Cardápio",
@@ -1372,6 +1409,9 @@ function Manager({
             Minha loja <ChevronRight size={14} />
             <strong>
               {{
+                atendimento: "Atendimento",
+                agente: "Agente de IA",
+                entregadores: "Entregadores",
                 relatorios: "Relatórios",
                 estoque: "Estoque",
                 entrega: "Endereços",
@@ -1413,7 +1453,13 @@ function Manager({
           </div>
         </header>
         <div className="manager-content">
-          {section === "relatorios" ? (
+          {section === "atendimento" ? (
+            <Support />
+          ) : section === "agente" ? (
+            <Agent />
+          ) : section === "entregadores" ? (
+            <CourierManager desktop={desktop} />
+          ) : section === "relatorios" ? (
             <Reports />
           ) : section === "estoque" ? (
             <Stock />

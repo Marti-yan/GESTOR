@@ -13,7 +13,7 @@ if (
   );
   process.exit(1);
 }
-const { app, db } = createApplication({
+const { app, db, communications } = createApplication({
   host,
   dataDir: process.env.DATA_DIR || resolve(".data"),
   webDir: process.env.PRONTO_WEB_DIR || resolve("dist"),
@@ -21,11 +21,13 @@ const { app, db } = createApplication({
   bootstrapToken: process.env.PRONTO_BOOTSTRAP_TOKEN || "",
   secureCookie: process.env.COOKIE_SECURE === "true",
 });
+communications.start();
 const server = app.listen(port, host, () =>
   console.log(`Pronto disponível em http://${host}:${port}`),
 );
 function close() {
-  server.close(() => {
+  server.close(async () => {
+    await communications.stop();
     db.close();
     process.exit(0);
   });

@@ -1,4 +1,4 @@
-# Pronto Gestor — MVP 0.5.0
+# Pronto Gestor — MVP 0.6.0
 
 Cardápio digital → aceite no gestor → comanda térmica. Garçom e gestor também lançam pedidos diretamente.
 
@@ -6,16 +6,16 @@ Preparado para **Elgin i8 USB de 80 mm**, com envio ESC/POS pela fila do Windows
 
 ## Começar pelo instalador Windows
 
-A versão **0.5.0** corrige o cadastro de endereços no executável e os formulários estreitos, limita a seleção pelo saldo disponível e permite ordenar produtos, grupos e opções. Comandas podem agrupar categorias em ordem própria, destacar uma categoria inteira e aumentar nomes de itens com uma unidade. A via do balcão não entra na numeração da cozinha. Importação/exportação JSON leva o catálogo entre computadores. Guias: [ORDENACAO-E-COMANDAS.md](ORDENACAO-E-COMANDAS.md), [TRANSFERIR-CARDAPIO.md](TRANSFERIR-CARDAPIO.md) e [RELATORIOS-ESTOQUE-ENDERECOS.md](RELATORIOS-ESTOQUE-ENDERECOS.md).
+A versão **0.6.0** acrescenta atendimento por tickets, tags/Kanban, respostas rápidas, contatos e campanhas com consentimento, adaptadores WhatsApp Evolution/Cloud API, agente por API com RAG local e fine-tuning supervisionado. Inclui PWA de entregadores com PIN individual, atribuição, localização confirmada do cliente e mapa de GPS compartilhado. Consulte [WHATSAPP-IA-ENTREGADORES.md](WHATSAPP-IA-ENTREGADORES.md). A conexão específica do Atende Chat depende do levantamento do outro projeto: [LEVANTAMENTO-ATENDECHAT.md](LEVANTAMENTO-ATENDECHAT.md).
 
-**Já tem o gestor instalado?** Feche o programa pela bandeja e execute o **[atualizador 0.5.0](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.5.0/Reparar-Pronto-0.5.0.exe)**. Ele mantém `%APPDATA%\Pronto Gestor` e refaz os atalhos. Se o programa ainda for detectado em execução, reinicie o Windows antes de atualizar. Ao abrir, confira **Pronto Gestor — 0.5.0** na barra de título.
+**Já tem o gestor instalado?** Feche o programa pela bandeja e execute o **[atualizador 0.6.0](https://github.com/Marti-yan/GESTOR/raw/refs/heads/downloads/windows-mvp-0.6.0/Reparar-Pronto-0.6.0.exe)**. Ele mantém `%APPDATA%\Pronto Gestor` e refaz os atalhos. Se o programa ainda for detectado em execução, reinicie o Windows antes de atualizar. Ao abrir, confira **Pronto Gestor — 0.6.0** na barra de título.
 
-Para instalar do zero, baixe o **[pacote Windows em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.5.0.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. O script monta o `.exe`, confere o SHA-256 e abre a instalação. O pacote está em uma branch de distribuição separada porque o instalador excede o limite de arquivo comum do Git.
+Para instalar do zero, baixe o **[pacote Windows em ZIP](https://github.com/Marti-yan/GESTOR/archive/refs/heads/downloads/windows-mvp-0.6.0.zip)**, escolha **Extrair tudo** e abra **Instalar.cmd**. O script monta o `.exe`, confere o SHA-256 e abre a instalação. O pacote está em uma branch de distribuição separada porque o instalador excede o limite de arquivo comum do Git.
 
 É possível instalar em outro computador com Windows de 64 bits; o computador de desenvolvimento não precisa estar disponível. Cada instalação mantém seu próprio banco local. Para testar cardápio e pedidos sem a impressora, mantenha a impressão automática desligada e visualize a comanda no gestor.
 
 1. Instale o driver Windows da Elgin i8. Confira que a impressora aparece em **Configurações → Impressoras e scanners** e imprima a página de teste do Windows.
-2. Execute `Pronto-Gestor-0.5.0-Windows-x64.exe` e abra o Pronto Gestor.
+2. Execute `Pronto-Gestor-0.6.0-Windows-x64.exe` e abra o Pronto Gestor.
 3. Crie uma senha de pelo menos 12 caracteres. Em **Minha loja**, informe o nome, taxa de entrega e prazo; em **Cardápio**, edite os produtos de exemplo.
 4. Em **Impressão**, selecione a Elgin i8 em **Comanda geral**, mantenha **80 mm** e modo **ESC/POS**. Escolha o modelo, ajuste a leitura e os destaques, salve e clique em **Testar este modelo**. Confira mesa, três lanches, bebidas, troco e o marcador FIM antes do corte.
 5. Ligue **Impressão automática**.
@@ -33,7 +33,7 @@ Recomendação inicial para operação: Windows 11 de 64 bits, 8 GB de RAM, SSD 
 - O cardápio compartilhado usa o IP local do computador. O endereço `127.0.0.1` funciona somente no próprio computador.
 - Se o Windows solicitar, permita acesso do servidor **somente em redes privadas**. O firewall precisa permitir a porta escolhida para que o celular alcance o cardápio.
 - Celular e computador precisam estar na mesma rede, sem isolamento de clientes Wi-Fi. Evite a rede de visitantes do roteador.
-- A internet não é necessária para esse fluxo na LAN depois de instalado. A conexão entre celular e computador é necessária.
+- A internet não é necessária para o fluxo de pedidos/impressão na LAN depois de instalado. WhatsApp, IA e as imagens do mapa precisam de internet; GPS no celular e instalação PWA exigem HTTPS. A conexão entre celular e computador é necessária.
 - Fechar a janela mantém o aplicativo e a impressão ativos na bandeja do Windows. Para encerrar tudo, use **Encerrar Pronto e parar servidor** no ícone da bandeja.
 - Computador desligado, suspenso ou aplicativo encerrado não recebe novos pedidos locais. Configure energia/ suspensão conforme a rotina da loja.
 - IPs locais podem mudar. Um endereço reservado no roteador ajuda a preservar o link e o QR Code.
@@ -63,8 +63,14 @@ Recomendação inicial para operação: Windows 11 de 64 bits, 8 GB de RAM, SSD 
 - Falhas e resultados incertos visíveis, com reenvio confirmado pelo operador.
 - Teste de impressão e visualização de comanda sem enviar ao equipamento.
 - Servidor incluído no instalador e opção de conectar o gestor a servidor externo.
+- Tickets com pausa/retomada do agente, tags e Kanban por etapa ou tag; respostas rápidas.
+- Contatos com opt-in e campanhas em fila, intervalo, descadastro e conferência de envios incertos.
+- Adaptadores de texto Evolution API e Meta Cloud API; webhook autenticado e deduplicação.
+- Informações da loja, perguntas/respostas com busca FTS5/RAG, API OpenAI, exemplos revisados, exportação JSONL e treinamento supervisionado com ativação explícita.
+- Entregadores com acesso individual por PIN, pedidos atribuídos, coleta/entrega/ocorrência e ponto confirmado do cliente.
+- GPS opcional do motoboy em mapa OpenStreetMap, precisão, última captura, indicação de posição antiga e interrupção do compartilhamento.
 
-**Não há confirmação online de pagamento neste MVP.** Dinheiro e cartão são recebidos na entrega ou retirada. Não foram incluídos iFood, 99Food, WhatsApp, IA, entregadores, mapa, financeiro ou emissão fiscal.
+**Não há confirmação online de pagamento neste MVP.** Dinheiro e cartão são recebidos na entrega ou retirada. Não foram incluídos iFood, 99Food, caixa/financeiro completo ou emissão fiscal. WhatsApp e IA exigem contas e credenciais externas; as conexões reais ainda precisam de homologação. O código do Atende Chat não foi disponibilizado neste ambiente.
 
 O catálogo inicial é **exemplo editável**. Não existem pedidos falsos pré-cadastrados na instalação.
 
@@ -89,10 +95,10 @@ Configure **um computador principal** para a impressão automática neste MVP. A
 
 - Banco: SQLite em `%APPDATA%\Pronto Gestor\database\pronto.sqlite`.
 - Diário de impressão e configuração: subpastas do mesmo diretório de dados do aplicativo.
-- Tokens de acesso são armazenados com a proteção do Windows quando disponível.
+- Tokens de acesso do desktop são armazenados com a proteção do Windows quando disponível. Chaves de provedores são criptografadas com a chave local `database/provider.key`; inclua esse arquivo no backup da pasta `database`.
 - O banco e a configuração ficam fora da pasta de instalação, preservados em atualizações.
 - Para um backup manual consistente, encerre o aplicativo **pela bandeja** e copie a pasta `database` completa. Não copie somente o `.sqlite` enquanto houver gravações, pois pode existir um arquivo WAL.
-- Não compartilhe o banco: ele contém telefone e endereço dos clientes.
+- Não compartilhe o banco nem `provider.key`: contêm conversas, dados de clientes e credenciais criptografadas. O diretório completo permite recuperar essas credenciais.
 
 ## Desenvolver e executar pelo código
 
@@ -106,6 +112,7 @@ npm run dev
 - Cardápio: `http://127.0.0.1:5173/#/`
 - Gestor: `http://127.0.0.1:5173/#/gestor`
 - Garçom: `http://127.0.0.1:5173/#/garcom`
+- Entregador: `http://127.0.0.1:5173/entregador#/entregador`
 - API: `http://127.0.0.1:4317/api/health`
 - Na primeira execução local, o gestor permite criar a senha.
 
@@ -141,7 +148,7 @@ npm run build
 npm run verify:package # depois do build Windows; confere módulos e recursos empacotados
 ```
 
-Há testes para migração do banco 0.1, preço, idempotência concorrente, aceite, origem do pedido, papéis de acesso, PIN, categorias, modelos, taxa/troco, reserva de impressão, expiração, cancelamento, comanda longa, comandos ESC/POS, envio completo ao spooler e recuperação da fila local. O envio nativo Windows e o mecanismo físico da Elgin precisam de validação no equipamento; os testes da ponte usam um spooler simulado.
+Os testes de serviços também cobrem isolamento de entregadores, revogação do GPS, webhooks, deduplicação, pausa durante resposta da IA, campanhas, RAG e fine-tuning com provedores simulados. Nenhuma chamada paga nem mensagem real é feita pelos testes. Há testes para migração do banco 0.1, preço, idempotência concorrente, aceite, origem do pedido, papéis de acesso, PIN, categorias, modelos, taxa/troco, reserva de impressão, expiração, cancelamento, comanda longa, comandos ESC/POS, envio completo ao spooler e recuperação da fila local. O envio nativo Windows e o mecanismo físico da Elgin precisam de validação no equipamento; os testes da ponte usam um spooler simulado.
 
 ## Servidor externo e Hostinger
 
