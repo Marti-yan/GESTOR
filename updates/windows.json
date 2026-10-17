@@ -1,15 +1,15 @@
 {
-  "version": "0.6.0",
+  "version": "0.7.0",
   "minVersion": "0.2.0",
-  "url": "https://raw.githubusercontent.com/Marti-yan/GESTOR/9c0237bbbb09416eba11b5dacafe55513ef78464/Reparar-Pronto-0.6.0.exe",
-  "size": 2425040,
-  "sha256": "af5640a17594f13f754ce1446683ac91772cef5b86f8af90cf388b1b766c22dc",
-  "sourceCommit": "dfe35bf2c25d3569c6feab4906182726b6ce0804",
+  "url": "https://raw.githubusercontent.com/Marti-yan/GESTOR/c89c474178570b32c0edc47e771ae2e0b075aea7/Reparar-Pronto-0.7.0.exe",
+  "size": 2725513,
+  "sha256": "6153f4d3cd8a41765a1d5cd10ee160741a56c56d69295f4363c9f86641f093ff",
+  "sourceCommit": "9adb2ccf82dc396b5c26f4878175145baa65f9f5",
   "notes": [
-    "Atendimento por tickets, tags/Kanban, contatos, respostas rápidas e campanhas com consentimento.",
-    "Adaptadores WhatsApp Evolution API e Cloud API; requerem configuração e homologação do provedor.",
-    "Agente por API com RAG local, dados da loja e exemplos revisados para fine-tuning opcional.",
-    "PWA do entregador com PIN, atribuição de pedidos e confirmação de localização do cliente.",
-    "GPS compartilhado por autorização, mapa com posição/precisão e interrupção do compartilhamento."
+    "Aba Precific carrega o site original com a mesma conta e dados da hospedagem.",
+    "Login do Precific persistente; atualizações do site por recarga, sem novo instalador.",
+    "Adaptador Atende Chat por HTTP e Socket.IO, preservando a sessão WhatsApp existente.",
+    "Tickets, QR, texto e pausa do agente ao assumir ou trocar de atendente.",
+    "Fila vinculada à conexão para impedir envio de mensagens antigas por outro número."
   ]
 }
