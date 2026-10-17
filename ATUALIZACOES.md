@@ -29,3 +29,9 @@ node scripts/create-update-manifest.mjs COMMIT_DOS_DOWNLOADS /caminho/da/main/up
 6. Teste “Buscar atualização” e o download usando uma versão anterior do cliente, sem instalar em uma loja durante atendimento.
 
 O atualizador pequeno substitui aplicativo, API e interface. Use-o enquanto o runtime incluído continuar compatível; mudanças de Electron/Node ou de requisitos de instalação precisam de instalador completo e revisão da versão mínima. Não troque o arquivo de uma versão já publicada: use outra versão/commit.
+
+## Versão 0.6.0
+
+Atendimento por tickets, tags/Kanban, contatos, respostas rápidas e campanhas com consentimento. Adaptadores de texto Evolution/Cloud API precisam de serviço/conta externa e homologação. Agente OpenAI por API com RAG local/FTS5, cadastro da loja e fine-tuning opcional a partir de exemplos revisados. PWA do entregador, atribuições, localização confirmada do cliente e GPS compartilhado em mapa, com indicação de precisão/posição antiga e opção de parar. O GPS no celular exige HTTPS.
+
+As tabelas novas são acrescentadas ao banco existente. Inclua `database/provider.key` no backup junto do banco se cadastrar credenciais. Nenhuma chamada paga nem mensagem real foi executada na entrega. A conexão do Atende Chat aguarda acesso à sua documentação/código. Guias: WHATSAPP-IA-ENTREGADORES.md e LEVANTAMENTO-ATENDECHAT.md.

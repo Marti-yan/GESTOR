@@ -1,23 +1,26 @@
-# Pronto Gestor 0.5.0 — teste local Windows
+# Pronto Gestor 0.6.0 — teste local Windows
 
-Atualize em **Minha loja → Atualizações** (0.3.0+) ou feche pela bandeja e execute **Reparar-Pronto-0.5.0.exe**. O banco em APPDATA é preservado; confira a impressão automática ao abrir novamente.
+Atualize em **Minha loja → Atualizações** (0.3.0+) ou feche pela bandeja e execute **Reparar-Pronto-0.6.0.exe**. O banco em APPDATA é preservado. Confira a versão na barra de título e a impressão automática ao abrir.
 
-Para instalar do zero, extraia o ZIP inteiro desta branch e execute **Instalar.cmd**. As três partes são unidas, o SHA-256 é conferido e o instalador é aberto. Windows x64; Node e servidor incluídos. Operação local, nenhuma VPS alterada.
+Para instalar do zero, extraia o ZIP completo desta branch e execute **Instalar.cmd**. As três partes são unidas e o SHA-256 é conferido antes da instalação. Requer Windows x64; inclui Node e servidor. Nenhuma VPS foi alterada.
 
-## Mudanças
+## Novidades
 
-- Corrige o bloqueio de endereços e CEP no executável; remove o bloco de conexão de Minha loja.
-- Lançamento ampliado com campos completos e rolagem acessível; editor de impressão sem alargar a página e prévia fixa nas telas largas.
-- Seleção limitada pelo saldo disponível, somando variações do mesmo produto. Motivo de ajuste de estoque opcional.
-- Ordenação de produtos, grupos e opções; ordem própria de grupos no produto.
-- Importar/exportar catálogo JSON para outro computador, com prévia, validação e preservação de histórico/estoque.
-- Geral + batata + balcão = duas comandas de cozinha, mais balcão separado da numeração.
-- Comandas agrupadas por categoria em ordem configurável; caixas por item ou categoria inteira; negrito e fonte maior mesmo com quantidade 1.
+- Tickets com pausa/retomada do agente, tags e Kanban por etapa ou tag; respostas rápidas e contatos.
+- Campanhas com opt-in, intervalo fixo e descadastro. Envio incerto exige conferência e não é repetido automaticamente.
+- Adaptadores de texto Evolution API e Meta Cloud API. Exigem instância/conta, credenciais e homologação; o executável não instala uma Evolution própria.
+- Agente OpenAI por API, cadastro da loja e RAG lexical com SQLite FTS5. Exemplos revisados, JSONL e fine-tuning opcional, pago e confirmado na tela. Nenhum treinamento real foi iniciado.
+- PWA do entregador com PIN individual, pedidos atribuídos, coleta/entrega/ocorrência e ponto do cliente salvo pelo telefone.
+- GPS opcional do motoboy e mapa com precisão/última captura, trajeto recente e opção de parar. No celular exige HTTPS; acesso externo fica para a etapa de infraestrutura. PWA em segundo plano pode parar de atualizar.
 
-49 testes passaram. Pacote verificado; nove recursos extraídos do atualizador conferidos por SHA-256. Interface testada na ponte real do Electron em Linux, incluindo endereços, estoque sem motivo, importação/exportação, ordenação e caixa da categoria inteira. Seletores/carrinho a 390 px conferidos. Instalação nativa Windows e impressão física na Elgin precisam de validação no restaurante.
+O código do **Atende Chat** não está neste ambiente. Para integrar sua conexão específica, copie **LEVANTAMENTO-ATENDECHAT.md** para a IA do outro projeto e traga a resposta; não precisa compactar o projeto inteiro. Não envie credenciais nem sessões.
 
-## Cardápio Ecta
+Guias: **COMECAR-AQUI.md**, **WHATSAPP-IA-ENTREGADORES.md**, **IMPRESSAO.md**, **PROXIMOS-COMANDOS.md**.
 
-A cópia do catálogo LojaDosSonhos está **pendente**: o endereço público retornou HTTP 403. Nenhum JSON inventado foi incluído como cópia. Envie exportação ou HTML/dados públicos salvos da página para a conversão. A importação Pronto está pronta; veja TRANSFERIR-CARDAPIO.md.
+## Validação
 
-Código: https://github.com/Marti-yan/GESTOR/tree/codex/mvp-pronto-gestor . Pacote sem banco da loja e credenciais. Hashes em SHA256SUMS.txt. Guias: COMECAR-AQUI.md, IMPRESSAO.md e ORDENACAO-E-COMANDAS.md.
+65 testes passaram. Pacote Windows verificado; 13 recursos extraídos do atualizador conferidos por SHA-256. O servidor empacotado iniciou e respondeu aos módulos novos. Interface Electron e PWA a 390 px conferidos; GPS/mapa e APIs externas simulados no teste. Ainda precisam de validação no equipamento: instalador Windows, impressão física Elgin, GPS real e conexão real WhatsApp/OpenAI.
+
+Código: https://github.com/Marti-yan/GESTOR/tree/codex/mvp-pronto-gestor . O pacote não contém banco, credenciais nem dados de clientes. Inclua `provider.key` no backup da pasta database se cadastrar chaves no seu computador. Hashes em SHA256SUMS.txt.
+
+O catálogo Ecta LojaDosSonhos continua pendente: o endereço público retornou HTTP 403 na etapa anterior. Nenhum catálogo inventado foi incluído como cópia. A importação/exportação JSON do Pronto está disponível; veja TRANSFERIR-CARDAPIO.md.
